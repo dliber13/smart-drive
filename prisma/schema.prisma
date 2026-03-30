@@ -1,0 +1,248 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum UserRole { SUPER_ADMIN EXECUTIVE UNDERWRITER SENIOR_UNDERWRITER FUNDING DEALER_MANAGER DEALER_USER COLLECTIONS COMPLIANCE ANALYST }
+enum DealerStatus { ACTIVE WATCH RESTRICTED INACTIVE }
+enum ApplicationStatus { DRAFT SUBMITTED IN_REVIEW DOCS_NEEDED APPROVED APPROVED_CONDITIONAL APPROVED_ALT_VEHICLE DENIED READY_FOR_FUNDING FUNDED }
+enum DocumentVerifyStatus { PENDING VERIFIED REJECTED }
+enum DealStatus { DRAFT APPROVED LOCKED FUNDING_HOLD FUNDED CANCELLED }
+enum AccountStatus { CURRENT LATE DELINQUENT REPO_REVIEW REPOSSESSED CHARGED_OFF CLOSED }
+
+model User {
+  id String @id @default(cuid())
+  firstName String
+  lastName String
+  email String @unique
+  passwordHash String?
+  role UserRole
+  isActive Boolean @default(true)
+  lastLoginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dealerUsers DealerUser[]
+  applications Application[] @relation("ApplicationCreator")
+  auditEvents AuditEvent[]
+}
+
+model Dealer {
+  id String @id @default(cuid())
+  name String
+  code String @unique
+  status DealerStatus @default(ACTIVE)
+  authorityLevel String
+  submissionScore Int @default(70)
+  earlyDefaultRate Float @default(0)
+  repoRate Float @default(0)
+  restrictionsJson Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dealerUsers DealerUser[]
+  applications Application[]
+}
+
+model DealerUser {
+  id String @id @default(cuid())
+  dealerId String
+  userId String
+  title String?
+  createdAt DateTime @default(now())
+  dealer Dealer @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([dealerId, userId])
+}
+
+model Application {
+  id String @id @default(cuid())
+  externalReference String? @unique
+  dealerId String
+  createdByUserId String
+  customerFirstName String
+  customerLastName String
+  verifiedIncome Float?
+  grossIncome Float?
+  payFrequency String?
+  residenceMonths Int?
+  employmentMonths Int?
+  creditScore Int?
+  mvrBand String?
+  requestedVehicle String?
+  requestedPrice Float?
+  downPayment Float?
+  status ApplicationStatus @default(DRAFT)
+  exceptionStatus String?
+  submittedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dealer Dealer @relation(fields: [dealerId], references: [id])
+  createdBy User @relation("ApplicationCreator", fields: [createdByUserId], references: [id])
+  documents ApplicationDocument[]
+  decisionRuns DecisionRun[]
+  deals Deal[]
+}
+
+model ApplicationDocument {
+  id String @id @default(cuid())
+  applicationId String
+  documentType String
+  fileKey String
+  verifyStatus DocumentVerifyStatus @default(PENDING)
+  verifiedByUserId String?
+  verifiedAt DateTime?
+  notes String?
+  createdAt DateTime @default(now())
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Vehicle {
+  id String @id @default(cuid())
+  stockNumber String @unique
+  year Int
+  make String
+  model String
+  mileage Int
+  vehicleClass String
+  askingPrice Float
+  reliabilityScore Int?
+  vehicleRiskScore Int?
+  maxTermDefault Int?
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  matches VehicleMatch[]
+  deals Deal[]
+}
+
+model DecisionRun {
+  id String @id @default(cuid())
+  applicationId String
+  rulesetVersion String
+  scorePayloadJson Json
+  riskTier String
+  defaultProbability Float
+  maxMonthlyPayment Float
+  maxPti Float
+  requiredControlsJson Json
+  createdAt DateTime @default(now())
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  vehicleMatches VehicleMatch[]
+  deals Deal[]
+}
+
+model VehicleMatch {
+  id String @id @default(cuid())
+  decisionRunId String
+  vehicleId String
+  fitScore Int
+  recommendationType String
+  structurePayloadJson Json
+  matchStatus String
+  createdAt DateTime @default(now())
+  decisionRun DecisionRun @relation(fields: [decisionRunId], references: [id], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model Deal {
+  id String @id @default(cuid())
+  applicationId String
+  selectedVehicleId String
+  decisionRunId String
+  approvalType String
+  approvedPrice Float
+  downPayment Float
+  apr Float
+  termMonths Int
+  paymentAmount Float
+  paymentFrequency String
+  pti Float
+  requiredControlsJson Json?
+  dealStatus DealStatus @default(DRAFT)
+  fundedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  application Application @relation(fields: [applicationId], references: [id])
+  selectedVehicle Vehicle @relation(fields: [selectedVehicleId], references: [id])
+  decisionRun DecisionRun @relation(fields: [decisionRunId], references: [id])
+  fundingChecklist FundingChecklist?
+  fundedAccount FundedAccount?
+}
+
+model FundingChecklist {
+  id String @id @default(cuid())
+  dealId String @unique
+  identityVerified Boolean @default(false)
+  poiVerified Boolean @default(false)
+  porVerified Boolean @default(false)
+  insuranceVerified Boolean @default(false)
+  gpsVerified Boolean @default(false)
+  starterInterruptVerified Boolean @default(false)
+  contractComplete Boolean @default(false)
+  finalStructureVerified Boolean @default(false)
+  readyToFund Boolean @default(false)
+  lastReviewedAt DateTime?
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model FundedAccount {
+  id String @id @default(cuid())
+  dealId String @unique
+  accountNumber String @unique
+  firstPaymentDueDate DateTime?
+  originalBalance Float
+  currentBalance Float
+  interestRate Float
+  accountStatus AccountStatus @default(CURRENT)
+  daysPastDue Int @default(0)
+  nextAction String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  earlyWarningScores EarlyWarningScore[]
+}
+
+model EarlyWarningScore {
+  id String @id @default(cuid())
+  accountId String
+  score Int
+  disruptionFlag Boolean @default(false)
+  nsfCount Int @default(0)
+  insuranceFlag Boolean @default(false)
+  paymentTrendFlag Boolean @default(false)
+  recommendedAction String
+  createdAt DateTime @default(now())
+  account FundedAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model CollectionNote {
+  id String @id @default(cuid())
+  accountId String
+  note String
+  actionType String
+  createdById String?
+  createdAt DateTime @default(now())
+}
+
+model PolicyRuleset {
+  id String @id @default(cuid())
+  version String @unique
+  name String
+  status String
+  rulesJson Json
+  effectiveAt DateTime
+  createdByUserId String?
+  createdAt DateTime @default(now())
+}
+
+model AuditEvent {
+  id String @id @default(cuid())
+  userId String?
+  entityType String
+  entityId String
+  action String
+  oldValueJson Json?
+  newValueJson Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id])
+}
