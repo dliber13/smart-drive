@@ -85,17 +85,22 @@ if (income >= 2500 && score >= 500) {
   status = "Declined";
 }
 
-    const newDeal: Deal = {
-      id: crypto.randomUUID(),
-      dealerName,
-      customerName,
-      vehicle,
-      monthlyIncome: income,
-      creditScore: score,
-      downPayment: down,
-      status,
-      submittedAt: new Date().toLocaleString(),
-    };
+const newDeal: Deal = {
+  id: Date.now().toString(),
+  dealerName,
+  customerName,
+  vehicle,
+  monthlyIncome: income,
+  creditScore: score,
+  downPayment: down,
+  status,
+  submittedAt: new Date().toLocaleString(),
+
+  // NEW DATA 👇
+  tier,
+  maxPayment,
+  maxVehiclePrice,
+};
 
     setQueue((prev) => [newDeal, ...prev]);
     setMessage(`Deal submitted: ${status}`);
