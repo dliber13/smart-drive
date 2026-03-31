@@ -72,6 +72,16 @@ let tier = "Tier 3";
 let maxPayment = income * 0.12;
 let maxVehiclePrice = maxPayment * 36;
 
+let vehicleRecommendation = "Economy";
+
+if (maxVehiclePrice >= 20000) {
+  vehicleRecommendation = "Premium";
+} else if (maxVehiclePrice >= 12000) {
+  vehicleRecommendation = "Mid Tier";
+} else {
+  vehicleRecommendation = "Budget";
+}
+
 if (income >= 2500 && score >= 500) {
   tier = "Tier 1";
   maxPayment = income * 0.18;
