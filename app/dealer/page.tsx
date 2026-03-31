@@ -14,6 +14,10 @@ type Deal = {
   downPayment: number;
   status: DealStatus;
   submittedAt: string;
+
+  tier: string;
+  maxPayment: number;
+  maxVehiclePrice: number;
 };
 
 const STORAGE_KEY = "smartdrive_deal_queue_v1";
