@@ -111,9 +111,10 @@ const newDeal: Deal = {
   submittedAt: new Date().toLocaleString(),
 
   // NEW DATA 👇
-  tier,
-  maxPayment,
-  maxVehiclePrice,
+tier,
+maxPayment,
+maxVehiclePrice,
+vehicleRecommendation,
 };
 
     setQueue((prev) => [newDeal, ...prev]);
