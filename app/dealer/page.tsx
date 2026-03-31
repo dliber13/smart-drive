@@ -232,6 +232,7 @@ vehicleRecommendation,
 <div><strong>Tier:</strong> {deal.tier}</div>
 <div><strong>Max Payment:</strong> ${Math.round(deal.maxPayment)}</div>
 <div><strong>Max Vehicle:</strong> ${Math.round(deal.maxVehiclePrice)}</div>
+<div><strong>Vehicle Fit:</strong> {deal.vehicleRecommendation}</div>
 
 <div><strong>Submitted:</strong> {deal.submittedAt}</div>
                   </div>
