@@ -1,8 +1,3 @@
-export const metadata = {
-  title: "Smart Drive",
-  description: "Smart Drive Financial",
-};
-
 export default function RootLayout({
   children,
 }: {
@@ -10,7 +5,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body style={{ margin: 0 }}>{children}</body>
     </html>
   );
 }
