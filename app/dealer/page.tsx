@@ -18,8 +18,8 @@ type Deal = {
   tier: string;
   maxPayment: number;
   maxVehiclePrice: number;
+  vehicleRecommendation: string;
 };
-
 const STORAGE_KEY = "smartdrive_deal_queue_v1";
 
 export default function DealerSubmissionPage() {
