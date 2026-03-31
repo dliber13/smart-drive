@@ -214,10 +214,15 @@ const newDeal: Deal = {
                   </div>
 
                   <div style={{ marginTop: 12, lineHeight: 1.8 }}>
-                    <div><strong>Income:</strong> ${deal.monthlyIncome.toLocaleString()}</div>
-                    <div><strong>Credit:</strong> {deal.creditScore}</div>
-                    <div><strong>Down:</strong> ${deal.downPayment.toLocaleString()}</div>
-                    <div><strong>Submitted:</strong> {deal.submittedAt}</div>
+<div><strong>Income:</strong> ${deal.monthlyIncome.toLocaleString()}</div>
+<div><strong>Credit:</strong> {deal.creditScore}</div>
+<div><strong>Down:</strong> ${deal.downPayment.toLocaleString()}</div>
+
+<div><strong>Tier:</strong> {deal.tier}</div>
+<div><strong>Max Payment:</strong> ${Math.round(deal.maxPayment)}</div>
+<div><strong>Max Vehicle:</strong> ${Math.round(deal.maxVehiclePrice)}</div>
+
+<div><strong>Submitted:</strong> {deal.submittedAt}</div>
                   </div>
 
                   <div style={actionRowStyle}>
