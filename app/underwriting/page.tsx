@@ -36,6 +36,8 @@ export default function UnderwritingPage() {
     let tier = "Tier 3";
     let decision = "Decline";
     let color = "#dc3545";
+    let apr = 24;
+    let term = 30;
 
     const maxPayment =
       income >= 2500 ? income * 0.18 :
@@ -59,6 +61,8 @@ export default function UnderwritingPage() {
       tier = "Tier 1";
       decision = "Approve";
       color = "#28a745";
+      apr = 19.9;
+      term = 36;
     } else if (
       income >= 2000 &&
       credit >= 450 &&
@@ -69,16 +73,22 @@ export default function UnderwritingPage() {
       tier = "Tier 2";
       decision = "Send to Stips";
       color = "#007bff";
+      apr = 22.9;
+      term = 33;
     } else if (income >= 1800) {
       tier = "Tier 3";
       decision = warnings.length >= 3 ? "Decline" : "Send to Stips";
       color = decision === "Decline" ? "#dc3545" : "#007bff";
+      apr = 24.9;
+      term = 30;
     }
 
     if (income < 1800) {
       tier = "Outside Program";
       decision = "Decline";
       color = "#dc3545";
+      apr = 24.9;
+      term = 24;
     }
 
     const vehicles: Vehicle[] = buildVehicleMatches({
@@ -89,6 +99,13 @@ export default function UnderwritingPage() {
       tier,
     });
 
+    const selectedVehicle = vehicles.find((v) => v.status === "Recommended") ?? vehicles[0];
+    const financeAmount = Math.max(selectedVehicle.price - down, 0);
+    const monthlyPayment = calcPayment(financeAmount, apr, term);
+    const pti = income > 0 ? (monthlyPayment / income) * 100 : 0;
+    const totalOfPayments = monthlyPayment * term;
+    const totalInterest = Math.max(totalOfPayments - financeAmount, 0);
+
     return {
       tier,
       decision,
@@ -97,6 +114,14 @@ export default function UnderwritingPage() {
       warnings,
       reasons,
       vehicles,
+      selectedVehicle,
+      apr,
+      term,
+      financeAmount,
+      monthlyPayment,
+      pti,
+      totalOfPayments,
+      totalInterest,
     };
   }, [monthlyIncome, creditScore, jobTime, residenceTime, downPayment]);
 
@@ -192,6 +217,29 @@ export default function UnderwritingPage() {
             )}
           </div>
 
+          <div
+            style={{
+              marginTop: 24,
+              padding: 20,
+              border: "1px solid #ccc",
+              width: 520,
+              borderRadius: 8,
+              background: "#eef6ff",
+            }}
+          >
+            <h2>Calculation Results Card</h2>
+            <p><strong>Selected Vehicle:</strong> {result.selectedVehicle.name}</p>
+            <p><strong>Vehicle Price:</strong> ${result.selectedVehicle.price.toLocaleString()}</p>
+            <p><strong>Down Payment:</strong> ${Number(downPayment || 0).toLocaleString()}</p>
+            <p><strong>Estimated Finance Amount:</strong> ${Math.round(result.financeAmount).toLocaleString()}</p>
+            <p><strong>APR Used:</strong> {result.apr}%</p>
+            <p><strong>Term Used:</strong> {result.term} months</p>
+            <p><strong>Estimated Monthly Payment:</strong> ${result.monthlyPayment.toLocaleString()}</p>
+            <p><strong>PTI:</strong> {result.pti.toFixed(1)}%</p>
+            <p><strong>Total of Payments:</strong> ${Math.round(result.totalOfPayments).toLocaleString()}</p>
+            <p><strong>Total Interest:</strong> ${Math.round(result.totalInterest).toLocaleString()}</p>
+          </div>
+
           <div style={{ marginTop: 40 }}>
             <h2>Vehicle Match Output</h2>
             <p>Best structure recommendations based on affordability and risk.</p>
@@ -228,6 +276,16 @@ export default function UnderwritingPage() {
       )}
     </div>
   );
+}
+
+function calcPayment(financeAmount: number, apr: number, term: number) {
+  if (financeAmount <= 0 || term <= 0) return 0;
+  const monthlyRate = apr / 100 / 12;
+  if (monthlyRate === 0) return Math.round(financeAmount / term);
+  const payment =
+    (financeAmount * monthlyRate) /
+    (1 - Math.pow(1 + monthlyRate, -term));
+  return Math.round(payment);
 }
 
 function buildVehicleMatches({
