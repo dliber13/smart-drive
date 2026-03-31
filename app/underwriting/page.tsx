@@ -1,38 +1,27 @@
-export default function Home() {
+export default function UnderwritingPage() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#0B1F3A",
-        color: "white",
-        fontFamily: "Arial",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: 42 }}>Smart Drive Financial 🚀</h1>
-        <p style={{ marginTop: 10 }}>
-          Lending Operating System is Live
-        </p>
+    <div style={{ padding: 40, fontFamily: "Arial, sans-serif" }}>
+      <h1>Underwriting Engine</h1>
+      <p>Smart Drive decision system</p>
 
-        <a
-          href="/dashboard"
-          style={{
-            display: "inline-block",
-            marginTop: 20,
-            padding: "12px 20px",
-            background: "#4A90E2",
-            color: "white",
-            borderRadius: 10,
-            textDecoration: "none",
-            fontWeight: "bold",
-          }}
-        >
-          Go to Dashboard →
-        </a>
+      <div style={{ marginTop: 20 }}>
+        <p><strong>Applications in Queue:</strong> 18</p>
+        <p><strong>Pending Review:</strong> 7</p>
+        <p><strong>Approved Today:</strong> 12</p>
+        <p><strong>Declined Today:</strong> 4</p>
       </div>
-    </main>
+
+      <div style={{ marginTop: 30 }}>
+        <button style={{ padding: 10, marginRight: 10 }}>
+          Approve Deal
+        </button>
+        <button style={{ padding: 10, marginRight: 10 }}>
+          Send to Stips
+        </button>
+        <button style={{ padding: 10 }}>
+          Decline
+        </button>
+      </div>
+    </div>
   );
 }
