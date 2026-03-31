@@ -63,15 +63,27 @@ export default function DealerSubmissionPage() {
     const score = Number(creditScore) || 0;
     const down = Number(downPayment) || 0;
 
-    let status: DealStatus = "Needs Stips";
+let status: DealStatus = "Needs Stips";
+let tier = "Tier 3";
+let maxPayment = income * 0.12;
+let maxVehiclePrice = maxPayment * 36;
 
-    if (income >= 2500 && score >= 500 && down >= 2000) {
-      status = "Approved";
-    } else if (income < 1800) {
-      status = "Declined";
-    } else {
-      status = "Needs Stips";
-    }
+if (income >= 2500 && score >= 500) {
+  tier = "Tier 1";
+  maxPayment = income * 0.18;
+  maxVehiclePrice = maxPayment * 48;
+  status = "Approved";
+} else if (income >= 2000 && score >= 450) {
+  tier = "Tier 2";
+  maxPayment = income * 0.15;
+  maxVehiclePrice = maxPayment * 42;
+  status = "Needs Stips";
+} else {
+  tier = "Tier 3";
+  maxPayment = income * 0.12;
+  maxVehiclePrice = maxPayment * 36;
+  status = "Declined";
+}
 
     const newDeal: Deal = {
       id: crypto.randomUUID(),
