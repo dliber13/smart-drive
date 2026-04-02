@@ -14,12 +14,12 @@ type Deal = {
   downPayment: number;
   status: DealStatus;
   submittedAt: string;
-
   tier: string;
   maxPayment: number;
   maxVehiclePrice: number;
   vehicleRecommendation: string;
 };
+
 const STORAGE_KEY = "smartdrive_deal_queue_v1";
 
 export default function DealerSubmissionPage() {
@@ -31,6 +31,7 @@ export default function DealerSubmissionPage() {
   const [downPayment, setDownPayment] = useState("");
   const [queue, setQueue] = useState<Deal[]>([]);
   const [message, setMessage] = useState("");
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -67,55 +68,52 @@ export default function DealerSubmissionPage() {
     const score = Number(creditScore) || 0;
     const down = Number(downPayment) || 0;
 
-let status: DealStatus = "Needs Stips";
-let tier = "Tier 3";
-let maxPayment = income * 0.12;
-let maxVehiclePrice = maxPayment * 36;
+    let status: DealStatus = "Needs Stips";
+    let tier = "Tier 3";
+    let maxPayment = income * 0.12;
+    let maxVehiclePrice = maxPayment * 36;
 
-let vehicleRecommendation = "Economy";
+    if (income >= 2500 && score >= 500) {
+      tier = "Tier 1";
+      maxPayment = income * 0.18;
+      maxVehiclePrice = maxPayment * 48;
+      status = "Approved";
+    } else if (income >= 2000 && score >= 450) {
+      tier = "Tier 2";
+      maxPayment = income * 0.15;
+      maxVehiclePrice = maxPayment * 42;
+      status = "Needs Stips";
+    } else {
+      tier = "Tier 3";
+      maxPayment = income * 0.12;
+      maxVehiclePrice = maxPayment * 36;
+      status = "Declined";
+    }
 
-if (maxVehiclePrice >= 20000) {
-  vehicleRecommendation = "Premium";
-} else if (maxVehiclePrice >= 12000) {
-  vehicleRecommendation = "Mid Tier";
-} else {
-  vehicleRecommendation = "Budget";
-}
+    let vehicleRecommendation = "Economy";
+    if (maxVehiclePrice >= 20000) {
+      vehicleRecommendation = "Premium";
+    } else if (maxVehiclePrice >= 12000) {
+      vehicleRecommendation = "Mid Tier";
+    } else {
+      vehicleRecommendation = "Budget";
+    }
 
-if (income >= 2500 && score >= 500) {
-  tier = "Tier 1";
-  maxPayment = income * 0.18;
-  maxVehiclePrice = maxPayment * 48;
-  status = "Approved";
-} else if (income >= 2000 && score >= 450) {
-  tier = "Tier 2";
-  maxPayment = income * 0.15;
-  maxVehiclePrice = maxPayment * 42;
-  status = "Needs Stips";
-} else {
-  tier = "Tier 3";
-  maxPayment = income * 0.12;
-  maxVehiclePrice = maxPayment * 36;
-  status = "Declined";
-}
-
-const newDeal: Deal = {
-  id: Date.now().toString(),
-  dealerName,
-  customerName,
-  vehicle,
-  monthlyIncome: income,
-  creditScore: score,
-  downPayment: down,
-  status,
-  submittedAt: new Date().toLocaleString(),
-
-  // NEW DATA 👇
-tier,
-maxPayment,
-maxVehiclePrice,
-vehicleRecommendation,
-};
+    const newDeal: Deal = {
+      id: Date.now().toString(),
+      dealerName,
+      customerName,
+      vehicle,
+      monthlyIncome: income,
+      creditScore: score,
+      downPayment: down,
+      status,
+      submittedAt: new Date().toLocaleString(),
+      tier,
+      maxPayment,
+      maxVehiclePrice,
+      vehicleRecommendation,
+    };
 
     setQueue((prev) => [newDeal, ...prev]);
     setMessage(`Deal submitted: ${status}`);
@@ -130,12 +128,22 @@ vehicleRecommendation,
 
   function updateStatus(id: string, status: DealStatus) {
     setQueue((prev) =>
-      prev.map((deal) => (deal.id === id ? { ...deal, status } : deal))
+      prev.map((deal) => {
+        if (deal.id !== id) return deal;
+        const updated = { ...deal, status };
+        if (selectedDeal?.id === id) {
+          setSelectedDeal(updated);
+        }
+        return updated;
+      })
     );
   }
 
   function removeDeal(id: string) {
     setQueue((prev) => prev.filter((deal) => deal.id !== id));
+    if (selectedDeal?.id === id) {
+      setSelectedDeal(null);
+    }
   }
 
   return (
@@ -200,106 +208,199 @@ vehicleRecommendation,
             </button>
           </div>
 
-          {message && <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>}
+          {message && (
+            <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>
+          )}
         </section>
 
-        <section style={panelStyle}>
-          <h2 style={sectionHeading}>Queue</h2>
+        <div style={{ display: "grid", gap: 24 }}>
+          <section style={panelStyle}>
+            <h2 style={sectionHeading}>Queue</h2>
 
-          {queue.length === 0 ? (
-            <p>No deals submitted yet.</p>
-          ) : (
-            <div style={{ display: "grid", gap: 14 }}>
-              {queue.map((deal) => (
-                <div
-  key={deal.id}
-  onClick={() => setSelectedDeal(deal)}
-  style={{ ...dealCardStyle, cursor: "pointer" }}
->
-                  <div style={dealHeaderStyle}>
-                    <div>
-                      <div style={{ fontWeight: 800, fontSize: 18 }}>
-                        {deal.customerName}
+            {queue.length === 0 ? (
+              <p>No deals submitted yet.</p>
+            ) : (
+              <div style={{ display: "grid", gap: 14 }}>
+                {queue.map((deal) => (
+                  <div
+                    key={deal.id}
+                    onClick={() => setSelectedDeal(deal)}
+                    style={{ ...dealCardStyle, cursor: "pointer" }}
+                  >
+                    <div style={dealHeaderStyle}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 18 }}>
+                          {deal.customerName}
+                        </div>
+                        <div style={{ color: "#555", marginTop: 4 }}>
+                          {deal.dealerName} • {deal.vehicle}
+                        </div>
                       </div>
-                      <div style={{ color: "#555", marginTop: 4 }}>
-                        {deal.dealerName} • {deal.vehicle}
+                      <StatusBadge status={deal.status} />
+                    </div>
+
+                    <div style={{ marginTop: 12, lineHeight: 1.8 }}>
+                      <div>
+                        <strong>Income:</strong> $
+                        {deal.monthlyIncome.toLocaleString()}
+                      </div>
+                      <div>
+                        <strong>Credit:</strong> {deal.creditScore}
+                      </div>
+                      <div>
+                        <strong>Down:</strong> $
+                        {deal.downPayment.toLocaleString()}
+                      </div>
+                      <div>
+                        <strong>Tier:</strong> {deal.tier}
+                      </div>
+                      <div>
+                        <strong>Max Payment:</strong> $
+                        {Math.round(deal.maxPayment)}
+                      </div>
+                      <div>
+                        <strong>Max Vehicle:</strong> $
+                        {Math.round(deal.maxVehiclePrice)}
+                      </div>
+                      <div>
+                        <strong>Vehicle Fit:</strong> {deal.vehicleRecommendation}
+                      </div>
+                      <div>
+                        <strong>Submitted:</strong> {deal.submittedAt}
                       </div>
                     </div>
-                    <StatusBadge status={deal.status} />
+
+                    <div style={actionRowStyle}>
+                      <button
+                        style={approveBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateStatus(deal.id, "Approved");
+                        }}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        style={stipBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateStatus(deal.id, "Needs Stips");
+                        }}
+                      >
+                        Needs Stips
+                      </button>
+                      <button
+                        style={declineBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateStatus(deal.id, "Declined");
+                        }}
+                      >
+                        Decline
+                      </button>
+                      <button
+                        style={deleteBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeDeal(deal.id);
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-                  <div style={{ marginTop: 12, lineHeight: 1.8 }}>
-<div><strong>Income:</strong> ${deal.monthlyIncome.toLocaleString()}</div>
-<div><strong>Credit:</strong> {deal.creditScore}</div>
-<div><strong>Down:</strong> ${deal.downPayment.toLocaleString()}</div>
+          {selectedDeal && (
+            <section style={panelStyle}>
+              <h2 style={sectionHeading}>Underwriting Review</h2>
 
-<div><strong>Tier:</strong> {deal.tier}</div>
-<div><strong>Max Payment:</strong> ${Math.round(deal.maxPayment)}</div>
-<div><strong>Max Vehicle:</strong> ${Math.round(deal.maxVehiclePrice)}</div>
-<div><strong>Vehicle Fit:</strong> {deal.vehicleRecommendation}</div>
-
-<div><strong>Submitted:</strong> {deal.submittedAt}</div>
-                  </div>
-
-                  <div style={actionRowStyle}>
-                    <button
-                      style={approveBtn}
-                      onClick={() => updateStatus(deal.id, "Approved")}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      style={stipBtn}
-                      onClick={() => updateStatus(deal.id, "Needs Stips")}
-                    >
-                      Needs Stips
-                    </button>
-                    <button
-                      style={declineBtn}
-                      onClick={() => updateStatus(deal.id, "Declined")}
-                    >
-                      Decline
-                    </button>
-                    <button
-                      style={deleteBtn}
-                      onClick={() => removeDeal(deal.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
+              <div style={{ lineHeight: 1.9 }}>
+                <div>
+                  <strong>Customer:</strong> {selectedDeal.customerName}
                 </div>
-              ))}
-            </div>
+                <div>
+                  <strong>Dealer:</strong> {selectedDeal.dealerName}
+                </div>
+                <div>
+                  <strong>Vehicle:</strong> {selectedDeal.vehicle}
+                </div>
+                <div>
+                  <strong>Income:</strong> $
+                  {selectedDeal.monthlyIncome.toLocaleString()}
+                </div>
+                <div>
+                  <strong>Credit:</strong> {selectedDeal.creditScore}
+                </div>
+                <div>
+                  <strong>Down Payment:</strong> $
+                  {selectedDeal.downPayment.toLocaleString()}
+                </div>
+                <div>
+                  <strong>Tier:</strong> {selectedDeal.tier}
+                </div>
+                <div>
+                  <strong>Max Payment:</strong> $
+                  {Math.round(selectedDeal.maxPayment)}
+                </div>
+                <div>
+                  <strong>Max Vehicle:</strong> $
+                  {Math.round(selectedDeal.maxVehiclePrice)}
+                </div>
+                <div>
+                  <strong>Vehicle Fit:</strong>{" "}
+                  {selectedDeal.vehicleRecommendation}
+                </div>
+                <div>
+                  <strong>Status:</strong> {selectedDeal.status}
+                </div>
+                <div>
+                  <strong>Submitted:</strong> {selectedDeal.submittedAt}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 14,
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  style={approveBtn}
+                  onClick={() => updateStatus(selectedDeal.id, "Approved")}
+                >
+                  Approve & Lock
+                </button>
+
+                <button
+                  style={stipBtn}
+                  onClick={() => updateStatus(selectedDeal.id, "Needs Stips")}
+                >
+                  Request Stips
+                </button>
+
+                <button
+                  style={declineBtn}
+                  onClick={() => updateStatus(selectedDeal.id, "Declined")}
+                >
+                  Decline
+                </button>
+
+                <button
+                  style={deleteBtn}
+                  onClick={() => setSelectedDeal(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </section>
           )}
-          273 </section>
-
-{selectedDeal && (
-  <div style={{ marginTop: 20, padding: 20, border: "2px solid #0070f3", borderRadius: 10 }}>
-    <h2>Underwriting Review</h2>
-
-    <div><strong>Customer:</strong> {selectedDeal.customerName}</div>
-    <div><strong>Vehicle:</strong> {selectedDeal.vehicle}</div>
-    <div><strong>Income:</strong> ${selectedDeal.monthlyIncome}</div>
-    <div><strong>Credit:</strong> {selectedDeal.creditScore}</div>
-
-    <div style={{ marginTop: 10 }}>
-      <strong>Tier:</strong> {selectedDeal.tier}
-    </div>
-    <div><strong>Max Payment:</strong> ${Math.round(selectedDeal.maxPayment)}</div>
-    <div><strong>Max Vehicle:</strong> ${Math.round(selectedDeal.maxVehiclePrice)}</div>
-    <div><strong>Fit:</strong> {selectedDeal.vehicleRecommendation}</div>
-
-    <button onClick={() => setSelectedDeal(null)} style={{ marginTop: 10 }}>
-      Close
-    </button>
-  </div>
-)}
-
-274 </div>
-275 </div>
-276 );
-277 }
-        </section>
+        </div>
       </div>
     </div>
   );
@@ -308,8 +409,12 @@ vehicleRecommendation,
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div style={statCardStyle}>
-      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
-      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
+      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>
+        {value}
+      </div>
     </div>
   );
 }
