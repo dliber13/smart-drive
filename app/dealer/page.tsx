@@ -211,7 +211,11 @@ vehicleRecommendation,
           ) : (
             <div style={{ display: "grid", gap: 14 }}>
               {queue.map((deal) => (
-                <div key={deal.id} style={dealCardStyle}>
+                <div
+  key={deal.id}
+  onClick={() => setSelectedDeal(deal)}
+  style={{ ...dealCardStyle, cursor: "pointer" }}
+>
                   <div style={dealHeaderStyle}>
                     <div>
                       <div style={{ fontWeight: 800, fontSize: 18 }}>
