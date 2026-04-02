@@ -4,42 +4,17 @@ import { useMemo, useState } from "react";
 
 type Decision = "Approve" | "Send to Stips" | "Decline";
 type Tier = "Tier 1" | "Tier 2" | "Tier 3" | "Outside Program";
-type VehicleStatus = "Recommended" | "Conditional" | "Blocked";
-
-type Vehicle = {
-  name: string;
-  price: number;
-  minDown: number;
-  apr: number;
-  term: number;
-  estimatedPayment: number;
-  status: VehicleStatus;
-  reason: string;
-};
 
 type UnderwritingResult = {
   tier: Tier;
   decision: Decision;
   color: string;
   maxPayment: number;
-  apr: number;
-  term: number;
-  financeAmount: number;
-  monthlyPayment: number;
-  pti: number;
-  totalOfPayments: number;
-  totalInterest: number;
+  maxVehiclePrice: number;
+  vehicleRecommendation: string;
   warnings: string[];
   reasons: string[];
-  selectedVehicle: Vehicle;
-  vehicles: Vehicle[];
 };
-
-const INVENTORY = [
-  { name: "2017 Chevrolet Malibu", price: 10995, minDown: 2200, category: "safe" },
-  { name: "2018 Ford Escape", price: 16295, minDown: 2800, category: "mid" },
-  { name: "2019 Dodge Charger", price: 19995, minDown: 3500, category: "high" },
-] as const;
 
 export default function UnderwritingPage() {
   const [customerName, setCustomerName] = useState("");
@@ -49,20 +24,19 @@ export default function UnderwritingPage() {
   const [residenceTime, setResidenceTime] = useState("");
   const [downPayment, setDownPayment] = useState("");
 
-  const result = useMemo<UnderwritingResult | null>(() => {
-    const income = toNumber(monthlyIncome);
-    const credit = toNumber(creditScore);
-    const jobMonths = toNumber(jobTime);
-    const residenceMonths = toNumber(residenceTime);
-    const down = toNumber(downPayment);
+  const [locked, setLocked] = useState(false);
+  const [decisionedAt, setDecisionedAt] = useState("");
+  const [decisionBy, setDecisionBy] = useState("");
+  const [finalDecision, setFinalDecision] = useState<Decision | "">("");
 
-    if (
-      !income &&
-      !credit &&
-      !jobMonths &&
-      !residenceMonths &&
-      !down
-    ) {
+  const result = useMemo<UnderwritingResult | null>(() => {
+    const income = Number(monthlyIncome) || 0;
+    const credit = Number(creditScore) || 0;
+    const jobMonths = Number(jobTime) || 0;
+    const residenceMonths = Number(residenceTime) || 0;
+    const down = Number(downPayment) || 0;
+
+    if (!income && !credit && !jobMonths && !residenceMonths && !down) {
       return null;
     }
 
@@ -72,84 +46,70 @@ export default function UnderwritingPage() {
     let tier: Tier = "Tier 3";
     let decision: Decision = "Decline";
     let color = "#dc3545";
-    let apr = 24.9;
-    let term = 30;
-    let maxPayment = Math.round(income * 0.12);
+    let maxPayment = income * 0.12;
+    let maxVehiclePrice = maxPayment * 36;
 
-    if (income >= 2500) {
-      maxPayment = Math.round(income * 0.18);
-    } else if (income >= 2000) {
-      maxPayment = Math.round(income * 0.15);
-    } else if (income >= 1800) {
-      maxPayment = Math.round(income * 0.12);
-    } else {
-      maxPayment = Math.round(income * 0.1);
+    if (income < 1800) {
+      reasons.push("Income below minimum program threshold.");
+    }
+    if (credit > 0 && credit < 450) {
+      warnings.push("Low credit score.");
+    }
+    if (jobMonths < 3) {
+      warnings.push("Job time under 3 months.");
+    }
+    if (residenceMonths < 3) {
+      warnings.push("Residence time under 3 months.");
+    }
+    if (down < 1500) {
+      warnings.push("Down payment below preferred minimum.");
     }
 
-    if (income < 1800) reasons.push("Income below minimum program threshold.");
-    if (credit > 0 && credit < 450) warnings.push("Very low credit score.");
-    if (jobMonths < 3) warnings.push("Job time under 3 months.");
-    if (residenceMonths < 3) warnings.push("Residence time under 3 months.");
-    if (down < 1500) warnings.push("Down payment below preferred minimum.");
-
-    if (
-      income >= 2500 &&
-      (credit >= 500 || credit === 0) &&
-      jobMonths >= 6 &&
-      residenceMonths >= 6 &&
-      down >= 2000
-    ) {
+    if (income >= 2500 && credit >= 500 && down >= 2000) {
       tier = "Tier 1";
       decision = "Approve";
       color = "#28a745";
-      apr = 19.9;
-      term = 36;
-    } else if (
-      income >= 2000 &&
-      credit >= 450 &&
-      jobMonths >= 3 &&
-      residenceMonths >= 3 &&
-      down >= 1500
-    ) {
+      maxPayment = income * 0.18;
+      maxVehiclePrice = maxPayment * 48;
+    } else if (income >= 2000 && credit >= 450) {
       tier = "Tier 2";
       decision = "Send to Stips";
       color = "#007bff";
-      apr = 22.9;
-      term = 33;
+      maxPayment = income * 0.15;
+      maxVehiclePrice = maxPayment * 42;
     } else if (income >= 1800) {
       tier = "Tier 3";
-      decision = warnings.length >= 3 ? "Decline" : "Send to Stips";
-      color = decision === "Decline" ? "#dc3545" : "#007bff";
-      apr = 24.9;
-      term = 30;
+      decision = "Decline";
+      color = "#dc3545";
+      maxPayment = income * 0.12;
+      maxVehiclePrice = maxPayment * 36;
     } else {
       tier = "Outside Program";
       decision = "Decline";
       color = "#dc3545";
-      apr = 24.9;
-      term = 24;
+      maxPayment = income * 0.1;
+      maxVehiclePrice = maxPayment * 30;
     }
 
-    const vehicles = buildVehicleMatches({
-      down,
-      maxPayment,
-      decision,
-      apr,
-      term,
-      tier,
-    });
+    let vehicleRecommendation = "Budget";
+    if (maxVehiclePrice >= 20000) {
+      vehicleRecommendation = "Premium";
+    } else if (maxVehiclePrice >= 12000) {
+      vehicleRecommendation = "Mid Tier";
+    } else {
+      vehicleRecommendation = "Budget";
+    }
 
-    const selectedVehicle =
-      vehicles.find((v) => v.status === "Recommended") ?? vehicles[0];
+    if (decision === "Approve" && down < 2000) {
+      warnings.push("Deal is approvable, but stronger down payment is recommended.");
+    }
 
-    const financeAmount = Math.max(selectedVehicle.price - down, 0);
-    const monthlyPayment = calcPayment(financeAmount, apr, term);
-    const pti = income > 0 ? (monthlyPayment / income) * 100 : 0;
-    const totalOfPayments = monthlyPayment * term;
-    const totalInterest = Math.max(totalOfPayments - financeAmount, 0);
+    if (decision === "Send to Stips") {
+      reasons.push("Additional stipulations required before final approval.");
+    }
 
-    if (monthlyPayment > maxPayment) {
-      warnings.push("Estimated payment exceeds suggested payment cap.");
+    if (decision === "Decline" && income >= 1800 && credit >= 400) {
+      reasons.push("Structure currently exceeds acceptable risk tolerance.");
     }
 
     return {
@@ -157,28 +117,44 @@ export default function UnderwritingPage() {
       decision,
       color,
       maxPayment,
-      apr,
-      term,
-      financeAmount,
-      monthlyPayment,
-      pti,
-      totalOfPayments,
-      totalInterest,
+      maxVehiclePrice,
+      vehicleRecommendation,
       warnings,
       reasons,
-      selectedVehicle,
-      vehicles,
     };
   }, [monthlyIncome, creditScore, jobTime, residenceTime, downPayment]);
 
+  function lockDecision(decision: Decision) {
+    if (locked) return;
+    setFinalDecision(decision);
+    setDecisionedAt(new Date().toLocaleString());
+    setDecisionBy("Underwriter");
+    setLocked(decision === "Approve" || decision === "Decline");
+  }
+
+  function resetCase() {
+    setCustomerName("");
+    setMonthlyIncome("");
+    setCreditScore("");
+    setJobTime("");
+    setResidenceTime("");
+    setDownPayment("");
+    setLocked(false);
+    setDecisionedAt("");
+    setDecisionBy("");
+    setFinalDecision("");
+  }
+
   return (
     <div style={pageStyle}>
-      <h1 style={headingStyle}>Underwriting Engine</h1>
-      <p style={subStyle}>Smart Drive Decision System</p>
+      <h1 style={headingStyle}>Underwriting Workstation</h1>
+      <p style={subStyle}>
+        Smart Drive centralized underwriting and decision engine.
+      </p>
 
       <div style={layoutStyle}>
         <section style={panelStyle}>
-          <h2 style={sectionHeading}>Deal Input</h2>
+          <h2 style={sectionHeading}>Borrower Input</h2>
 
           <input
             placeholder="Customer Name"
@@ -217,186 +193,151 @@ export default function UnderwritingPage() {
             onChange={(e) => setDownPayment(e.target.value)}
           />
 
-          <div style={{ marginTop: 18 }}>
-            <button style={approveBtn}>Approve Deal</button>
-            <button style={stipBtn}>Send to Stips</button>
-            <button style={declineBtn}>Decline</button>
+          <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              style={approveBtn}
+              disabled={locked}
+              onClick={() => lockDecision("Approve")}
+            >
+              Approve & Lock
+            </button>
+
+            <button
+              style={stipBtn}
+              disabled={locked}
+              onClick={() => lockDecision("Send to Stips")}
+            >
+              Request Stips
+            </button>
+
+            <button
+              style={declineBtn}
+              disabled={locked}
+              onClick={() => lockDecision("Decline")}
+            >
+              Decline
+            </button>
+
+            <button
+              style={deleteBtn}
+              onClick={resetCase}
+            >
+              Reset Case
+            </button>
           </div>
         </section>
 
-        {result && (
-          <section style={panelStyle}>
-            <h2 style={sectionHeading}>Decision Output</h2>
-            <p><strong>Customer:</strong> {customerName || "N/A"}</p>
-            <p><strong>Tier:</strong> {result.tier}</p>
-            <p>
-              <strong>Decision:</strong>{" "}
-              <span style={{ color: result.color, fontWeight: 700 }}>
-                {result.decision}
-              </span>
-            </p>
-            <p><strong>Max Suggested Payment:</strong> ${result.maxPayment}/mo</p>
+        <section style={panelStyle}>
+          <h2 style={sectionHeading}>Decision Summary</h2>
 
-            {result.warnings.length > 0 && (
-              <>
-                <h3 style={miniHeading}>Warnings</h3>
-                <ul>
-                  {result.warnings.map((warning, i) => (
-                    <li key={i}>{warning}</li>
-                  ))}
-                </ul>
-              </>
-            )}
+          {!result ? (
+            <p>No borrower data entered yet.</p>
+          ) : (
+            <>
+              <div style={{ lineHeight: 1.9 }}>
+                <div>
+                  <strong>Customer:</strong> {customerName || "N/A"}
+                </div>
+                <div>
+                  <strong>Tier:</strong> {result.tier}
+                </div>
+                <div>
+                  <strong>System Decision:</strong>{" "}
+                  <span style={{ color: result.color, fontWeight: 700 }}>
+                    {result.decision}
+                  </span>
+                </div>
+                <div>
+                  <strong>Max Payment:</strong> ${Math.round(result.maxPayment)}
+                </div>
+                <div>
+                  <strong>Max Vehicle:</strong> ${Math.round(result.maxVehiclePrice)}
+                </div>
+                <div>
+                  <strong>Vehicle Fit:</strong> {result.vehicleRecommendation}
+                </div>
+                <div>
+                  <strong>Locked:</strong> {locked ? "Yes" : "No"}
+                </div>
+                {finalDecision && (
+                  <div>
+                    <strong>Final Decision:</strong> {finalDecision}
+                  </div>
+                )}
+                {decisionedAt && (
+                  <div>
+                    <strong>Decision Time:</strong> {decisionedAt}
+                  </div>
+                )}
+                {decisionBy && (
+                  <div>
+                    <strong>Decision By:</strong> {decisionBy}
+                  </div>
+                )}
+              </div>
 
-            {result.reasons.length > 0 && (
-              <>
-                <h3 style={miniHeading}>Decline Reasons</h3>
-                <ul>
-                  {result.reasons.map((reason, i) => (
-                    <li key={i}>{reason}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </section>
-        )}
+              {result.warnings.length > 0 && (
+                <div style={warningBoxStyle}>
+                  <h3 style={miniHeading}>Risk Flags</h3>
+                  <ul style={listStyle}>
+                    {result.warnings.map((warning, index) => (
+                      <li key={index}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {result.reasons.length > 0 && (
+                <div style={reasonBoxStyle}>
+                  <h3 style={miniHeading}>Decision Notes</h3>
+                  <ul style={listStyle}>
+                    {result.reasons.map((reason, index) => (
+                      <li key={index}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </section>
       </div>
 
       {result && (
-        <>
-          <section style={resultCardStyle}>
-            <h2 style={sectionHeading}>Calculation Results Card</h2>
-            <p><strong>Selected Vehicle:</strong> {result.selectedVehicle.name}</p>
-            <p><strong>Vehicle Price:</strong> ${result.selectedVehicle.price.toLocaleString()}</p>
-            <p><strong>Down Payment:</strong> ${toNumber(downPayment).toLocaleString()}</p>
-            <p><strong>Estimated Finance Amount:</strong> ${Math.round(result.financeAmount).toLocaleString()}</p>
-            <p><strong>APR Used:</strong> {result.apr}%</p>
-            <p><strong>Term Used:</strong> {result.term} months</p>
-            <p><strong>Estimated Monthly Payment:</strong> ${result.monthlyPayment.toLocaleString()}</p>
-            <p><strong>PTI:</strong> {result.pti.toFixed(1)}%</p>
-            <p><strong>Total of Payments:</strong> ${Math.round(result.totalOfPayments).toLocaleString()}</p>
-            <p><strong>Total Interest:</strong> ${Math.round(result.totalInterest).toLocaleString()}</p>
-          </section>
+        <section style={{ ...panelStyle, marginTop: 24 }}>
+          <h2 style={sectionHeading}>Underwriter Recommendation</h2>
 
-          <section style={{ marginTop: 28 }}>
-            <h2 style={sectionHeading}>Vehicle Match Output</h2>
-            <p style={subStyle}>Best structure recommendations based on affordability and risk.</p>
-
-            <div style={vehicleGridStyle}>
-              {result.vehicles.map((vehicle, index) => (
-                <div
-                  key={index}
-                  style={{
-                    ...vehicleCardStyle,
-                    background:
-                      vehicle.status === "Recommended"
-                        ? "#eef9f0"
-                        : vehicle.status === "Conditional"
-                        ? "#f9f6ea"
-                        : "#faeded",
-                  }}
-                >
-                  <h3 style={{ marginTop: 0 }}>{vehicle.name}</h3>
-                  <p><strong>Status:</strong> {vehicle.status}</p>
-                  <p><strong>Price:</strong> ${vehicle.price.toLocaleString()}</p>
-                  <p><strong>Down Needed:</strong> ${vehicle.minDown.toLocaleString()}</p>
-                  <p><strong>APR:</strong> {vehicle.apr}%</p>
-                  <p><strong>Term:</strong> {vehicle.term} months</p>
-                  <p><strong>Estimated Payment:</strong> ${vehicle.estimatedPayment}/mo</p>
-                  <p><strong>Why:</strong> {vehicle.reason}</p>
-                </div>
-              ))}
+          <div style={recommendationGrid}>
+            <div style={metricCardStyle}>
+              <div style={metricLabelStyle}>Recommended Tier</div>
+              <div style={metricValueStyle}>{result.tier}</div>
             </div>
-          </section>
-        </>
+
+            <div style={metricCardStyle}>
+              <div style={metricLabelStyle}>Recommended Payment Cap</div>
+              <div style={metricValueStyle}>${Math.round(result.maxPayment)}</div>
+            </div>
+
+            <div style={metricCardStyle}>
+              <div style={metricLabelStyle}>Recommended Vehicle Band</div>
+              <div style={metricValueStyle}>${Math.round(result.maxVehiclePrice)}</div>
+            </div>
+
+            <div style={metricCardStyle}>
+              <div style={metricLabelStyle}>Vehicle Class</div>
+              <div style={metricValueStyle}>{result.vehicleRecommendation}</div>
+            </div>
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function buildVehicleMatches({
-  down,
-  maxPayment,
-  decision,
-  apr,
-  term,
-  tier,
-}: {
-  down: number;
-  maxPayment: number;
-  decision: Decision;
-  apr: number;
-  term: number;
-  tier: Tier;
-}): Vehicle[] {
-  return INVENTORY.map((item, index) => {
-    const financeAmount = Math.max(item.price - down, 0);
-    const estimatedPayment = calcPayment(financeAmount, apr, term);
-
-    let status: VehicleStatus = "Blocked";
-    let reason = "Outside current structure limits.";
-
-    const paymentFits = estimatedPayment <= maxPayment;
-    const downFits = down >= item.minDown;
-
-    if (decision === "Approve" && paymentFits && downFits && item.category === "safe") {
-      status = "Recommended";
-      reason = "Best fit for approval, affordability, and lower-risk structure.";
-    } else if (
-      (decision === "Approve" || decision === "Send to Stips") &&
-      item.category !== "high" &&
-      estimatedPayment <= maxPayment + 40
-    ) {
-      status = "Conditional";
-      reason = downFits
-        ? "Close to approval range but may need stips or tighter structure."
-        : "Requires more down payment or shorter term.";
-    } else {
-      status = "Blocked";
-      reason =
-        tier === "Outside Program"
-          ? "Customer profile falls outside minimum program standards."
-          : "Vehicle exceeds payment tolerance or risk guidelines.";
-    }
-
-    if (index === 0 && decision !== "Decline" && paymentFits) {
-      status = "Recommended";
-      reason = "Primary approval fit based on current borrower profile.";
-    }
-
-    return {
-      name: item.name,
-      price: item.price,
-      minDown: item.minDown,
-      apr,
-      term,
-      estimatedPayment,
-      status,
-      reason,
-    };
-  });
-}
-
-function calcPayment(financeAmount: number, apr: number, term: number) {
-  if (financeAmount <= 0 || term <= 0) return 0;
-  const monthlyRate = apr / 100 / 12;
-  if (monthlyRate === 0) return Math.round(financeAmount / term);
-
-  const payment =
-    (financeAmount * monthlyRate) /
-    (1 - Math.pow(1 + monthlyRate, -term));
-
-  return Math.round(payment);
-}
-
-function toNumber(value: string) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
 const pageStyle: React.CSSProperties = {
   padding: 40,
   fontFamily: "Arial, sans-serif",
+  background: "#f5f7fb",
+  minHeight: "100vh",
 };
 
 const headingStyle: React.CSSProperties = {
@@ -404,87 +345,123 @@ const headingStyle: React.CSSProperties = {
 };
 
 const subStyle: React.CSSProperties = {
-  color: "#333",
+  color: "#444",
+  marginBottom: 24,
 };
 
 const layoutStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+  gridTemplateColumns: "minmax(320px, 420px) 1fr",
   gap: 24,
-  marginTop: 24,
+  alignItems: "start",
 };
 
 const panelStyle: React.CSSProperties = {
-  border: "1px solid #d9d9d9",
-  borderRadius: 10,
-  padding: 20,
   background: "#fff",
-};
-
-const resultCardStyle: React.CSSProperties = {
-  marginTop: 28,
+  border: "1px solid #d9e2f1",
+  borderRadius: 12,
   padding: 20,
-  border: "1px solid #c7d8f5",
-  borderRadius: 10,
-  background: "#eef6ff",
-  maxWidth: 560,
 };
 
 const sectionHeading: React.CSSProperties = {
   marginTop: 0,
-  marginBottom: 14,
+  marginBottom: 16,
 };
 
 const miniHeading: React.CSSProperties = {
-  marginBottom: 8,
-};
-
-const vehicleGridStyle: React.CSSProperties = {
-  display: "grid",
-  gap: 16,
-  maxWidth: 900,
-};
-
-const vehicleCardStyle: React.CSSProperties = {
-  border: "1px solid #ccc",
-  borderRadius: 8,
-  padding: 18,
+  marginTop: 0,
+  marginBottom: 10,
 };
 
 const inputStyle: React.CSSProperties = {
   display: "block",
-  marginBottom: 12,
+  width: "100%",
   padding: 12,
-  width: 320,
+  marginBottom: 12,
   border: "1px solid #ccc",
-  borderRadius: 6,
+  borderRadius: 8,
+  boxSizing: "border-box",
 };
 
 const approveBtn: React.CSSProperties = {
-  padding: 12,
-  marginRight: 10,
+  padding: "10px 14px",
   background: "#28a745",
   color: "white",
   border: "none",
-  borderRadius: 6,
+  borderRadius: 8,
   cursor: "pointer",
 };
 
 const stipBtn: React.CSSProperties = {
-  padding: 12,
-  marginRight: 10,
-  background: "#007bff",
+  padding: "10px 14px",
+  background: "#f0ad4e",
   color: "white",
   border: "none",
-  borderRadius: 6,
+  borderRadius: 8,
   cursor: "pointer",
 };
 
 const declineBtn: React.CSSProperties = {
-  padding: 12,
+  padding: "10px 14px",
   background: "#dc3545",
   color: "white",
   border: "none",
-  borderRadius: 6,
+  borderRadius: 8,
   cursor: "pointer",
+};
+
+const deleteBtn: React.CSSProperties = {
+  padding: "10px 14px",
+  background: "#6c757d",
+  color: "white",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const warningBoxStyle: React.CSSProperties = {
+  marginTop: 20,
+  padding: 16,
+  borderRadius: 10,
+  background: "#fff8e6",
+  border: "1px solid #f0d27a",
+};
+
+const reasonBoxStyle: React.CSSProperties = {
+  marginTop: 16,
+  padding: 16,
+  borderRadius: 10,
+  background: "#eef6ff",
+  border: "1px solid #b6d4fe",
+};
+
+const listStyle: React.CSSProperties = {
+  margin: 0,
+  paddingLeft: 20,
+  lineHeight: 1.8,
+};
+
+const recommendationGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 16,
+};
+
+const metricCardStyle: React.CSSProperties = {
+  background: "#fcfdff",
+  border: "1px solid #d9e2f1",
+  borderRadius: 10,
+  padding: 16,
+};
+
+const metricLabelStyle: React.CSSProperties = {
+  color: "#5f6f86",
+  fontSize: 13,
+  fontWeight: 700,
+  marginBottom: 8,
+};
+
+const metricValueStyle: React.CSSProperties = {
+  fontSize: 24,
+  fontWeight: 800,
 };
