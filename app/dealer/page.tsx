@@ -271,6 +271,34 @@ vehicleRecommendation,
               ))}
             </div>
           )}
+          273 </section>
+
+{selectedDeal && (
+  <div style={{ marginTop: 20, padding: 20, border: "2px solid #0070f3", borderRadius: 10 }}>
+    <h2>Underwriting Review</h2>
+
+    <div><strong>Customer:</strong> {selectedDeal.customerName}</div>
+    <div><strong>Vehicle:</strong> {selectedDeal.vehicle}</div>
+    <div><strong>Income:</strong> ${selectedDeal.monthlyIncome}</div>
+    <div><strong>Credit:</strong> {selectedDeal.creditScore}</div>
+
+    <div style={{ marginTop: 10 }}>
+      <strong>Tier:</strong> {selectedDeal.tier}
+    </div>
+    <div><strong>Max Payment:</strong> ${Math.round(selectedDeal.maxPayment)}</div>
+    <div><strong>Max Vehicle:</strong> ${Math.round(selectedDeal.maxVehiclePrice)}</div>
+    <div><strong>Fit:</strong> {selectedDeal.vehicleRecommendation}</div>
+
+    <button onClick={() => setSelectedDeal(null)} style={{ marginTop: 10 }}>
+      Close
+    </button>
+  </div>
+)}
+
+274 </div>
+275 </div>
+276 );
+277 }
         </section>
       </div>
     </div>
