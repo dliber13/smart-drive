@@ -3,6 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 
 type DealStatus = "New Submission" | "Needs Stips" | "Approved" | "Declined";
+type FundingStatus = "Not Ready" | "Waiting on Stips" | "Ready to Fund";
+type LenderRoute =
+  | "Smart Drive"
+  | "Westlake"
+  | "CAC"
+  | "RouteOne Lane"
+  | "Manual Review";
+
+type StipChecklist = {
+  poi: boolean;
+  por: boolean;
+  insurance: boolean;
+  gps: boolean;
+  references: boolean;
+  signedDocs: boolean;
+};
 
 type Deal = {
   id: string;
@@ -18,9 +34,16 @@ type Deal = {
   maxPayment: number;
   maxVehiclePrice: number;
   vehicleRecommendation: string;
+  lenderRoute: LenderRoute;
+  fundingStatus: FundingStatus;
+  stips: StipChecklist;
+  notes: string;
+  decisionedAt?: string;
+  locked?: boolean;
+  decisionBy?: string;
 };
 
-const STORAGE_KEY = "smartdrive_deal_queue_v1";
+const STORAGE_KEY = "smartdrive_deal_queue_v2";
 
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
@@ -55,8 +78,35 @@ export default function DealerSubmissionPage() {
       needsStips: queue.filter((d) => d.status === "Needs Stips").length,
       approved: queue.filter((d) => d.status === "Approved").length,
       declined: queue.filter((d) => d.status === "Declined").length,
+      readyToFund: queue.filter((d) => d.fundingStatus === "Ready to Fund").length,
     };
   }, [queue]);
+
+  function getLenderRoute(
+    income: number,
+    score: number,
+    tier: string
+  ): LenderRoute {
+    if (tier === "Tier 1" && score >= 550) return "Westlake";
+    if (tier === "Tier 2" && score >= 500) return "CAC";
+    if (tier === "Tier 3") return "Smart Drive";
+    if (income >= 1800) return "RouteOne Lane";
+    return "Manual Review";
+  }
+
+  function getFundingStatus(deal: Deal): FundingStatus {
+    const allStipsComplete = Object.values(deal.stips).every(Boolean);
+
+    if (deal.status === "Approved" && allStipsComplete) {
+      return "Ready to Fund";
+    }
+
+    if (deal.status === "Needs Stips" || !allStipsComplete) {
+      return "Waiting on Stips";
+    }
+
+    return "Not Ready";
+  }
 
   function submitDeal() {
     if (!dealerName || !customerName || !vehicle) {
@@ -99,6 +149,8 @@ export default function DealerSubmissionPage() {
       vehicleRecommendation = "Budget";
     }
 
+    const lenderRoute = getLenderRoute(income, score, tier);
+
     const newDeal: Deal = {
       id: Date.now().toString(),
       dealerName,
@@ -113,6 +165,18 @@ export default function DealerSubmissionPage() {
       maxPayment,
       maxVehiclePrice,
       vehicleRecommendation,
+      lenderRoute,
+      fundingStatus: status === "Approved" ? "Waiting on Stips" : "Not Ready",
+      stips: {
+        poi: false,
+        por: false,
+        insurance: false,
+        gps: false,
+        references: false,
+        signedDocs: false,
+      },
+      notes: "",
+      locked: false,
     };
 
     setQueue((prev) => [newDeal, ...prev]);
@@ -130,10 +194,66 @@ export default function DealerSubmissionPage() {
     setQueue((prev) =>
       prev.map((deal) => {
         if (deal.id !== id) return deal;
-        const updated = { ...deal, status };
+        if (deal.locked) return deal;
+
+        const updated: Deal = {
+          ...deal,
+          status,
+          decisionedAt: new Date().toLocaleString(),
+          decisionBy: "Underwriter",
+          locked: status === "Approved" || status === "Declined",
+        };
+
+        updated.fundingStatus = getFundingStatus(updated);
+
         if (selectedDeal?.id === id) {
           setSelectedDeal(updated);
         }
+
+        return updated;
+      })
+    );
+  }
+
+  function updateStip(
+    id: string,
+    stipKey: keyof StipChecklist,
+    value: boolean
+  ) {
+    setQueue((prev) =>
+      prev.map((deal) => {
+        if (deal.id !== id) return deal;
+
+        const updated: Deal = {
+          ...deal,
+          stips: {
+            ...deal.stips,
+            [stipKey]: value,
+          },
+        };
+
+        updated.fundingStatus = getFundingStatus(updated);
+
+        if (selectedDeal?.id === id) {
+          setSelectedDeal(updated);
+        }
+
+        return updated;
+      })
+    );
+  }
+
+  function updateNotes(id: string, notes: string) {
+    setQueue((prev) =>
+      prev.map((deal) => {
+        if (deal.id !== id) return deal;
+
+        const updated = { ...deal, notes };
+
+        if (selectedDeal?.id === id) {
+          setSelectedDeal(updated);
+        }
+
         return updated;
       })
     );
@@ -150,7 +270,8 @@ export default function DealerSubmissionPage() {
     <div style={pageStyle}>
       <h1 style={headingStyle}>Dealer Submission System</h1>
       <p style={subStyle}>
-        Centralized intake for Smart Drive Financial deal submissions.
+        Centralized intake, routing, stip tracking, and funding readiness for
+        Smart Drive Financial.
       </p>
 
       <div style={statsGrid}>
@@ -159,6 +280,7 @@ export default function DealerSubmissionPage() {
         <StatCard label="Needs Stips" value={totals.needsStips} />
         <StatCard label="Approved" value={totals.approved} />
         <StatCard label="Declined" value={totals.declined} />
+        <StatCard label="Ready to Fund" value={totals.readyToFund} />
       </div>
 
       <div style={layoutStyle}>
@@ -266,13 +388,30 @@ export default function DealerSubmissionPage() {
                         <strong>Vehicle Fit:</strong> {deal.vehicleRecommendation}
                       </div>
                       <div>
+                        <strong>Lender Route:</strong> {deal.lenderRoute}
+                      </div>
+                      <div>
+                        <strong>Funding Status:</strong> {deal.fundingStatus}
+                      </div>
+                      <div>
                         <strong>Submitted:</strong> {deal.submittedAt}
                       </div>
+                      {deal.decisionedAt && (
+                        <>
+                          <div>
+                            <strong>Decision Time:</strong> {deal.decisionedAt}
+                          </div>
+                          <div>
+                            <strong>Decision By:</strong> {deal.decisionBy}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <div style={actionRowStyle}>
                       <button
                         style={approveBtn}
+                        disabled={!!deal.locked}
                         onClick={(e) => {
                           e.stopPropagation();
                           updateStatus(deal.id, "Approved");
@@ -282,6 +421,7 @@ export default function DealerSubmissionPage() {
                       </button>
                       <button
                         style={stipBtn}
+                        disabled={!!deal.locked}
                         onClick={(e) => {
                           e.stopPropagation();
                           updateStatus(deal.id, "Needs Stips");
@@ -291,6 +431,7 @@ export default function DealerSubmissionPage() {
                       </button>
                       <button
                         style={declineBtn}
+                        disabled={!!deal.locked}
                         onClick={(e) => {
                           e.stopPropagation();
                           updateStatus(deal.id, "Declined");
@@ -355,11 +496,68 @@ export default function DealerSubmissionPage() {
                   {selectedDeal.vehicleRecommendation}
                 </div>
                 <div>
+                  <strong>Lender Route:</strong> {selectedDeal.lenderRoute}
+                </div>
+                <div>
                   <strong>Status:</strong> {selectedDeal.status}
+                </div>
+                <div>
+                  <strong>Funding Status:</strong> {selectedDeal.fundingStatus}
                 </div>
                 <div>
                   <strong>Submitted:</strong> {selectedDeal.submittedAt}
                 </div>
+                {selectedDeal.decisionedAt && (
+                  <>
+                    <div>
+                      <strong>Decision Time:</strong> {selectedDeal.decisionedAt}
+                    </div>
+                    <div>
+                      <strong>Decision By:</strong> {selectedDeal.decisionBy}
+                    </div>
+                  </>
+                )}
+                <div>
+                  <strong>Locked:</strong> {selectedDeal.locked ? "Yes" : "No"}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 20 }}>
+                <h3 style={miniHeading}>Stip Checklist</h3>
+
+                <div style={stipGridStyle}>
+                  {(
+                    [
+                      ["poi", "Proof of Income"],
+                      ["por", "Proof of Residence"],
+                      ["insurance", "Insurance"],
+                      ["gps", "GPS Installed"],
+                      ["references", "References"],
+                      ["signedDocs", "Signed Docs"],
+                    ] as Array<[keyof StipChecklist, string]>
+                  ).map(([key, label]) => (
+                    <label key={key} style={stipItemStyle}>
+                      <input
+                        type="checkbox"
+                        checked={selectedDeal.stips[key]}
+                        onChange={(e) =>
+                          updateStip(selectedDeal.id, key, e.target.checked)
+                        }
+                      />{" "}
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginTop: 20 }}>
+                <h3 style={miniHeading}>Underwriter Notes</h3>
+                <textarea
+                  style={textareaStyle}
+                  value={selectedDeal.notes}
+                  onChange={(e) => updateNotes(selectedDeal.id, e.target.value)}
+                  placeholder="Add underwriter notes here..."
+                />
               </div>
 
               <div
@@ -372,6 +570,7 @@ export default function DealerSubmissionPage() {
               >
                 <button
                   style={approveBtn}
+                  disabled={!!selectedDeal.locked}
                   onClick={() => updateStatus(selectedDeal.id, "Approved")}
                 >
                   Approve & Lock
@@ -379,6 +578,7 @@ export default function DealerSubmissionPage() {
 
                 <button
                   style={stipBtn}
+                  disabled={!!selectedDeal.locked}
                   onClick={() => updateStatus(selectedDeal.id, "Needs Stips")}
                 >
                   Request Stips
@@ -386,6 +586,7 @@ export default function DealerSubmissionPage() {
 
                 <button
                   style={declineBtn}
+                  disabled={!!selectedDeal.locked}
                   onClick={() => updateStatus(selectedDeal.id, "Declined")}
                 >
                   Decline
@@ -503,6 +704,11 @@ const sectionHeading: React.CSSProperties = {
   marginBottom: 16,
 };
 
+const miniHeading: React.CSSProperties = {
+  marginTop: 0,
+  marginBottom: 10,
+};
+
 const inputStyle: React.CSSProperties = {
   display: "block",
   width: "100%",
@@ -511,6 +717,16 @@ const inputStyle: React.CSSProperties = {
   border: "1px solid #ccc",
   borderRadius: 8,
   boxSizing: "border-box",
+};
+
+const textareaStyle: React.CSSProperties = {
+  width: "100%",
+  minHeight: 90,
+  padding: 12,
+  border: "1px solid #ccc",
+  borderRadius: 8,
+  boxSizing: "border-box",
+  resize: "vertical",
 };
 
 const primaryBtn: React.CSSProperties = {
@@ -542,6 +758,20 @@ const actionRowStyle: React.CSSProperties = {
   gap: 10,
   flexWrap: "wrap",
   marginTop: 16,
+};
+
+const stipGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: 10,
+};
+
+const stipItemStyle: React.CSSProperties = {
+  display: "block",
+  padding: 10,
+  border: "1px solid #e2e8f0",
+  borderRadius: 8,
+  background: "#fafcff",
 };
 
 const approveBtn: React.CSSProperties = {
