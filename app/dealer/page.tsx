@@ -3,12 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 
 type DealStatus = "New Submission" | "Needs Stips" | "Approved" | "Declined";
+
 type FundingStage =
   | "New Submission"
   | "In Underwriting"
   | "Needs Stips"
   | "Approved Pending Stips"
   | "Ready to Fund"
+  | "Submitted to Lender"
+  | "Lender Approved"
+  | "Lender Declined"
+  | "Funded"
   | "Declined";
 
 type LenderRoute =
@@ -17,6 +22,8 @@ type LenderRoute =
   | "CAC"
   | "RouteOne Lane"
   | "Manual Review";
+
+type LenderDecision = "Pending" | "Approved" | "Declined";
 
 type StipChecklist = {
   poi: boolean;
@@ -44,7 +51,14 @@ type Deal = {
   maxVehiclePrice: number;
   vehicleRecommendation: string;
   lenderRoute: LenderRoute;
+  lenderSubmittedAt?: string;
+  lenderSubmittedBy?: string;
+  lenderDecision: LenderDecision;
+  lenderDecisionAt?: string;
+  lenderDecisionBy?: string;
   fundingStage: FundingStage;
+  fundedAt?: string;
+  fundedBy?: string;
   stips: StipChecklist;
   notes: string;
   decisionedAt?: string;
@@ -52,7 +66,7 @@ type Deal = {
   decisionBy?: string;
 };
 
-const STORAGE_KEY = "smartdrive_deal_queue_v3";
+const STORAGE_KEY = "smartdrive_deal_queue_v4";
 
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
@@ -61,6 +75,7 @@ export default function DealerSubmissionPage() {
   const [monthlyIncome, setMonthlyIncome] = useState("");
   const [creditScore, setCreditScore] = useState("");
   const [downPayment, setDownPayment] = useState("");
+
   const [queue, setQueue] = useState<Deal[]>([]);
   const [message, setMessage] = useState("");
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
@@ -88,7 +103,12 @@ export default function DealerSubmissionPage() {
       needsStips: queue.filter((d) => d.fundingStage === "Needs Stips").length,
       approvedPending: queue.filter((d) => d.fundingStage === "Approved Pending Stips").length,
       readyToFund: queue.filter((d) => d.fundingStage === "Ready to Fund").length,
-      declined: queue.filter((d) => d.fundingStage === "Declined").length,
+      submittedToLender: queue.filter((d) => d.fundingStage === "Submitted to Lender").length,
+      lenderApproved: queue.filter((d) => d.fundingStage === "Lender Approved").length,
+      funded: queue.filter((d) => d.fundingStage === "Funded").length,
+      declined: queue.filter(
+        (d) => d.fundingStage === "Declined" || d.fundingStage === "Lender Declined"
+      ).length,
     };
   }, [queue]);
 
@@ -105,6 +125,10 @@ export default function DealerSubmissionPage() {
   }
 
   function getFundingStage(deal: Deal): FundingStage {
+    if (deal.fundedAt) return "Funded";
+    if (deal.lenderDecision === "Declined") return "Lender Declined";
+    if (deal.lenderDecision === "Approved") return "Lender Approved";
+    if (deal.lenderSubmittedAt) return "Submitted to Lender";
     if (deal.finalDecision === "Declined") return "Declined";
     if (!deal.finalDecision) return "In Underwriting";
     if (deal.finalDecision === "Needs Stips") return "Needs Stips";
@@ -174,7 +198,14 @@ export default function DealerSubmissionPage() {
       maxVehiclePrice,
       vehicleRecommendation,
       lenderRoute,
+      lenderSubmittedAt: undefined,
+      lenderSubmittedBy: undefined,
+      lenderDecision: "Pending",
+      lenderDecisionAt: undefined,
+      lenderDecisionBy: undefined,
       fundingStage: "New Submission",
+      fundedAt: undefined,
+      fundedBy: undefined,
       stips: {
         poi: false,
         por: false,
@@ -184,7 +215,9 @@ export default function DealerSubmissionPage() {
         signedDocs: false,
       },
       notes: "",
+      decisionedAt: undefined,
       locked: false,
+      decisionBy: undefined,
     };
 
     setQueue((prev) => [newDeal, ...prev]);
@@ -268,10 +301,84 @@ export default function DealerSubmissionPage() {
     setQueue((prev) =>
       prev.map((deal) => {
         if (deal.id !== id) return deal;
+
         const updated = { ...deal, notes };
+
         if (selectedDeal?.id === id) {
           setSelectedDeal(updated);
         }
+
+        return updated;
+      })
+    );
+  }
+
+  function submitToLender(id: string) {
+    setQueue((prev) =>
+      prev.map((deal) => {
+        if (deal.id !== id) return deal;
+        if (deal.fundingStage !== "Ready to Fund") return deal;
+
+        const updated: Deal = {
+          ...deal,
+          lenderSubmittedAt: new Date().toLocaleString(),
+          lenderSubmittedBy: "Underwriter",
+        };
+
+        updated.fundingStage = getFundingStage(updated);
+
+        if (selectedDeal?.id === id) {
+          setSelectedDeal(updated);
+        }
+
+        return updated;
+      })
+    );
+  }
+
+  function setLenderDecision(id: string, decision: LenderDecision) {
+    setQueue((prev) =>
+      prev.map((deal) => {
+        if (deal.id !== id) return deal;
+        if (!deal.lenderSubmittedAt) return deal;
+        if (deal.fundedAt) return deal;
+
+        const updated: Deal = {
+          ...deal,
+          lenderDecision: decision,
+          lenderDecisionAt: new Date().toLocaleString(),
+          lenderDecisionBy: "Lender Desk",
+        };
+
+        updated.fundingStage = getFundingStage(updated);
+
+        if (selectedDeal?.id === id) {
+          setSelectedDeal(updated);
+        }
+
+        return updated;
+      })
+    );
+  }
+
+  function markFunded(id: string) {
+    setQueue((prev) =>
+      prev.map((deal) => {
+        if (deal.id !== id) return deal;
+        if (deal.lenderDecision !== "Approved") return deal;
+
+        const updated: Deal = {
+          ...deal,
+          fundedAt: new Date().toLocaleString(),
+          fundedBy: "Funding Desk",
+        };
+
+        updated.fundingStage = getFundingStage(updated);
+
+        if (selectedDeal?.id === id) {
+          setSelectedDeal(updated);
+        }
+
         return updated;
       })
     );
@@ -304,6 +411,9 @@ export default function DealerSubmissionPage() {
         <StatCard label="Needs Stips" value={totals.needsStips} />
         <StatCard label="Approved Pending" value={totals.approvedPending} />
         <StatCard label="Ready to Fund" value={totals.readyToFund} />
+        <StatCard label="Submitted to Lender" value={totals.submittedToLender} />
+        <StatCard label="Lender Approved" value={totals.lenderApproved} />
+        <StatCard label="Funded" value={totals.funded} />
         <StatCard label="Declined" value={totals.declined} />
       </div>
 
@@ -311,12 +421,42 @@ export default function DealerSubmissionPage() {
         <section style={panelStyle}>
           <h2 style={sectionHeading}>Submit a Deal</h2>
 
-          <input style={inputStyle} placeholder="Dealer Name" value={dealerName} onChange={(e) => setDealerName(e.target.value)} />
-          <input style={inputStyle} placeholder="Customer Name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-          <input style={inputStyle} placeholder="Vehicle" value={vehicle} onChange={(e) => setVehicle(e.target.value)} />
-          <input style={inputStyle} placeholder="Monthly Income ($)" value={monthlyIncome} onChange={(e) => setMonthlyIncome(e.target.value)} />
-          <input style={inputStyle} placeholder="Credit Score" value={creditScore} onChange={(e) => setCreditScore(e.target.value)} />
-          <input style={inputStyle} placeholder="Down Payment ($)" value={downPayment} onChange={(e) => setDownPayment(e.target.value)} />
+          <input
+            style={inputStyle}
+            placeholder="Dealer Name"
+            value={dealerName}
+            onChange={(e) => setDealerName(e.target.value)}
+          />
+          <input
+            style={inputStyle}
+            placeholder="Customer Name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+          <input
+            style={inputStyle}
+            placeholder="Vehicle"
+            value={vehicle}
+            onChange={(e) => setVehicle(e.target.value)}
+          />
+          <input
+            style={inputStyle}
+            placeholder="Monthly Income ($)"
+            value={monthlyIncome}
+            onChange={(e) => setMonthlyIncome(e.target.value)}
+          />
+          <input
+            style={inputStyle}
+            placeholder="Credit Score"
+            value={creditScore}
+            onChange={(e) => setCreditScore(e.target.value)}
+          />
+          <input
+            style={inputStyle}
+            placeholder="Down Payment ($)"
+            value={downPayment}
+            onChange={(e) => setDownPayment(e.target.value)}
+          />
 
           <div style={{ marginTop: 16 }}>
             <button style={primaryBtn} onClick={submitDeal}>
@@ -324,7 +464,9 @@ export default function DealerSubmissionPage() {
             </button>
           </div>
 
-          {message && <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>}
+          {message && (
+            <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>
+          )}
         </section>
 
         <div style={{ display: "grid", gap: 24 }}>
@@ -343,7 +485,9 @@ export default function DealerSubmissionPage() {
                   >
                     <div style={dealHeaderStyle}>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: 18 }}>{deal.customerName}</div>
+                        <div style={{ fontWeight: 800, fontSize: 18 }}>
+                          {deal.customerName}
+                        </div>
                         <div style={{ color: "#555", marginTop: 4 }}>
                           {deal.dealerName} • {deal.vehicle}
                         </div>
@@ -357,19 +501,12 @@ export default function DealerSubmissionPage() {
                       <div><strong>Down:</strong> ${deal.downPayment.toLocaleString()}</div>
                       <div><strong>Tier:</strong> {deal.tier}</div>
                       <div><strong>System Recommendation:</strong> {deal.systemRecommendation}</div>
-                      <div><strong>Final Decision:</strong> {deal.finalDecision ? deal.finalDecision : "Pending"}</div>
+                      <div><strong>Final Decision:</strong> {deal.finalDecision || "Pending"}</div>
                       <div><strong>Max Payment:</strong> ${Math.round(deal.maxPayment)}</div>
                       <div><strong>Max Vehicle:</strong> ${Math.round(deal.maxVehiclePrice)}</div>
                       <div><strong>Vehicle Fit:</strong> {deal.vehicleRecommendation}</div>
                       <div><strong>Lender Route:</strong> {deal.lenderRoute}</div>
                       <div><strong>Workflow Stage:</strong> {deal.fundingStage}</div>
-                      <div><strong>Submitted:</strong> {deal.submittedAt}</div>
-                      {deal.decisionedAt && (
-                        <>
-                          <div><strong>Decision Time:</strong> {deal.decisionedAt}</div>
-                          <div><strong>Decision By:</strong> {deal.decisionBy}</div>
-                        </>
-                      )}
                     </div>
 
                     <div style={actionRowStyle}>
@@ -445,6 +582,25 @@ export default function DealerSubmissionPage() {
                     <div><strong>Decision By:</strong> {selectedDeal.decisionBy}</div>
                   </>
                 )}
+                {selectedDeal.lenderSubmittedAt && (
+                  <>
+                    <div><strong>Lender Submitted:</strong> {selectedDeal.lenderSubmittedAt}</div>
+                    <div><strong>Submitted By:</strong> {selectedDeal.lenderSubmittedBy}</div>
+                  </>
+                )}
+                {selectedDeal.lenderDecisionAt && (
+                  <>
+                    <div><strong>Lender Decision:</strong> {selectedDeal.lenderDecision}</div>
+                    <div><strong>Lender Decision Time:</strong> {selectedDeal.lenderDecisionAt}</div>
+                    <div><strong>Lender Decision By:</strong> {selectedDeal.lenderDecisionBy}</div>
+                  </>
+                )}
+                {selectedDeal.fundedAt && (
+                  <>
+                    <div><strong>Funded At:</strong> {selectedDeal.fundedAt}</div>
+                    <div><strong>Funded By:</strong> {selectedDeal.fundedBy}</div>
+                  </>
+                )}
                 <div><strong>Locked:</strong> {selectedDeal.locked ? "Yes" : "No"}</div>
               </div>
 
@@ -484,19 +640,6 @@ export default function DealerSubmissionPage() {
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-  <button
-    style={approveBtn}
-    disabled={!!selectedDeal.locked}
-    onClick={() => applyDecision(selectedDeal.id, "Approved")}
-  >
-    Approve & Lock
-  </button>
-
-  <button
-    style={stipBtn}
-    disabled={!!selectedDeal.locked}
-    onClick={() => applyDecision(selectedDeal.id, "Needs Stips")}
-  >
                 <button
                   style={approveBtn}
                   disabled={!!selectedDeal.locked}
@@ -568,12 +711,8 @@ export default function DealerSubmissionPage() {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div style={statCardStyle}>
-      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>
-        {value}
-      </div>
+      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
     </div>
   );
 }
