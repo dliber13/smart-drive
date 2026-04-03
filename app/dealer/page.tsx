@@ -484,6 +484,19 @@ export default function DealerSubmissionPage() {
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
+  <button
+    style={approveBtn}
+    disabled={!!selectedDeal.locked}
+    onClick={() => applyDecision(selectedDeal.id, "Approved")}
+  >
+    Approve & Lock
+  </button>
+
+  <button
+    style={stipBtn}
+    disabled={!!selectedDeal.locked}
+    onClick={() => applyDecision(selectedDeal.id, "Needs Stips")}
+  >
                 <button
                   style={approveBtn}
                   disabled={!!selectedDeal.locked}
@@ -508,6 +521,38 @@ export default function DealerSubmissionPage() {
                   Decline
                 </button>
 
+                <button
+                  style={primaryBtn}
+                  disabled={selectedDeal.fundingStage !== "Ready to Fund"}
+                  onClick={() => submitToLender(selectedDeal.id)}
+                >
+                  Submit to Lender
+                </button>
+
+                <button
+                  style={approveBtn}
+                  disabled={!selectedDeal.lenderSubmittedAt || !!selectedDeal.fundedAt}
+                  onClick={() => setLenderDecision(selectedDeal.id, "Approved")}
+                >
+                  Lender Approved
+                </button>
+
+                <button
+                  style={declineBtn}
+                  disabled={!selectedDeal.lenderSubmittedAt || !!selectedDeal.fundedAt}
+                  onClick={() => setLenderDecision(selectedDeal.id, "Declined")}
+                >
+                  Lender Declined
+                </button>
+
+                <button
+                  style={primaryBtn}
+                  disabled={selectedDeal.lenderDecision !== "Approved" || !!selectedDeal.fundedAt}
+                  onClick={() => markFunded(selectedDeal.id)}
+                >
+                  Mark Funded
+                </button>
+
                 <button style={deleteBtn} onClick={() => setSelectedDeal(null)}>
                   Close
                 </button>
@@ -523,8 +568,12 @@ export default function DealerSubmissionPage() {
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <div style={statCardStyle}>
-      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
-      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
+      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -627,13 +676,12 @@ const textareaStyle: React.CSSProperties = {
 };
 
 const primaryBtn: React.CSSProperties = {
-  padding: "12px 18px",
+  padding: "10px 14px",
   background: "#007bff",
   color: "white",
   border: "none",
   borderRadius: 8,
   cursor: "pointer",
-  fontWeight: 700,
 };
 
 const dealCardStyle: React.CSSProperties = {
