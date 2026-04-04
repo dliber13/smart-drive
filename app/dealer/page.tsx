@@ -66,6 +66,64 @@ type Deal = {
   decisionBy?: string;
 };
 
+type InventoryVehicle = {
+  stock: string;
+  year: number;
+  make: string;
+  model: string;
+  price: number;
+};
+
+const INVENTORY: InventoryVehicle[] = [
+  {
+    stock: "7731AA",
+    year: 2014,
+    make: "NISSAN",
+    model: "ALTIMA",
+    price: 6250,
+  },
+  {
+    stock: "7760",
+    year: 2017,
+    make: "RAM",
+    model: "1500",
+    price: 20175,
+  },
+  {
+    stock: "7757",
+    year: 2017,
+    make: "GMC",
+    model: "ACADIA",
+    price: 6820,
+  },
+  {
+    stock: "7623",
+    year: 2015,
+    make: "CHEVROLET",
+    model: "MALIBU",
+    price: 8400,
+  },
+  {
+    stock: "7780",
+    year: 2022,
+    make: "FORD",
+    model: "ESCAPE",
+    price: 15775,
+  },
+];
+
+function getMatches(maxVehiclePrice: number) {
+  return INVENTORY.map((car) => {
+    if (car.price <= maxVehiclePrice) {
+      return { ...car, match: "Best Fit" };
+    } else if (car.price <= maxVehiclePrice * 1.15) {
+      return { ...car, match: "Stretch" };
+    } else {
+      return { ...car, match: "Over Budget" };
+    }
+  }).sort((a, b) => a.price - b.price);
+}
+
 const STORAGE_KEY = "smartdrive_deal_queue_v4";
 
 export default function DealerSubmissionPage() {
@@ -637,6 +695,35 @@ export default function DealerSubmissionPage() {
                   onChange={(e) => updateNotes(selectedDeal.id, e.target.value)}
                   placeholder="Add underwriter notes here..."
                 />
+              </div>
+
+              <div style={{ marginTop: 20 }}>
+                <h3 style={miniHeading}>Recommended Vehicles</h3>
+
+                {getMatches(selectedDeal.maxVehiclePrice).map((car) => (
+                  <div
+                    key={car.stock}
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: 8,
+                      padding: 10,
+                      marginBottom: 8,
+                      background:
+                        car.match === "Best Fit"
+                          ? "#e7f7ea"
+                          : car.match === "Stretch"
+                          ? "#fff4d6"
+                          : "#fdeaea",
+                    }}
+                  >
+                    <strong>
+                      {car.year} {car.make} {car.model}
+                    </strong>
+                    <div>Stock: {car.stock}</div>
+                    <div>Price: ${car.price.toLocaleString()}</div>
+                    <div>Match: {car.match}</div>
+                  </div>
+                ))}
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
