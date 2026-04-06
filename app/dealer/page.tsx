@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 type DealStatus = "New Submission" | "Needs Stips" | "Approved" | "Declined";
 
@@ -196,7 +196,7 @@ export default function DealerSubmissionPage() {
     return "New Submission";
   }
 
-  function submitDeal() {
+  async function submitDeal() {
     if (!dealerName || !customerName || !vehicle) {
       setMessage("Dealer, customer, and vehicle are required.");
       return;
@@ -278,15 +278,47 @@ export default function DealerSubmissionPage() {
       decisionBy: undefined,
     };
 
-    setQueue((prev) => [newDeal, ...prev]);
-    setMessage(`Deal submitted. System recommendation: ${systemRecommendation}`);
+    try {
+      const nameParts = customerName.trim().split(" ");
+      const customerFirstName = nameParts[0] || "";
+      const customerLastName = nameParts.slice(1).join(" ") || "Unknown";
 
-    setDealerName("");
-    setCustomerName("");
-    setVehicle("");
-    setMonthlyIncome("");
-    setCreditScore("");
-    setDownPayment("");
+      const response = await fetch("/api/deals", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dealerName,
+          customerFirstName,
+          customerLastName,
+          grossIncome: income,
+          creditScore: score,
+          employmentMonths: 0,
+          residenceMonths: 0,
+          requestedVehicle: vehicle,
+          downPayment: down,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || "Failed to save deal");
+      }
+
+      setQueue((prev) => [newDeal, ...prev]);
+      setMessage(`Deal submitted and saved. System recommendation: ${systemRecommendation}`);
+
+      setDealerName("");
+      setCustomerName("");
+      setVehicle("");
+      setMonthlyIncome("");
+      setCreditScore("");
+      setDownPayment("");
+    } catch (error) {
+      console.error(error);
+      setMessage("Deal was not saved to database.");
+    }
   }
 
   function setUnderwritingOpen(id: string) {
@@ -522,9 +554,7 @@ export default function DealerSubmissionPage() {
             </button>
           </div>
 
-          {message && (
-            <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>
-          )}
+          {message && <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>}
         </section>
 
         <div style={{ display: "grid", gap: 24 }}>
@@ -805,7 +835,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 function StatusBadge({ status }: { status: DealStatus }) {
-  const colors: Record<DealStatus, React.CSSProperties> = {
+  const colors: Record<DealStatus, CSSProperties> = {
     "New Submission": { background: "#e8f1fd", color: "#0b4ea2" },
     "Needs Stips": { background: "#fff4d6", color: "#946200" },
     Approved: { background: "#e7f7ea", color: "#1f7a35" },
@@ -827,61 +857,61 @@ function StatusBadge({ status }: { status: DealStatus }) {
   );
 }
 
-const pageStyle: React.CSSProperties = {
+const pageStyle: CSSProperties = {
   padding: 40,
   fontFamily: "Arial, sans-serif",
   background: "#f5f7fb",
   minHeight: "100vh",
 };
 
-const headingStyle: React.CSSProperties = {
+const headingStyle: CSSProperties = {
   marginBottom: 8,
 };
 
-const subStyle: React.CSSProperties = {
+const subStyle: CSSProperties = {
   color: "#444",
   marginBottom: 24,
 };
 
-const statsGrid: React.CSSProperties = {
+const statsGrid: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
   gap: 16,
   marginBottom: 24,
 };
 
-const statCardStyle: React.CSSProperties = {
+const statCardStyle: CSSProperties = {
   background: "#fff",
   border: "1px solid #d9e2f1",
   borderRadius: 12,
   padding: 18,
 };
 
-const layoutStyle: React.CSSProperties = {
+const layoutStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "minmax(320px, 420px) 1fr",
   gap: 24,
   alignItems: "start",
 };
 
-const panelStyle: React.CSSProperties = {
+const panelStyle: CSSProperties = {
   background: "#fff",
   border: "1px solid #d9e2f1",
   borderRadius: 12,
   padding: 20,
 };
 
-const sectionHeading: React.CSSProperties = {
+const sectionHeading: CSSProperties = {
   marginTop: 0,
   marginBottom: 16,
 };
 
-const miniHeading: React.CSSProperties = {
+const miniHeading: CSSProperties = {
   marginTop: 0,
   marginBottom: 10,
 };
 
-const inputStyle: React.CSSProperties = {
+const inputStyle: CSSProperties = {
   display: "block",
   width: "100%",
   padding: 12,
@@ -891,7 +921,7 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-const textareaStyle: React.CSSProperties = {
+const textareaStyle: CSSProperties = {
   width: "100%",
   minHeight: 90,
   padding: 12,
@@ -901,7 +931,7 @@ const textareaStyle: React.CSSProperties = {
   resize: "vertical",
 };
 
-const primaryBtn: React.CSSProperties = {
+const primaryBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#007bff",
   color: "white",
@@ -910,34 +940,34 @@ const primaryBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const dealCardStyle: React.CSSProperties = {
+const dealCardStyle: CSSProperties = {
   border: "1px solid #ddd",
   borderRadius: 10,
   padding: 16,
   background: "#fcfdff",
 };
 
-const dealHeaderStyle: React.CSSProperties = {
+const dealHeaderStyle: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   gap: 12,
   alignItems: "start",
 };
 
-const actionRowStyle: React.CSSProperties = {
+const actionRowStyle: CSSProperties = {
   display: "flex",
   gap: 10,
   flexWrap: "wrap",
   marginTop: 16,
 };
 
-const stipGridStyle: React.CSSProperties = {
+const stipGridStyle: CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
   gap: 10,
 };
 
-const stipItemStyle: React.CSSProperties = {
+const stipItemStyle: CSSProperties = {
   display: "block",
   padding: 10,
   border: "1px solid #e2e8f0",
@@ -945,7 +975,7 @@ const stipItemStyle: React.CSSProperties = {
   background: "#fafcff",
 };
 
-const approveBtn: React.CSSProperties = {
+const approveBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#28a745",
   color: "white",
@@ -954,7 +984,7 @@ const approveBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const stipBtn: React.CSSProperties = {
+const stipBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#f0ad4e",
   color: "white",
@@ -963,7 +993,7 @@ const stipBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const declineBtn: React.CSSProperties = {
+const declineBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#dc3545",
   color: "white",
@@ -972,7 +1002,7 @@ const declineBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const deleteBtn: React.CSSProperties = {
+const deleteBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#6c757d",
   color: "white",
