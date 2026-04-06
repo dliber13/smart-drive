@@ -75,56 +75,22 @@ type InventoryVehicle = {
 };
 
 const INVENTORY: InventoryVehicle[] = [
-  {
-    stock: "7731AA",
-    year: 2014,
-    make: "NISSAN",
-    model: "ALTIMA",
-    price: 6250,
-  },
-  {
-    stock: "7760",
-    year: 2017,
-    make: "RAM",
-    model: "1500",
-    price: 20175,
-  },
-  {
-    stock: "7757",
-    year: 2017,
-    make: "GMC",
-    model: "ACADIA",
-    price: 6820,
-  },
-  {
-    stock: "7623",
-    year: 2015,
-    make: "CHEVROLET",
-    model: "MALIBU",
-    price: 8400,
-  },
-  {
-    stock: "7780",
-    year: 2022,
-    make: "FORD",
-    model: "ESCAPE",
-    price: 15775,
-  },
+  { stock: "7731AA", year: 2014, make: "NISSAN", model: "ALTIMA", price: 6250 },
+  { stock: "7760", year: 2017, make: "RAM", model: "1500", price: 20175 },
+  { stock: "7757", year: 2017, make: "GMC", model: "ACADIA", price: 6820 },
+  { stock: "7623", year: 2015, make: "CHEVROLET", model: "MALIBU", price: 8400 },
+  { stock: "7780", year: 2022, make: "FORD", model: "ESCAPE", price: 15775 },
 ];
 
 function getMatches(maxVehiclePrice: number) {
   return INVENTORY.map((car) => {
-    if (car.price <= maxVehiclePrice) {
-      return { ...car, match: "Best Fit" };
-    } else if (car.price <= maxVehiclePrice * 1.15) {
-      return { ...car, match: "Stretch" };
-    } else {
-      return { ...car, match: "Over Budget" };
-    }
+    if (car.price <= maxVehiclePrice) return { ...car, match: "Best Fit" as const };
+    if (car.price <= maxVehiclePrice * 1.15) return { ...car, match: "Stretch" as const };
+    return { ...car, match: "Over Budget" as const };
   }).sort((a, b) => a.price - b.price);
 }
 
-const STORAGE_KEY = "smartdrive_deal_queue_v4";
+const STORAGE_KEY = "smartdrive_deal_queue_v5";
 
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
@@ -137,6 +103,7 @@ export default function DealerSubmissionPage() {
   const [queue, setQueue] = useState<Deal[]>([]);
   const [message, setMessage] = useState("");
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -229,13 +196,9 @@ export default function DealerSubmissionPage() {
     }
 
     let vehicleRecommendation = "Economy";
-    if (maxVehiclePrice >= 20000) {
-      vehicleRecommendation = "Premium";
-    } else if (maxVehiclePrice >= 12000) {
-      vehicleRecommendation = "Mid Tier";
-    } else {
-      vehicleRecommendation = "Budget";
-    }
+    if (maxVehiclePrice >= 20000) vehicleRecommendation = "Premium";
+    else if (maxVehiclePrice >= 12000) vehicleRecommendation = "Mid Tier";
+    else vehicleRecommendation = "Budget";
 
     const lenderRoute = getLenderRoute(income, score, tier);
 
@@ -279,6 +242,9 @@ export default function DealerSubmissionPage() {
     };
 
     try {
+      setIsSubmitting(true);
+      setMessage("");
+
       const nameParts = customerName.trim().split(" ");
       const customerFirstName = nameParts[0] || "";
       const customerLastName = nameParts.slice(1).join(" ") || "Unknown";
@@ -318,6 +284,8 @@ export default function DealerSubmissionPage() {
     } catch (error) {
       console.error(error);
       setMessage("Deal was not saved to database.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -354,10 +322,7 @@ export default function DealerSubmissionPage() {
 
         updated.fundingStage = getFundingStage(updated);
 
-        if (selectedDeal?.id === id) {
-          setSelectedDeal(updated);
-        }
-
+        if (selectedDeal?.id === id) setSelectedDeal(updated);
         return updated;
       })
     );
@@ -378,10 +343,7 @@ export default function DealerSubmissionPage() {
 
         updated.fundingStage = getFundingStage(updated);
 
-        if (selectedDeal?.id === id) {
-          setSelectedDeal(updated);
-        }
-
+        if (selectedDeal?.id === id) setSelectedDeal(updated);
         return updated;
       })
     );
@@ -391,13 +353,8 @@ export default function DealerSubmissionPage() {
     setQueue((prev) =>
       prev.map((deal) => {
         if (deal.id !== id) return deal;
-
         const updated = { ...deal, notes };
-
-        if (selectedDeal?.id === id) {
-          setSelectedDeal(updated);
-        }
-
+        if (selectedDeal?.id === id) setSelectedDeal(updated);
         return updated;
       })
     );
@@ -417,10 +374,7 @@ export default function DealerSubmissionPage() {
 
         updated.fundingStage = getFundingStage(updated);
 
-        if (selectedDeal?.id === id) {
-          setSelectedDeal(updated);
-        }
-
+        if (selectedDeal?.id === id) setSelectedDeal(updated);
         return updated;
       })
     );
@@ -442,10 +396,7 @@ export default function DealerSubmissionPage() {
 
         updated.fundingStage = getFundingStage(updated);
 
-        if (selectedDeal?.id === id) {
-          setSelectedDeal(updated);
-        }
-
+        if (selectedDeal?.id === id) setSelectedDeal(updated);
         return updated;
       })
     );
@@ -465,10 +416,7 @@ export default function DealerSubmissionPage() {
 
         updated.fundingStage = getFundingStage(updated);
 
-        if (selectedDeal?.id === id) {
-          setSelectedDeal(updated);
-        }
-
+        if (selectedDeal?.id === id) setSelectedDeal(updated);
         return updated;
       })
     );
@@ -476,9 +424,7 @@ export default function DealerSubmissionPage() {
 
   function removeDeal(id: string) {
     setQueue((prev) => prev.filter((deal) => deal.id !== id));
-    if (selectedDeal?.id === id) {
-      setSelectedDeal(null);
-    }
+    if (selectedDeal?.id === id) setSelectedDeal(null);
   }
 
   function openDeal(deal: Deal) {
@@ -549,8 +495,8 @@ export default function DealerSubmissionPage() {
           />
 
           <div style={{ marginTop: 16 }}>
-            <button style={primaryBtn} onClick={submitDeal}>
-              Submit Deal
+            <button style={primaryBtn} onClick={submitDeal} disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Deal"}
             </button>
           </div>
 
@@ -573,9 +519,7 @@ export default function DealerSubmissionPage() {
                   >
                     <div style={dealHeaderStyle}>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: 18 }}>
-                          {deal.customerName}
-                        </div>
+                        <div style={{ fontWeight: 800, fontSize: 18 }}>{deal.customerName}</div>
                         <div style={{ color: "#555", marginTop: 4 }}>
                           {deal.dealerName} • {deal.vehicle}
                         </div>
