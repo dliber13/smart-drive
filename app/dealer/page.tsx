@@ -90,7 +90,7 @@ function getMatches(maxVehiclePrice: number) {
   }).sort((a, b) => a.price - b.price);
 }
 
-const STORAGE_KEY = "smartdrive_deal_queue_v5";
+const STORAGE_KEY = "smartdrive_deal_queue_v6";
 
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
@@ -267,13 +267,14 @@ export default function DealerSubmissionPage() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || "Failed to save deal");
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to save deal");
       }
 
       setQueue((prev) => [newDeal, ...prev]);
-      setMessage(`Deal submitted and saved. System recommendation: ${systemRecommendation}`);
+      setMessage(`Deal submitted and saved to database. System recommendation: ${systemRecommendation}`);
 
       setDealerName("");
       setCustomerName("");
