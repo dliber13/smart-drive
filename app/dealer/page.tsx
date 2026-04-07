@@ -12,7 +12,6 @@ type FundingStage =
   | "Ready to Fund"
   | "Submitted to Lender"
   | "Lender Approved"
-  | "Lender Declined"
   | "Funded"
   | "Declined";
 
@@ -51,19 +50,26 @@ type Deal = {
   maxVehiclePrice: number;
   vehicleRecommendation: string;
   lenderRoute: LenderRoute;
-  lenderSubmittedAt?: string;
-  lenderSubmittedBy?: string;
   lenderDecision: LenderDecision;
-  lenderDecisionAt?: string;
-  lenderDecisionBy?: string;
   fundingStage: FundingStage;
-  fundedAt?: string;
-  fundedBy?: string;
   stips: StipChecklist;
   notes: string;
-  decisionedAt?: string;
   locked?: boolean;
-  decisionBy?: string;
+};
+
+type ApiApplication = {
+  id: string;
+  customerFirstName: string;
+  customerLastName: string;
+  grossIncome: number | null;
+  creditScore: number | null;
+  downPayment: number | null;
+  requestedVehicle: string | null;
+  status: string;
+  submittedAt: string | null;
+  dealer?: {
+    name: string;
+  } | null;
 };
 
 type InventoryVehicle = {
@@ -90,7 +96,152 @@ function getMatches(maxVehiclePrice: number) {
   }).sort((a, b) => a.price - b.price);
 }
 
-const STORAGE_KEY = "smartdrive_deal_queue_v7";
+function getLenderRoute(income: number, score: number, tier: string): LenderRoute {
+  if (tier === "Tier 1" && score >= 550) return "Westlake";
+  if (tier === "Tier 2" && score >= 500) return "CAC";
+  if (tier === "Tier 3") return "Smart Drive";
+  if (income >= 1800) return "RouteOne Lane";
+  return "Manual Review";
+}
+
+function mapDbStatusToUi(status: string): {
+  finalDecision?: DealStatus;
+  fundingStage: FundingStage;
+  uiStatus: DealStatus;
+  locked: boolean;
+} {
+  switch (status) {
+    case "SUBMITTED":
+      return {
+        fundingStage: "New Submission",
+        uiStatus: "New Submission",
+        locked: false,
+      };
+    case "IN_REVIEW":
+      return {
+        fundingStage: "In Underwriting",
+        uiStatus: "New Submission",
+        locked: false,
+      };
+    case "DOCS_NEEDED":
+      return {
+        finalDecision: "Needs Stips",
+        fundingStage: "Needs Stips",
+        uiStatus: "Needs Stips",
+        locked: false,
+      };
+    case "APPROVED":
+    case "APPROVED_ALT_VEHICLE":
+      return {
+        finalDecision: "Approved",
+        fundingStage: "Ready to Fund",
+        uiStatus: "Approved",
+        locked: true,
+      };
+    case "APPROVED_CONDITIONAL":
+      return {
+        finalDecision: "Approved",
+        fundingStage: "Approved Pending Stips",
+        uiStatus: "Approved",
+        locked: true,
+      };
+    case "READY_FOR_FUNDING":
+      return {
+        finalDecision: "Approved",
+        fundingStage: "Ready to Fund",
+        uiStatus: "Approved",
+        locked: true,
+      };
+    case "FUNDED":
+      return {
+        finalDecision: "Approved",
+        fundingStage: "Funded",
+        uiStatus: "Approved",
+        locked: true,
+      };
+    case "DENIED":
+      return {
+        finalDecision: "Declined",
+        fundingStage: "Declined",
+        uiStatus: "Declined",
+        locked: true,
+      };
+    default:
+      return {
+        fundingStage: "New Submission",
+        uiStatus: "New Submission",
+        locked: false,
+      };
+  }
+}
+
+function mapApplicationToDeal(app: ApiApplication): Deal {
+  const income = Number(app.grossIncome || 0);
+  const score = Number(app.creditScore || 0);
+  const down = Number(app.downPayment || 0);
+
+  let systemRecommendation: DealStatus = "Needs Stips";
+  let tier = "Tier 3";
+  let maxPayment = income * 0.12;
+  let maxVehiclePrice = maxPayment * 36;
+
+  if (income >= 2500 && score >= 500) {
+    tier = "Tier 1";
+    maxPayment = income * 0.18;
+    maxVehiclePrice = maxPayment * 48;
+    systemRecommendation = "Approved";
+  } else if (income >= 2000 && score >= 450) {
+    tier = "Tier 2";
+    maxPayment = income * 0.15;
+    maxVehiclePrice = maxPayment * 42;
+    systemRecommendation = "Needs Stips";
+  } else {
+    tier = "Tier 3";
+    maxPayment = income * 0.12;
+    maxVehiclePrice = maxPayment * 36;
+    systemRecommendation = "Declined";
+  }
+
+  let vehicleRecommendation = "Economy";
+  if (maxVehiclePrice >= 20000) vehicleRecommendation = "Premium";
+  else if (maxVehiclePrice >= 12000) vehicleRecommendation = "Mid Tier";
+  else vehicleRecommendation = "Budget";
+
+  const mapped = mapDbStatusToUi(app.status);
+
+  return {
+    id: app.id,
+    dealerName: app.dealer?.name || "Unknown Dealer",
+    customerName: `${app.customerFirstName || ""} ${app.customerLastName || ""}`.trim(),
+    vehicle: app.requestedVehicle || "No Vehicle",
+    monthlyIncome: income,
+    creditScore: score,
+    downPayment: down,
+    systemRecommendation,
+    finalDecision: mapped.finalDecision,
+    status: mapped.uiStatus,
+    submittedAt: app.submittedAt
+      ? new Date(app.submittedAt).toLocaleString()
+      : "Not Submitted",
+    tier,
+    maxPayment,
+    maxVehiclePrice,
+    vehicleRecommendation,
+    lenderRoute: getLenderRoute(income, score, tier),
+    lenderDecision: "Pending",
+    fundingStage: mapped.fundingStage,
+    stips: {
+      poi: false,
+      por: false,
+      insurance: false,
+      gps: false,
+      references: false,
+      signedDocs: false,
+    },
+    notes: "",
+    locked: mapped.locked,
+  };
+}
 
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
@@ -105,20 +256,22 @@ export default function DealerSubmissionPage() {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        setQueue(JSON.parse(raw));
-      } catch {
-        setQueue([]);
+  async function loadDeals() {
+    try {
+      const res = await fetch("/api/deals", { cache: "no-store" });
+      const data = await res.json();
+
+      if (data?.success && Array.isArray(data.applications)) {
+        setQueue(data.applications.map(mapApplicationToDeal));
       }
+    } catch (error) {
+      console.error("Failed to load queue:", error);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-  }, [queue]);
+    loadDeals();
+  }, []);
 
   const totals = useMemo(() => {
     return {
@@ -131,37 +284,9 @@ export default function DealerSubmissionPage() {
       submittedToLender: queue.filter((d) => d.fundingStage === "Submitted to Lender").length,
       lenderApproved: queue.filter((d) => d.fundingStage === "Lender Approved").length,
       funded: queue.filter((d) => d.fundingStage === "Funded").length,
-      declined: queue.filter(
-        (d) => d.fundingStage === "Declined" || d.fundingStage === "Lender Declined"
-      ).length,
+      declined: queue.filter((d) => d.fundingStage === "Declined").length,
     };
   }, [queue]);
-
-  function getLenderRoute(income: number, score: number, tier: string): LenderRoute {
-    if (tier === "Tier 1" && score >= 550) return "Westlake";
-    if (tier === "Tier 2" && score >= 500) return "CAC";
-    if (tier === "Tier 3") return "Smart Drive";
-    if (income >= 1800) return "RouteOne Lane";
-    return "Manual Review";
-  }
-
-  function allStipsComplete(stips: StipChecklist) {
-    return Object.values(stips).every(Boolean);
-  }
-
-  function getFundingStage(deal: Deal): FundingStage {
-    if (deal.fundedAt) return "Funded";
-    if (deal.lenderDecision === "Declined") return "Lender Declined";
-    if (deal.lenderDecision === "Approved") return "Lender Approved";
-    if (deal.lenderSubmittedAt) return "Submitted to Lender";
-    if (deal.finalDecision === "Declined") return "Declined";
-    if (!deal.finalDecision) return "In Underwriting";
-    if (deal.finalDecision === "Needs Stips") return "Needs Stips";
-    if (deal.finalDecision === "Approved") {
-      return allStipsComplete(deal.stips) ? "Ready to Fund" : "Approved Pending Stips";
-    }
-    return "New Submission";
-  }
 
   async function submitDeal() {
     if (!dealerName || !customerName || !vehicle) {
@@ -174,72 +299,9 @@ export default function DealerSubmissionPage() {
     const down = Number(downPayment) || 0;
 
     let systemRecommendation: DealStatus = "Needs Stips";
-    let tier = "Tier 3";
-    let maxPayment = income * 0.12;
-    let maxVehiclePrice = maxPayment * 36;
-
-    if (income >= 2500 && score >= 500) {
-      tier = "Tier 1";
-      maxPayment = income * 0.18;
-      maxVehiclePrice = maxPayment * 48;
-      systemRecommendation = "Approved";
-    } else if (income >= 2000 && score >= 450) {
-      tier = "Tier 2";
-      maxPayment = income * 0.15;
-      maxVehiclePrice = maxPayment * 42;
-      systemRecommendation = "Needs Stips";
-    } else {
-      tier = "Tier 3";
-      maxPayment = income * 0.12;
-      maxVehiclePrice = maxPayment * 36;
-      systemRecommendation = "Declined";
-    }
-
-    let vehicleRecommendation = "Economy";
-    if (maxVehiclePrice >= 20000) vehicleRecommendation = "Premium";
-    else if (maxVehiclePrice >= 12000) vehicleRecommendation = "Mid Tier";
-    else vehicleRecommendation = "Budget";
-
-    const lenderRoute = getLenderRoute(income, score, tier);
-
-    const newDeal: Deal = {
-      id: Date.now().toString(),
-      dealerName,
-      customerName,
-      vehicle,
-      monthlyIncome: income,
-      creditScore: score,
-      downPayment: down,
-      systemRecommendation,
-      finalDecision: undefined,
-      status: systemRecommendation,
-      submittedAt: new Date().toLocaleString(),
-      tier,
-      maxPayment,
-      maxVehiclePrice,
-      vehicleRecommendation,
-      lenderRoute,
-      lenderSubmittedAt: undefined,
-      lenderSubmittedBy: undefined,
-      lenderDecision: "Pending",
-      lenderDecisionAt: undefined,
-      lenderDecisionBy: undefined,
-      fundingStage: "New Submission",
-      fundedAt: undefined,
-      fundedBy: undefined,
-      stips: {
-        poi: false,
-        por: false,
-        insurance: false,
-        gps: false,
-        references: false,
-        signedDocs: false,
-      },
-      notes: "",
-      decisionedAt: undefined,
-      locked: false,
-      decisionBy: undefined,
-    };
+    if (income >= 2500 && score >= 500) systemRecommendation = "Approved";
+    else if (income >= 2000 && score >= 450) systemRecommendation = "Needs Stips";
+    else systemRecommendation = "Declined";
 
     try {
       setIsSubmitting(true);
@@ -273,7 +335,6 @@ export default function DealerSubmissionPage() {
         throw new Error(data?.error || "Failed to save deal");
       }
 
-      setQueue((prev) => [newDeal, ...prev]);
       setMessage(`Deal submitted and saved to database. System recommendation: ${systemRecommendation}`);
 
       setDealerName("");
@@ -282,6 +343,8 @@ export default function DealerSubmissionPage() {
       setMonthlyIncome("");
       setCreditScore("");
       setDownPayment("");
+
+      await loadDeals();
     } catch (error) {
       console.error(error);
       setMessage("Deal was not saved to database.");
@@ -290,147 +353,35 @@ export default function DealerSubmissionPage() {
     }
   }
 
-  function setUnderwritingOpen(id: string) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-        if (deal.fundingStage === "New Submission") {
-          const updated = { ...deal, fundingStage: "In Underwriting" as FundingStage };
-          if (selectedDeal?.id === id) setSelectedDeal(updated);
-          return updated;
-        }
-        return deal;
-      })
-    );
-  }
+  async function updateDealStatus(id: string, status: string) {
+    try {
+      const res = await fetch(`/api/deals/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
 
-  function applyDecision(id: string, decision: DealStatus) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-        if (deal.locked) return deal;
+      const data = await res.json().catch(() => null);
 
-        const shouldLock = decision === "Approved" || decision === "Declined";
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to update deal");
+      }
 
-        const updated: Deal = {
-          ...deal,
-          finalDecision: decision,
-          status: decision,
-          decisionedAt: new Date().toLocaleString(),
-          decisionBy: "Underwriter",
-          locked: shouldLock,
-        };
+      await loadDeals();
 
-        updated.fundingStage = getFundingStage(updated);
-
-        if (selectedDeal?.id === id) setSelectedDeal(updated);
-        return updated;
-      })
-    );
-  }
-
-  function updateStip(id: string, stipKey: keyof StipChecklist, value: boolean) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-
-        const updated: Deal = {
-          ...deal,
-          stips: {
-            ...deal.stips,
-            [stipKey]: value,
-          },
-        };
-
-        updated.fundingStage = getFundingStage(updated);
-
-        if (selectedDeal?.id === id) setSelectedDeal(updated);
-        return updated;
-      })
-    );
-  }
-
-  function updateNotes(id: string, notes: string) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-        const updated = { ...deal, notes };
-        if (selectedDeal?.id === id) setSelectedDeal(updated);
-        return updated;
-      })
-    );
-  }
-
-  function submitToLender(id: string) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-        if (deal.fundingStage !== "Ready to Fund") return deal;
-
-        const updated: Deal = {
-          ...deal,
-          lenderSubmittedAt: new Date().toLocaleString(),
-          lenderSubmittedBy: "Underwriter",
-        };
-
-        updated.fundingStage = getFundingStage(updated);
-
-        if (selectedDeal?.id === id) setSelectedDeal(updated);
-        return updated;
-      })
-    );
-  }
-
-  function setLenderDecision(id: string, decision: LenderDecision) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-        if (!deal.lenderSubmittedAt) return deal;
-        if (deal.fundedAt) return deal;
-
-        const updated: Deal = {
-          ...deal,
-          lenderDecision: decision,
-          lenderDecisionAt: new Date().toLocaleString(),
-          lenderDecisionBy: "Lender Desk",
-        };
-
-        updated.fundingStage = getFundingStage(updated);
-
-        if (selectedDeal?.id === id) setSelectedDeal(updated);
-        return updated;
-      })
-    );
-  }
-
-  function markFunded(id: string) {
-    setQueue((prev) =>
-      prev.map((deal) => {
-        if (deal.id !== id) return deal;
-        if (deal.lenderDecision !== "Approved") return deal;
-
-        const updated: Deal = {
-          ...deal,
-          fundedAt: new Date().toLocaleString(),
-          fundedBy: "Funding Desk",
-        };
-
-        updated.fundingStage = getFundingStage(updated);
-
-        if (selectedDeal?.id === id) setSelectedDeal(updated);
-        return updated;
-      })
-    );
-  }
-
-  function removeDeal(id: string) {
-    setQueue((prev) => prev.filter((deal) => deal.id !== id));
-    if (selectedDeal?.id === id) setSelectedDeal(null);
+      if (selectedDeal?.id === id) {
+        setSelectedDeal(null);
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("Failed to update deal status.");
+    }
   }
 
   function openDeal(deal: Deal) {
     setSelectedDeal(deal);
-    setUnderwritingOpen(deal.id);
   }
 
   return (
@@ -544,43 +495,49 @@ export default function DealerSubmissionPage() {
 
                     <div style={actionRowStyle}>
                       <button
-                        style={approveBtn}
-                        disabled={!!deal.locked}
+                        style={primaryBtn}
                         onClick={(e) => {
                           e.stopPropagation();
-                          applyDecision(deal.id, "Approved");
+                          updateDealStatus(deal.id, "IN_REVIEW");
+                        }}
+                      >
+                        Open UW
+                      </button>
+                      <button
+                        style={approveBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateDealStatus(deal.id, "APPROVED");
                         }}
                       >
                         Approve
                       </button>
                       <button
                         style={stipBtn}
-                        disabled={!!deal.locked}
                         onClick={(e) => {
                           e.stopPropagation();
-                          applyDecision(deal.id, "Needs Stips");
+                          updateDealStatus(deal.id, "DOCS_NEEDED");
                         }}
                       >
                         Needs Stips
                       </button>
                       <button
                         style={declineBtn}
-                        disabled={!!deal.locked}
                         onClick={(e) => {
                           e.stopPropagation();
-                          applyDecision(deal.id, "Declined");
+                          updateDealStatus(deal.id, "DENIED");
                         }}
                       >
                         Decline
                       </button>
                       <button
-                        style={deleteBtn}
+                        style={approveBtn}
                         onClick={(e) => {
                           e.stopPropagation();
-                          removeDeal(deal.id);
+                          updateDealStatus(deal.id, "FUNDED");
                         }}
                       >
-                        Remove
+                        Funded
                       </button>
                     </div>
                   </div>
@@ -609,72 +566,10 @@ export default function DealerSubmissionPage() {
                 <div><strong>Lender Route:</strong> {selectedDeal.lenderRoute}</div>
                 <div><strong>Workflow Stage:</strong> {selectedDeal.fundingStage}</div>
                 <div><strong>Submitted:</strong> {selectedDeal.submittedAt}</div>
-                {selectedDeal.decisionedAt && (
-                  <>
-                    <div><strong>Decision Time:</strong> {selectedDeal.decisionedAt}</div>
-                    <div><strong>Decision By:</strong> {selectedDeal.decisionBy}</div>
-                  </>
-                )}
-                {selectedDeal.lenderSubmittedAt && (
-                  <>
-                    <div><strong>Lender Submitted:</strong> {selectedDeal.lenderSubmittedAt}</div>
-                    <div><strong>Submitted By:</strong> {selectedDeal.lenderSubmittedBy}</div>
-                  </>
-                )}
-                {selectedDeal.lenderDecisionAt && (
-                  <>
-                    <div><strong>Lender Decision:</strong> {selectedDeal.lenderDecision}</div>
-                    <div><strong>Lender Decision Time:</strong> {selectedDeal.lenderDecisionAt}</div>
-                    <div><strong>Lender Decision By:</strong> {selectedDeal.lenderDecisionBy}</div>
-                  </>
-                )}
-                {selectedDeal.fundedAt && (
-                  <>
-                    <div><strong>Funded At:</strong> {selectedDeal.fundedAt}</div>
-                    <div><strong>Funded By:</strong> {selectedDeal.fundedBy}</div>
-                  </>
-                )}
-                <div><strong>Locked:</strong> {selectedDeal.locked ? "Yes" : "No"}</div>
-              </div>
-
-              <div style={{ marginTop: 20 }}>
-                <h3 style={miniHeading}>Stip Checklist</h3>
-                <div style={stipGridStyle}>
-                  {(
-                    [
-                      ["poi", "Proof of Income"],
-                      ["por", "Proof of Residence"],
-                      ["insurance", "Insurance"],
-                      ["gps", "GPS Installed"],
-                      ["references", "References"],
-                      ["signedDocs", "Signed Docs"],
-                    ] as Array<[keyof StipChecklist, string]>
-                  ).map(([key, label]) => (
-                    <label key={key} style={stipItemStyle}>
-                      <input
-                        type="checkbox"
-                        checked={selectedDeal.stips[key]}
-                        onChange={(e) => updateStip(selectedDeal.id, key, e.target.checked)}
-                      />{" "}
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginTop: 20 }}>
-                <h3 style={miniHeading}>Underwriter Notes</h3>
-                <textarea
-                  style={textareaStyle}
-                  value={selectedDeal.notes}
-                  onChange={(e) => updateNotes(selectedDeal.id, e.target.value)}
-                  placeholder="Add underwriter notes here..."
-                />
               </div>
 
               <div style={{ marginTop: 20 }}>
                 <h3 style={miniHeading}>Recommended Vehicles</h3>
-
                 {getMatches(selectedDeal.maxVehiclePrice).map((car) => (
                   <div
                     key={car.stock}
@@ -702,62 +597,18 @@ export default function DealerSubmissionPage() {
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button
-                  style={approveBtn}
-                  disabled={!!selectedDeal.locked}
-                  onClick={() => applyDecision(selectedDeal.id, "Approved")}
-                >
+                <button style={approveBtn} onClick={() => updateDealStatus(selectedDeal.id, "APPROVED")}>
                   Approve & Lock
                 </button>
-
-                <button
-                  style={stipBtn}
-                  disabled={!!selectedDeal.locked}
-                  onClick={() => applyDecision(selectedDeal.id, "Needs Stips")}
-                >
+                <button style={stipBtn} onClick={() => updateDealStatus(selectedDeal.id, "DOCS_NEEDED")}>
                   Request Stips
                 </button>
-
-                <button
-                  style={declineBtn}
-                  disabled={!!selectedDeal.locked}
-                  onClick={() => applyDecision(selectedDeal.id, "Declined")}
-                >
+                <button style={declineBtn} onClick={() => updateDealStatus(selectedDeal.id, "DENIED")}>
                   Decline
                 </button>
-
-                <button
-                  style={primaryBtn}
-                  disabled={selectedDeal.fundingStage !== "Ready to Fund"}
-                  onClick={() => submitToLender(selectedDeal.id)}
-                >
-                  Submit to Lender
-                </button>
-
-                <button
-                  style={approveBtn}
-                  disabled={!selectedDeal.lenderSubmittedAt || !!selectedDeal.fundedAt}
-                  onClick={() => setLenderDecision(selectedDeal.id, "Approved")}
-                >
-                  Lender Approved
-                </button>
-
-                <button
-                  style={declineBtn}
-                  disabled={!selectedDeal.lenderSubmittedAt || !!selectedDeal.fundedAt}
-                  onClick={() => setLenderDecision(selectedDeal.id, "Declined")}
-                >
-                  Lender Declined
-                </button>
-
-                <button
-                  style={primaryBtn}
-                  disabled={selectedDeal.lenderDecision !== "Approved" || !!selectedDeal.fundedAt}
-                  onClick={() => markFunded(selectedDeal.id)}
-                >
+                <button style={primaryBtn} onClick={() => updateDealStatus(selectedDeal.id, "FUNDED")}>
                   Mark Funded
                 </button>
-
                 <button style={deleteBtn} onClick={() => setSelectedDeal(null)}>
                   Close
                 </button>
@@ -866,16 +717,6 @@ const inputStyle: CSSProperties = {
   boxSizing: "border-box",
 };
 
-const textareaStyle: CSSProperties = {
-  width: "100%",
-  minHeight: 90,
-  padding: 12,
-  border: "1px solid #ccc",
-  borderRadius: 8,
-  boxSizing: "border-box",
-  resize: "vertical",
-};
-
 const primaryBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#007bff",
@@ -904,20 +745,6 @@ const actionRowStyle: CSSProperties = {
   gap: 10,
   flexWrap: "wrap",
   marginTop: 16,
-};
-
-const stipGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: 10,
-};
-
-const stipItemStyle: CSSProperties = {
-  display: "block",
-  padding: 10,
-  border: "1px solid #e2e8f0",
-  borderRadius: 8,
-  background: "#fafcff",
 };
 
 const approveBtn: CSSProperties = {
