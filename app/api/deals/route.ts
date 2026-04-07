@@ -5,13 +5,16 @@ export async function GET() {
   try {
     const applications = await prisma.application.findMany({
       orderBy: { createdAt: "desc" },
-      take: 50,
       include: {
         dealer: true,
       },
+      take: 100,
     });
 
-    return NextResponse.json({ success: true, applications });
+    return NextResponse.json({
+      success: true,
+      applications,
+    });
   } catch (error) {
     console.error("GET /api/deals failed:", error);
     return NextResponse.json(
