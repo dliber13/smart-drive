@@ -90,7 +90,7 @@ function getMatches(maxVehiclePrice: number) {
   }).sort((a, b) => a.price - b.price);
 }
 
-const STORAGE_KEY = "smartdrive_deal_queue_v6";
+const STORAGE_KEY = "smartdrive_deal_queue_v7";
 
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
