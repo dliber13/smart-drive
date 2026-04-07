@@ -8,10 +8,7 @@ type FundingStage =
   | "New Submission"
   | "In Underwriting"
   | "Needs Stips"
-  | "Approved Pending Stips"
   | "Ready to Fund"
-  | "Submitted to Lender"
-  | "Lender Approved"
   | "Funded"
   | "Declined";
 
@@ -21,17 +18,6 @@ type LenderRoute =
   | "CAC"
   | "RouteOne Lane"
   | "Manual Review";
-
-type LenderDecision = "Pending" | "Approved" | "Declined";
-
-type StipChecklist = {
-  poi: boolean;
-  por: boolean;
-  insurance: boolean;
-  gps: boolean;
-  references: boolean;
-  signedDocs: boolean;
-};
 
 type Deal = {
   id: string;
@@ -50,11 +36,7 @@ type Deal = {
   maxVehiclePrice: number;
   vehicleRecommendation: string;
   lenderRoute: LenderRoute;
-  lenderDecision: LenderDecision;
   fundingStage: FundingStage;
-  stips: StipChecklist;
-  notes: string;
-  locked?: boolean;
 };
 
 type ApiApplication = {
@@ -108,54 +90,46 @@ function mapDbStatusToUi(status: string): {
   finalDecision?: DealStatus;
   fundingStage: FundingStage;
   uiStatus: DealStatus;
-  locked: boolean;
 } {
   switch (status) {
     case "SUBMITTED":
       return {
         fundingStage: "New Submission",
         uiStatus: "New Submission",
-        locked: false,
       };
     case "IN_REVIEW":
       return {
         fundingStage: "In Underwriting",
         uiStatus: "New Submission",
-        locked: false,
       };
     case "DOCS_NEEDED":
       return {
         finalDecision: "Needs Stips",
         fundingStage: "Needs Stips",
         uiStatus: "Needs Stips",
-        locked: false,
       };
     case "APPROVED":
       return {
         finalDecision: "Approved",
         fundingStage: "Ready to Fund",
         uiStatus: "Approved",
-        locked: true,
       };
     case "FUNDED":
       return {
         finalDecision: "Approved",
         fundingStage: "Funded",
         uiStatus: "Approved",
-        locked: true,
       };
     case "DENIED":
       return {
         finalDecision: "Declined",
         fundingStage: "Declined",
         uiStatus: "Declined",
-        locked: true,
       };
     default:
       return {
         fundingStage: "New Submission",
         uiStatus: "New Submission",
-        locked: false,
       };
   }
 }
@@ -213,18 +187,7 @@ function mapApplicationToDeal(app: ApiApplication): Deal {
     maxVehiclePrice,
     vehicleRecommendation,
     lenderRoute: getLenderRoute(income, score, tier),
-    lenderDecision: "Pending",
     fundingStage: mapped.fundingStage,
-    stips: {
-      poi: false,
-      por: false,
-      insurance: false,
-      gps: false,
-      references: false,
-      signedDocs: false,
-    },
-    notes: "",
-    locked: mapped.locked,
   };
 }
 
@@ -247,10 +210,17 @@ export default function DealerSubmissionPage() {
       const data = await res.json();
 
       if (data?.success && Array.isArray(data.applications)) {
-        setQueue(data.applications.map(mapApplicationToDeal));
+        const mappedDeals = data.applications.map(mapApplicationToDeal);
+        setQueue(mappedDeals);
+
+        if (selectedDeal) {
+          const refreshedSelected = mappedDeals.find((d: Deal) => d.id === selectedDeal.id) || null;
+          setSelectedDeal(refreshedSelected);
+        }
       }
     } catch (error) {
       console.error("Failed to load deals:", error);
+      setMessage("Failed to load deals.");
     }
   }
 
@@ -264,10 +234,7 @@ export default function DealerSubmissionPage() {
       newSubmissions: queue.filter((d) => d.fundingStage === "New Submission").length,
       inUnderwriting: queue.filter((d) => d.fundingStage === "In Underwriting").length,
       needsStips: queue.filter((d) => d.fundingStage === "Needs Stips").length,
-      approvedPending: queue.filter((d) => d.fundingStage === "Approved Pending Stips").length,
       readyToFund: queue.filter((d) => d.fundingStage === "Ready to Fund").length,
-      submittedToLender: queue.filter((d) => d.fundingStage === "Submitted to Lender").length,
-      lenderApproved: queue.filter((d) => d.fundingStage === "Lender Approved").length,
       funded: queue.filter((d) => d.fundingStage === "Funded").length,
       declined: queue.filter((d) => d.fundingStage === "Declined").length,
     };
@@ -358,11 +325,6 @@ export default function DealerSubmissionPage() {
 
       setMessage(`Deal updated: ${status}`);
       await loadDeals();
-
-      if (selectedDeal?.id === id) {
-        const updatedDeal = queue.find((d) => d.id === id);
-        setSelectedDeal(updatedDeal || null);
-      }
     } catch (error) {
       console.error(error);
       setMessage("Failed to update deal status.");
@@ -386,10 +348,7 @@ export default function DealerSubmissionPage() {
         <StatCard label="New Submission" value={totals.newSubmissions} />
         <StatCard label="In Underwriting" value={totals.inUnderwriting} />
         <StatCard label="Needs Stips" value={totals.needsStips} />
-        <StatCard label="Approved Pending" value={totals.approvedPending} />
         <StatCard label="Ready to Fund" value={totals.readyToFund} />
-        <StatCard label="Submitted to Lender" value={totals.submittedToLender} />
-        <StatCard label="Lender Approved" value={totals.lenderApproved} />
         <StatCard label="Funded" value={totals.funded} />
         <StatCard label="Declined" value={totals.declined} />
       </div>
