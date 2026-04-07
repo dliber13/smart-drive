@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+export async function GET() {
+  try {
+    const applications = await prisma.application.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        dealer: true,
+      },
+    });
+
+    return NextResponse.json({ success: true, applications });
+  } catch (error) {
+    console.error("GET /api/deals failed:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to load deals" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -54,7 +74,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("POST /api/deals failed:", error);
     return NextResponse.json(
-      { error: "Failed to create deal" },
+      { success: false, error: "Failed to create deal" },
       { status: 500 }
     );
   }
