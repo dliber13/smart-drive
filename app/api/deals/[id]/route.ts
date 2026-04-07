@@ -24,10 +24,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       application: updated,
     });
   } catch (error) {
-    console.error("PATCH /api/deals/[id] failed:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to update deal" },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
