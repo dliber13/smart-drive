@@ -336,6 +336,10 @@ export default function DealerSubmissionPage() {
     setSelectedDeal(deal);
   }
 
+  function openUnderwriting(dealId: string) {
+    window.location.href = `/underwriting?id=${dealId}`;
+  }
+
   return (
     <div style={pageStyle}>
       <h1 style={headingStyle}>Dealer Submission System</h1>
@@ -443,20 +447,31 @@ export default function DealerSubmissionPage() {
                     </div>
 
                     <div style={actionRowStyle}>
-                      {deal.fundingStage === "New Submission" && (
-                        <button
-                          style={primaryBtn}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.location.href = `/underwriting?id=${deal.id}`;
-                          }}
-                        >
-                          Open UW
-                        </button>
-                      )}
+                      <button
+                        style={uwBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openUnderwriting(deal.id);
+                        }}
+                      >
+                        Open UW
+                      </button>
 
-                      {deal.fundingStage === "In Underwriting" && (
+                      {(deal.fundingStage === "New Submission" ||
+                        deal.fundingStage === "In Underwriting") && (
                         <>
+                          {deal.fundingStage === "New Submission" && (
+                            <button
+                              style={primaryBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateDealStatus(deal.id, "IN_REVIEW");
+                              }}
+                            >
+                              Move to UW
+                            </button>
+                          )}
+
                           <button
                             style={approveBtn}
                             onClick={(e) => {
@@ -562,19 +577,18 @@ export default function DealerSubmissionPage() {
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {selectedDeal.fundingStage === "New Submission" && (
-                  <button
-                    style={primaryBtn}
-                    onClick={() => {
-                      window.location.href = `/underwriting?id=${selectedDeal.id}`;
-                    }}
-                  >
-                    Open UW
-                  </button>
-                )}
+                <button style={uwBtn} onClick={() => openUnderwriting(selectedDeal.id)}>
+                  Open UW
+                </button>
 
-                {selectedDeal.fundingStage === "In Underwriting" && (
+                {(selectedDeal.fundingStage === "New Submission" ||
+                  selectedDeal.fundingStage === "In Underwriting") && (
                   <>
+                    {selectedDeal.fundingStage === "New Submission" && (
+                      <button style={primaryBtn} onClick={() => updateDealStatus(selectedDeal.id, "IN_REVIEW")}>
+                        Move to UW
+                      </button>
+                    )}
                     <button style={approveBtn} onClick={() => updateDealStatus(selectedDeal.id, "APPROVED")}>
                       Approve & Lock
                     </button>
@@ -638,15 +652,6 @@ function StatusBadge({ status }: { status: DealStatus }) {
     >
       {status}
     </span>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div style={statCardStyle}>
-      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
-      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
-    </div>
   );
 }
 
@@ -717,6 +722,15 @@ const inputStyle: CSSProperties = {
 const primaryBtn: CSSProperties = {
   padding: "10px 14px",
   background: "#007bff",
+  color: "white",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const uwBtn: CSSProperties = {
+  padding: "10px 14px",
+  background: "#2563eb",
   color: "white",
   border: "none",
   borderRadius: 8,
