@@ -214,7 +214,8 @@ export default function DealerSubmissionPage() {
         setQueue(mappedDeals);
 
         if (selectedDeal) {
-          const refreshedSelected = mappedDeals.find((d: Deal) => d.id === selectedDeal.id) || null;
+          const refreshedSelected =
+            mappedDeals.find((d: Deal) => d.id === selectedDeal.id) || null;
           setSelectedDeal(refreshedSelected);
         }
       }
@@ -447,7 +448,7 @@ export default function DealerSubmissionPage() {
                           style={primaryBtn}
                           onClick={(e) => {
                             e.stopPropagation();
-                            updateDealStatus(deal.id, "IN_REVIEW");
+                            window.location.href = `/underwriting?id=${deal.id}`;
                           }}
                         >
                           Open UW
@@ -562,7 +563,12 @@ export default function DealerSubmissionPage() {
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {selectedDeal.fundingStage === "New Submission" && (
-                  <button style={primaryBtn} onClick={() => updateDealStatus(selectedDeal.id, "IN_REVIEW")}>
+                  <button
+                    style={primaryBtn}
+                    onClick={() => {
+                      window.location.href = `/underwriting?id=${selectedDeal.id}`;
+                    }}
+                  >
                     Open UW
                   </button>
                 )}
@@ -632,6 +638,15 @@ function StatusBadge({ status }: { status: DealStatus }) {
     >
       {status}
     </span>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={statCardStyle}>
+      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
+    </div>
   );
 }
 
