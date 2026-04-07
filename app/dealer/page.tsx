@@ -131,21 +131,6 @@ function mapDbStatusToUi(status: string): {
         locked: false,
       };
     case "APPROVED":
-    case "APPROVED_ALT_VEHICLE":
-      return {
-        finalDecision: "Approved",
-        fundingStage: "Ready to Fund",
-        uiStatus: "Approved",
-        locked: true,
-      };
-    case "APPROVED_CONDITIONAL":
-      return {
-        finalDecision: "Approved",
-        fundingStage: "Approved Pending Stips",
-        uiStatus: "Approved",
-        locked: true,
-      };
-    case "READY_FOR_FUNDING":
       return {
         finalDecision: "Approved",
         fundingStage: "Ready to Fund",
@@ -265,7 +250,7 @@ export default function DealerSubmissionPage() {
         setQueue(data.applications.map(mapApplicationToDeal));
       }
     } catch (error) {
-      console.error("Failed to load queue:", error);
+      console.error("Failed to load deals:", error);
     }
   }
 
@@ -335,7 +320,9 @@ export default function DealerSubmissionPage() {
         throw new Error(data?.error || "Failed to save deal");
       }
 
-      setMessage(`Deal submitted and saved to database. System recommendation: ${systemRecommendation}`);
+      setMessage(
+        `Deal submitted and saved to database. System recommendation: ${systemRecommendation}`
+      );
 
       setDealerName("");
       setCustomerName("");
@@ -369,10 +356,12 @@ export default function DealerSubmissionPage() {
         throw new Error(data?.error || "Failed to update deal");
       }
 
+      setMessage(`Deal updated: ${status}`);
       await loadDeals();
 
       if (selectedDeal?.id === id) {
-        setSelectedDeal(null);
+        const updatedDeal = queue.find((d) => d.id === id);
+        setSelectedDeal(updatedDeal || null);
       }
     } catch (error) {
       console.error(error);
@@ -494,51 +483,67 @@ export default function DealerSubmissionPage() {
                     </div>
 
                     <div style={actionRowStyle}>
-                      <button
-                        style={primaryBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateDealStatus(deal.id, "IN_REVIEW");
-                        }}
-                      >
-                        Open UW
-                      </button>
-                      <button
-                        style={approveBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateDealStatus(deal.id, "APPROVED");
-                        }}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        style={stipBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateDealStatus(deal.id, "DOCS_NEEDED");
-                        }}
-                      >
-                        Needs Stips
-                      </button>
-                      <button
-                        style={declineBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateDealStatus(deal.id, "DENIED");
-                        }}
-                      >
-                        Decline
-                      </button>
-                      <button
-                        style={approveBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateDealStatus(deal.id, "FUNDED");
-                        }}
-                      >
-                        Funded
-                      </button>
+                      {deal.fundingStage === "New Submission" && (
+                        <button
+                          style={primaryBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateDealStatus(deal.id, "IN_REVIEW");
+                          }}
+                        >
+                          Open UW
+                        </button>
+                      )}
+
+                      {deal.fundingStage === "In Underwriting" && (
+                        <>
+                          <button
+                            style={approveBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateDealStatus(deal.id, "APPROVED");
+                            }}
+                          >
+                            Approve
+                          </button>
+
+                          <button
+                            style={stipBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateDealStatus(deal.id, "DOCS_NEEDED");
+                            }}
+                          >
+                            Needs Stips
+                          </button>
+
+                          <button
+                            style={declineBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateDealStatus(deal.id, "DENIED");
+                            }}
+                          >
+                            Decline
+                          </button>
+                        </>
+                      )}
+
+                      {deal.fundingStage === "Ready to Fund" && (
+                        <button
+                          style={approveBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateDealStatus(deal.id, "FUNDED");
+                          }}
+                        >
+                          Funded
+                        </button>
+                      )}
+
+                      {deal.fundingStage === "Funded" && (
+                        <span style={completeStyle}>✅ Deal Complete</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -597,18 +602,36 @@ export default function DealerSubmissionPage() {
               </div>
 
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button style={approveBtn} onClick={() => updateDealStatus(selectedDeal.id, "APPROVED")}>
-                  Approve & Lock
-                </button>
-                <button style={stipBtn} onClick={() => updateDealStatus(selectedDeal.id, "DOCS_NEEDED")}>
-                  Request Stips
-                </button>
-                <button style={declineBtn} onClick={() => updateDealStatus(selectedDeal.id, "DENIED")}>
-                  Decline
-                </button>
-                <button style={primaryBtn} onClick={() => updateDealStatus(selectedDeal.id, "FUNDED")}>
-                  Mark Funded
-                </button>
+                {selectedDeal.fundingStage === "New Submission" && (
+                  <button style={primaryBtn} onClick={() => updateDealStatus(selectedDeal.id, "IN_REVIEW")}>
+                    Open UW
+                  </button>
+                )}
+
+                {selectedDeal.fundingStage === "In Underwriting" && (
+                  <>
+                    <button style={approveBtn} onClick={() => updateDealStatus(selectedDeal.id, "APPROVED")}>
+                      Approve & Lock
+                    </button>
+                    <button style={stipBtn} onClick={() => updateDealStatus(selectedDeal.id, "DOCS_NEEDED")}>
+                      Request Stips
+                    </button>
+                    <button style={declineBtn} onClick={() => updateDealStatus(selectedDeal.id, "DENIED")}>
+                      Decline
+                    </button>
+                  </>
+                )}
+
+                {selectedDeal.fundingStage === "Ready to Fund" && (
+                  <button style={approveBtn} onClick={() => updateDealStatus(selectedDeal.id, "FUNDED")}>
+                    Mark Funded
+                  </button>
+                )}
+
+                {selectedDeal.fundingStage === "Funded" && (
+                  <span style={completeStyle}>✅ Deal Complete</span>
+                )}
+
                 <button style={deleteBtn} onClick={() => setSelectedDeal(null)}>
                   Close
                 </button>
@@ -781,4 +804,11 @@ const deleteBtn: CSSProperties = {
   border: "none",
   borderRadius: 8,
   cursor: "pointer",
+};
+
+const completeStyle: CSSProperties = {
+  color: "#1f7a35",
+  fontWeight: 800,
+  display: "inline-flex",
+  alignItems: "center",
 };
