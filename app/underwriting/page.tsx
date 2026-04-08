@@ -13,6 +13,7 @@ type Deal = {
 export default function UnderwritingPage() {
   const [dealId, setDealId] = useState("");
   const [deal, setDeal] = useState<Deal | null>(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -42,11 +43,37 @@ export default function UnderwritingPage() {
         }
       } catch (error) {
         console.error("Failed to load deal:", error);
+        setMessage("Failed to load deal.");
       }
     };
 
     fetchDeal();
   }, [dealId]);
+
+  async function updateDeal(status: string) {
+    if (!dealId) return;
+
+    try {
+      const res = await fetch(`/api/deals/${dealId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to update deal");
+      }
+
+      setMessage(`Deal updated: ${status}`);
+    } catch (error) {
+      console.error("Failed to update deal:", error);
+      setMessage("Failed to update deal.");
+    }
+  }
 
   return (
     <div style={{ padding: 24 }}>
@@ -92,10 +119,18 @@ export default function UnderwritingPage() {
           />
 
           <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-            <button style={approveBtn}>Approve & Lock</button>
-            <button style={stipBtn}>Request Stips</button>
-            <button style={declineBtn}>Decline</button>
+            <button style={approveBtn} onClick={() => updateDeal("APPROVED")}>
+              Approve & Lock
+            </button>
+            <button style={stipBtn} onClick={() => updateDeal("DOCS_NEEDED")}>
+              Request Stips
+            </button>
+            <button style={declineBtn} onClick={() => updateDeal("DENIED")}>
+              Decline
+            </button>
           </div>
+
+          {message && <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>}
         </div>
 
         <div style={{ flex: 1 }}>
