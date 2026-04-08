@@ -191,6 +191,38 @@ function mapApplicationToDeal(app: ApiApplication): Deal {
   };
 }
 
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={statCardStyle}>
+      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: DealStatus }) {
+  const colors: Record<DealStatus, CSSProperties> = {
+    "New Submission": { background: "#e8f1fd", color: "#0b4ea2" },
+    "Needs Stips": { background: "#fff4d6", color: "#946200" },
+    Approved: { background: "#e7f7ea", color: "#1f7a35" },
+    Declined: { background: "#fdeaea", color: "#b42318" },
+  };
+
+  return (
+    <span
+      style={{
+        ...colors[status],
+        padding: "8px 12px",
+        borderRadius: 999,
+        fontWeight: 700,
+        fontSize: 12,
+      }}
+    >
+      {status}
+    </span>
+  );
+}
+
 export default function DealerSubmissionPage() {
   const [dealerName, setDealerName] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -620,38 +652,6 @@ export default function DealerSubmissionPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div style={statCardStyle}>
-      <div style={{ color: "#5f6f86", fontSize: 13, fontWeight: 700 }}>{label}</div>
-      <div style={{ fontSize: 30, fontWeight: 800, marginTop: 8 }}>{value}</div>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: DealStatus }) {
-  const colors: Record<DealStatus, CSSProperties> = {
-    "New Submission": { background: "#e8f1fd", color: "#0b4ea2" },
-    "Needs Stips": { background: "#fff4d6", color: "#946200" },
-    Approved: { background: "#e7f7ea", color: "#1f7a35" },
-    Declined: { background: "#fdeaea", color: "#b42318" },
-  };
-
-  return (
-    <span
-      style={{
-        ...colors[status],
-        padding: "8px 12px",
-        borderRadius: 999,
-        fontWeight: 700,
-        fontSize: 12,
-      }}
-    >
-      {status}
-    </span>
   );
 }
 
