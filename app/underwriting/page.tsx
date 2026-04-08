@@ -1,27 +1,52 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+
+type Deal = {
+  id: string;
+  customerName?: string;
+  income?: number;
+  creditScore?: number;
+  downPayment?: number;
+};
 
 export default function UnderwritingPage() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id");
-
-  const [deal, setDeal] = useState<any>(null);
+  const [dealId, setDealId] = useState("");
+  const [deal, setDeal] = useState<Deal | null>(null);
 
   useEffect(() => {
-    if (!id) return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id") || "";
+    setDealId(id);
+  }, []);
+
+  useEffect(() => {
+    if (!dealId) return;
 
     const fetchDeal = async () => {
-      const res = await fetch(`/api/deals`);
-      const data = await res.json();
+      try {
+        const res = await fetch("/api/deals", { cache: "no-store" });
+        const data = await res.json();
 
-      const found = data.applications.find((d: any) => d.id === id);
-      setDeal(found);
+        const found = data?.applications?.find((d: any) => d.id === dealId) || null;
+
+        if (found) {
+          setDeal({
+            id: found.id,
+            customerName:
+              `${found.customerFirstName || ""} ${found.customerLastName || ""}`.trim(),
+            income: Number(found.grossIncome || 0),
+            creditScore: Number(found.creditScore || 0),
+            downPayment: Number(found.downPayment || 0),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load deal:", error);
+      }
     };
 
     fetchDeal();
-  }, [id]);
+  }, [dealId]);
 
   return (
     <div style={{ padding: 24 }}>
@@ -31,17 +56,45 @@ export default function UnderwritingPage() {
         <div style={{ flex: 1 }}>
           <h2>Borrower Input</h2>
 
-          <input value={deal?.customerName || ""} placeholder="Customer Name" />
-          <input value={deal?.income || ""} placeholder="Monthly Income" />
-          <input value={deal?.creditScore || ""} placeholder="Credit Score" />
-          <input placeholder="Job Time (months)" />
-          <input placeholder="Residence Time (months)" />
-          <input value={deal?.downPayment || ""} placeholder="Down Payment" />
+          <input
+            value={deal?.customerName || ""}
+            placeholder="Customer Name"
+            readOnly
+            style={inputStyle}
+          />
+          <input
+            value={deal?.income ?? ""}
+            placeholder="Monthly Income"
+            readOnly
+            style={inputStyle}
+          />
+          <input
+            value={deal?.creditScore ?? ""}
+            placeholder="Credit Score"
+            readOnly
+            style={inputStyle}
+          />
+          <input
+            placeholder="Job Time (months)"
+            readOnly
+            style={inputStyle}
+          />
+          <input
+            placeholder="Residence Time (months)"
+            readOnly
+            style={inputStyle}
+          />
+          <input
+            value={deal?.downPayment ?? ""}
+            placeholder="Down Payment"
+            readOnly
+            style={inputStyle}
+          />
 
-          <div style={{ marginTop: 10 }}>
-            <button>Approve & Lock</button>
-            <button>Request Stips</button>
-            <button>Decline</button>
+          <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+            <button style={approveBtn}>Approve & Lock</button>
+            <button style={stipBtn}>Request Stips</button>
+            <button style={declineBtn}>Decline</button>
           </div>
         </div>
 
@@ -63,3 +116,40 @@ export default function UnderwritingPage() {
     </div>
   );
 }
+
+const inputStyle = {
+  display: "block" as const,
+  width: "100%",
+  padding: 12,
+  marginBottom: 12,
+  border: "1px solid #ccc",
+  borderRadius: 8,
+  boxSizing: "border-box" as const,
+};
+
+const approveBtn = {
+  background: "#16a34a",
+  color: "white",
+  padding: "10px 14px",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const stipBtn = {
+  background: "#f59e0b",
+  color: "white",
+  padding: "10px 14px",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const declineBtn = {
+  background: "#dc2626",
+  color: "white",
+  padding: "10px 14px",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
