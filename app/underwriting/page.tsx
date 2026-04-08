@@ -135,6 +135,8 @@ export default function UnderwritingPage() {
             creditScore: Number(found.creditScore || 0),
             downPayment: Number(found.downPayment || 0),
           });
+        } else {
+          setMessage("Deal not found.");
         }
       } catch (error) {
         console.error("Failed to load deal:", error);
@@ -147,6 +149,7 @@ export default function UnderwritingPage() {
 
   const decisionResult = useMemo(() => {
     if (!deal) return null;
+
     return getDecision(
       Number(deal.income || 0),
       Number(deal.creditScore || 0),
@@ -154,7 +157,14 @@ export default function UnderwritingPage() {
     );
   }, [deal]);
 
-  async function updateDeal(status: Decision) {
+  async function updateDeal(payload: {
+    status: Decision;
+    tier?: Tier;
+    lender?: Lender;
+    maxPayment?: number;
+    maxVehicle?: number;
+    reason?: string;
+  }) {
     if (!dealId) return;
 
     try {
@@ -163,7 +173,7 @@ export default function UnderwritingPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => null);
@@ -172,7 +182,7 @@ export default function UnderwritingPage() {
         throw new Error(data?.error || "Failed to update deal");
       }
 
-      setMessage(`Deal updated: ${status}`);
+      setMessage(`Deal updated: ${payload.status}`);
     } catch (error) {
       console.error("Failed to update deal:", error);
       setMessage("Failed to update deal.");
@@ -223,13 +233,51 @@ export default function UnderwritingPage() {
           />
 
           <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-            <button style={approveBtn} onClick={() => updateDeal("APPROVED")}>
+            <button
+              style={approveBtn}
+              onClick={() =>
+                updateDeal({
+                  status: "APPROVED",
+                  tier: decisionResult?.tier,
+                  lender: decisionResult?.lender,
+                  maxPayment: decisionResult?.maxPayment,
+                  maxVehicle: decisionResult?.maxVehicle,
+                  reason: decisionResult?.reason,
+                })
+              }
+            >
               Approve & Lock
             </button>
-            <button style={stipBtn} onClick={() => updateDeal("DOCS_NEEDED")}>
+
+            <button
+              style={stipBtn}
+              onClick={() =>
+                updateDeal({
+                  status: "DOCS_NEEDED",
+                  tier: decisionResult?.tier,
+                  lender: decisionResult?.lender,
+                  maxPayment: decisionResult?.maxPayment,
+                  maxVehicle: decisionResult?.maxVehicle,
+                  reason: decisionResult?.reason,
+                })
+              }
+            >
               Request Stips
             </button>
-            <button style={declineBtn} onClick={() => updateDeal("DENIED")}>
+
+            <button
+              style={declineBtn}
+              onClick={() =>
+                updateDeal({
+                  status: "DENIED",
+                  tier: decisionResult?.tier,
+                  lender: decisionResult?.lender,
+                  maxPayment: decisionResult?.maxPayment,
+                  maxVehicle: decisionResult?.maxVehicle,
+                  reason: decisionResult?.reason,
+                })
+              }
+            >
               Decline
             </button>
           </div>
