@@ -43,7 +43,7 @@ export default function HomePage() {
               </Link>
             </nav>
 
-            <button className="rounded-full border border-black/10 bg-white/85 px-5 py-3 text-[14px] font-semibold text-[#111111] shadow-[0_10px_24px_rgba(0,0,0,0.04)] transition hover:bg-white">
+            <button className="rounded-full border border-black/10 bg-white px-5 py-3 text-[14px] font-semibold text-black/70 transition hover:text-black">
               Request access
             </button>
           </div>
@@ -60,7 +60,7 @@ export default function HomePage() {
               Built for modern auto finance
             </div>
 
-            <h1 className="max-w-4xl text-[84px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#111111] sm:text-[104px] xl:text-[124px]">
+            <h1 className="max-w-3xl text-[78px] font-semibold leading-[0.92] tracking-[-0.065em] text-[#111111] sm:text-[96px] xl:text-[110px]">
               Control the decision.
               <br />
               Control the outcome.
@@ -123,21 +123,21 @@ export default function HomePage() {
           {/* RIGHT */}
           <div className="relative">
             <div className="absolute inset-0 rounded-[42px] bg-white/75 blur-2xl" />
-            <div className="relative overflow-hidden rounded-[42px] border border-black/10 bg-white/86 p-8 shadow-[0_45px_120px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+            <div className="relative overflow-hidden rounded-[42px] border border-black/10 bg-white/86 p-8 shadow-[0_60px_140px_rgba(0,0,0,0.18)] ring-1 ring-black/5 backdrop-blur-xl">
               <div className="absolute inset-x-0 top-0 h-[150px] bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0))]" />
 
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-3 text-[12px] uppercase tracking-[0.30em] text-black/38">
                     <span>Live decision proof</span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-emerald-700">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[#d7e9df] bg-[#eef6f2] px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-[#2f6f55]">
+                      <span className="h-2 w-2 rounded-full bg-[#2f6f55]" />
                       LIVE
                     </span>
                   </div>
 
-                  <div className="mt-4 text-[64px] font-semibold leading-none tracking-[-0.07em] text-[#111111]">
-                    APPROVED
+                  <div className="mt-4 text-[64px] font-semibold leading-none text-[#111111]">
+                    <span className="tracking-[-0.06em]">APPROVED</span>
                   </div>
                 </div>
 
@@ -147,8 +147,8 @@ export default function HomePage() {
               </div>
 
               <div className="mt-6 flex items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#d7e9df] bg-[#eef6f2] px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#2f6f55]">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#2f6f55]" />
                   Rate locked
                 </span>
               </div>
