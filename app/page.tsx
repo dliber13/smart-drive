@@ -5,18 +5,19 @@ export default function HomePage() {
     <main className="min-h-screen overflow-hidden bg-[#f7f4ee] text-[#111111]">
       {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbf9f5_0%,#f7f4ee_44%,#f2ede5_100%)]" />
-        <div className="absolute left-[-10%] top-[-8%] h-[520px] w-[520px] rounded-full bg-white/90 blur-3xl" />
-        <div className="absolute left-[18%] top-[10%] h-[420px] w-[420px] rounded-full bg-[#ece1d3] blur-3xl opacity-70" />
-        <div className="absolute right-[-8%] top-[6%] h-[420px] w-[420px] rounded-full bg-white/80 blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(rgba(17,17,17,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.18)_1px,transparent_1px)] [background-size:84px_84px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fcfaf6_0%,#f7f4ee_42%,#f1ece4_100%)]" />
+        <div className="absolute left-[-12%] top-[-8%] h-[560px] w-[560px] rounded-full bg-white/95 blur-3xl" />
+        <div className="absolute left-[18%] top-[8%] h-[420px] w-[420px] rounded-full bg-[#e9dece] blur-3xl opacity-80" />
+        <div className="absolute right-[-8%] top-[4%] h-[460px] w-[460px] rounded-full bg-white/80 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(17,17,17,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.16)_1px,transparent_1px)] [background-size:88px_88px]" />
+        <div className="absolute inset-x-0 top-0 h-px bg-black/8" />
       </div>
 
-      {/* NAV */}
+      {/* HEADER */}
       <header className="relative z-10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-8">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[20px] border border-black/8 bg-white/90 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[20px] border border-black/8 bg-white/95 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
               <span className="text-[15px] font-bold tracking-[0.24em] text-[#111111]">
                 SDF
               </span>
@@ -45,25 +46,25 @@ export default function HomePage() {
 
       {/* HERO */}
       <section className="relative z-10">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-8 pb-16 pt-8 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-8 pb-18 pt-8 lg:grid-cols-[1.03fr_0.97fr]">
+          {/* LEFT */}
           <div className="max-w-4xl">
-            <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/75 px-5 py-3 text-[12px] font-medium uppercase tracking-[0.28em] text-black/50 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur">
+            <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/80 px-5 py-3 text-[12px] font-medium uppercase tracking-[0.28em] text-black/50 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur">
               <span className="h-2.5 w-2.5 rounded-full bg-[#b89662]" />
               Built for modern auto finance
             </div>
 
-            <h1 className="max-w-5xl text-[68px] font-semibold leading-[0.9] tracking-[-0.08em] text-[#111111] sm:text-[86px] xl:text-[110px]">
-              Faster decisions.
+            <h1 className="max-w-5xl text-[76px] font-semibold leading-[0.86] tracking-[-0.085em] text-[#111111] sm:text-[98px] xl:text-[122px]">
+              Control the decision.
               <br />
-              Better structure.
-              <br />
-              Full control.
+              Control the outcome.
             </h1>
 
             <p className="mt-8 max-w-3xl text-[23px] leading-[1.5] tracking-[-0.02em] text-black/62">
               SmartDrive Financial helps finance teams evaluate credit, structure
               deals, route lender fit, and lock decisions in a platform designed
-              to increase speed, improve visibility, and elevate underwriting confidence.
+              to increase speed, improve visibility, and strengthen underwriting
+              confidence.
             </p>
 
             <div className="mt-10 flex flex-wrap gap-4">
@@ -76,15 +77,14 @@ export default function HomePage() {
 
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center rounded-[20px] border border-black/10 bg-white/80 px-8 py-4 text-[16px] font-semibold text-[#111111] shadow-[0_14px_34px_rgba(0,0,0,0.05)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white"
+                className="inline-flex items-center justify-center rounded-[20px] border border-black/10 bg-white/85 px-8 py-4 text-[16px] font-semibold text-[#111111] shadow-[0_14px_34px_rgba(0,0,0,0.05)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white"
               >
                 View Dashboard
               </Link>
             </div>
 
-            {/* VALUE STRIP */}
             <div className="mt-14 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="rounded-[28px] border border-black/8 bg-white/72 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
+              <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
                 <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
                   Speed
                 </div>
@@ -93,7 +93,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-black/8 bg-white/72 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
+              <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
                 <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
                   Precision
                 </div>
@@ -102,7 +102,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-black/8 bg-white/72 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
+              <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
                 <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
                   Visibility
                 </div>
@@ -113,18 +113,18 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* PROOF PANEL */}
+          {/* RIGHT */}
           <div className="relative">
-            <div className="absolute inset-0 rounded-[40px] bg-white/70 blur-2xl" />
-            <div className="relative overflow-hidden rounded-[40px] border border-black/8 bg-white/78 p-7 shadow-[0_35px_90px_rgba(0,0,0,0.10)] backdrop-blur-xl">
-              <div className="absolute inset-x-0 top-0 h-[140px] bg-[linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0))]" />
+            <div className="absolute inset-0 rounded-[42px] bg-white/75 blur-2xl" />
+            <div className="relative overflow-hidden rounded-[42px] border border-black/10 bg-white/86 p-8 shadow-[0_45px_120px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+              <div className="absolute inset-x-0 top-0 h-[150px] bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0))]" />
 
               <div className="relative flex items-start justify-between">
                 <div>
                   <div className="text-[12px] uppercase tracking-[0.30em] text-black/38">
                     Live decision proof
                   </div>
-                  <div className="mt-3 text-[40px] font-semibold leading-none tracking-[-0.06em] text-[#111111]">
+                  <div className="mt-4 text-[64px] font-semibold leading-none tracking-[-0.07em] text-[#111111]">
                     APPROVED
                   </div>
                 </div>
@@ -134,17 +134,17 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-8 rounded-[30px] border border-black/8 bg-[#fcfbf8] p-6">
+              <div className="mt-8 rounded-[30px] border border-black/8 bg-[#fcfbf8] p-7">
                 <div className="mb-5 text-[12px] uppercase tracking-[0.28em] text-black/38">
                   Key decision metrics
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-6 gap-y-8">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-9">
                   <div>
                     <div className="text-[13px] uppercase tracking-[0.20em] text-black/36">
                       Lender
                     </div>
-                    <div className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.05em]">
+                    <div className="mt-2 text-[34px] font-semibold leading-none tracking-[-0.05em]">
                       Westlake
                     </div>
                   </div>
@@ -153,7 +153,7 @@ export default function HomePage() {
                     <div className="text-[13px] uppercase tracking-[0.20em] text-black/36">
                       Status
                     </div>
-                    <div className="mt-2 text-[32px] font-semibold leading-none tracking-[-0.05em]">
+                    <div className="mt-2 text-[34px] font-semibold leading-none tracking-[-0.05em]">
                       Locked
                     </div>
                   </div>
@@ -162,7 +162,7 @@ export default function HomePage() {
                     <div className="text-[13px] uppercase tracking-[0.20em] text-black/36">
                       Max Payment
                     </div>
-                    <div className="mt-2 text-[36px] font-semibold leading-none tracking-[-0.06em]">
+                    <div className="mt-2 text-[42px] font-semibold leading-none tracking-[-0.065em]">
                       $685
                     </div>
                   </div>
@@ -171,18 +171,18 @@ export default function HomePage() {
                     <div className="text-[13px] uppercase tracking-[0.20em] text-black/36">
                       Max Vehicle
                     </div>
-                    <div className="mt-2 text-[36px] font-semibold leading-none tracking-[-0.06em]">
+                    <div className="mt-2 text-[42px] font-semibold leading-none tracking-[-0.065em]">
                       $32,880
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[30px] border border-black/8 bg-[#fcfbf8] p-6">
+              <div className="mt-5 rounded-[30px] border border-black/8 bg-[#fcfbf8] p-7">
                 <div className="mb-4 text-[12px] uppercase tracking-[0.28em] text-black/38">
                   Why this matters
                 </div>
-                <p className="text-[19px] leading-8 tracking-[-0.02em] text-black/64">
+                <p className="text-[20px] leading-8 tracking-[-0.02em] text-black/64">
                   Clean lender alignment, clear payment tolerance, and structured
                   approval logic reduce friction, improve file quality, and help
                   finance teams move faster with better control.
@@ -229,7 +229,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="rounded-[32px] border border-black/8 bg-white/72 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="rounded-[32px] border border-black/8 bg-white/74 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-[18px] border border-black/8 bg-[#f1ebe2] text-[14px] font-semibold text-[#111111]">
                 01
               </div>
@@ -238,12 +238,12 @@ export default function HomePage() {
               </h3>
               <p className="mt-4 text-[17px] leading-8 text-black/60">
                 Move from intake to decision with less friction and better
-                structure, so teams can spend more time moving deals and less time
-                chasing clarity.
+                structure, so teams can spend more time moving deals and less
+                time chasing clarity.
               </p>
             </div>
 
-            <div className="rounded-[32px] border border-black/8 bg-white/72 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="rounded-[32px] border border-black/8 bg-white/74 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-[18px] border border-black/8 bg-[#f1ebe2] text-[14px] font-semibold text-[#111111]">
                 02
               </div>
@@ -256,7 +256,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="rounded-[32px] border border-black/8 bg-white/72 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="rounded-[32px] border border-black/8 bg-white/74 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-[18px] border border-black/8 bg-[#f1ebe2] text-[14px] font-semibold text-[#111111]">
                 03
               </div>
@@ -265,7 +265,8 @@ export default function HomePage() {
               </h3>
               <p className="mt-4 text-[17px] leading-8 text-black/60">
                 Keep visibility across every file, every decision, and every
-                status so underwriting becomes easier to manage, trust, and scale.
+                status so underwriting becomes easier to manage, trust, and
+                scale.
               </p>
             </div>
           </div>
