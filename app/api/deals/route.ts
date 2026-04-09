@@ -29,10 +29,13 @@ export async function POST(req: Request) {
         email: body.email ?? null,
         phone: body.phone ?? null,
 
+        stockNumber: body.stockNumber ?? null,
+        vin: body.vin ?? null,
         vehicleYear: body.vehicleYear ?? null,
         vehicleMake: body.vehicleMake ?? null,
         vehicleModel: body.vehicleModel ?? null,
         vehiclePrice: body.vehiclePrice ?? null,
+
         downPayment: body.downPayment ?? null,
         tradeIn: body.tradeIn ?? null,
         amountFinanced: body.amountFinanced ?? null,
