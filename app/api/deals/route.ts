@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import prisma from "@/lib/prisma"
 
-// GET ALL DEALS
 export async function GET() {
   try {
     const applications = await prisma.application.findMany({
@@ -19,28 +18,27 @@ export async function GET() {
   }
 }
 
-// CREATE DEAL
 export async function POST(req: Request) {
   try {
     const body = await req.json()
 
     const application = await prisma.application.create({
       data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        email: body.email,
-        phone: body.phone,
+        firstName: body.firstName ?? null,
+        lastName: body.lastName ?? null,
+        email: body.email ?? null,
+        phone: body.phone ?? null,
 
-        vehicleYear: body.vehicleYear,
-        vehicleMake: body.vehicleMake,
-        vehicleModel: body.vehicleModel,
-        vehiclePrice: body.vehiclePrice,
-        downPayment: body.downPayment,
-        tradeIn: body.tradeIn,
-        amountFinanced: body.amountFinanced,
+        vehicleYear: body.vehicleYear ?? null,
+        vehicleMake: body.vehicleMake ?? null,
+        vehicleModel: body.vehicleModel ?? null,
+        vehiclePrice: body.vehiclePrice ?? null,
+        downPayment: body.downPayment ?? null,
+        tradeIn: body.tradeIn ?? null,
+        amountFinanced: body.amountFinanced ?? null,
 
-        creditScore: body.creditScore,
-        monthlyIncome: body.monthlyIncome,
+        creditScore: body.creditScore ?? null,
+        monthlyIncome: body.monthlyIncome ?? null,
 
         status: "PENDING",
       },
