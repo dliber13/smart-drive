@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 
-// GET SINGLE DEAL
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+type RouteContext = {
+  params: Promise<{
+    id: string
+  }>
+}
+
+export async function GET(_req: Request, context: RouteContext) {
   try {
+    const { id } = await context.params
+
     const application = await prisma.application.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!application) {
@@ -25,21 +29,15 @@ export async function GET(
   }
 }
 
-// UPDATE DEAL (THIS IS THE IMPORTANT PART)
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, context: RouteContext) {
   try {
+    const { id } = await context.params
     const body = await req.json()
 
     const updated = await prisma.application.update({
-      where: { id: params.id },
+      where: { id },
       data: {
-        // status update (Approve / Decline / Stips)
         status: body.status ?? undefined,
-
-        // ✅ UNDERWRITING FIELDS (NOW SAVED)
         tier: body.tier ?? undefined,
         lender: body.lender ?? undefined,
         maxPayment: body.maxPayment ?? undefined,
