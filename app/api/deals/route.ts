@@ -1,9 +1,19 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import { getRequestUser, unauthorizedResponse } from "@/lib/auth"
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const user = await getRequestUser(req)
+  if (!user) return unauthorizedResponse()
+
   try {
+    const where =
+      user.role === "ADMIN"
+        ? {}
+        : { teamId: user.teamId ?? "__no_team__" }
+
     const applications = await prisma.application.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       take: 100,
     })
@@ -18,12 +28,18 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const user = await getRequestUser(req)
+  if (!user) return unauthorizedResponse()
+
   try {
     const body = await req.json()
 
     const application = await prisma.application.create({
       data: {
+        ownerId: user.id,
+        teamId: user.teamId,
+
         firstName: body.firstName ?? null,
         lastName: body.lastName ?? null,
         email: body.email ?? null,
