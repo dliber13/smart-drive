@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 type Deal = {
   id: string;
   customerName?: string;
+  stockNumber?: string;
+  vin?: string;
+  vehicleLabel?: string;
   income?: number;
   creditScore?: number;
   downPayment?: number;
@@ -14,7 +17,6 @@ type Tier = "Tier 1" | "Tier 2" | "Tier 3" | "Decline";
 type Decision = "APPROVED" | "DOCS_NEEDED" | "DENIED";
 type Lender = "Westlake" | "CAC" | "Smart Drive" | "Manual Review";
 
-// ---------- LOGIC (UNCHANGED) ----------
 function getTier(creditScore: number): Tier {
   if (creditScore >= 600) return "Tier 1";
   if (creditScore >= 520) return "Tier 2";
@@ -39,8 +41,8 @@ function getDecision(income: number, creditScore: number, downPayment: number) {
   if (income < 1800) {
     return {
       tier,
-      decision: "DENIED",
-      lender: "Manual Review",
+      decision: "DENIED" as Decision,
+      lender: "Manual Review" as Lender,
       maxPayment: 0,
       maxVehicle: 0,
       reason: "Income below minimum threshold.",
@@ -66,7 +68,7 @@ function getDecision(income: number, creditScore: number, downPayment: number) {
   if (tier === "Tier 3" && downPayment < 1000) {
     return {
       tier,
-      decision: "DOCS_NEEDED",
+      decision: "DOCS_NEEDED" as Decision,
       lender,
       maxPayment: Math.round(maxPayment),
       maxVehicle,
@@ -77,7 +79,7 @@ function getDecision(income: number, creditScore: number, downPayment: number) {
   if (creditScore < 560 || downPayment < 800) {
     return {
       tier,
-      decision: "DOCS_NEEDED",
+      decision: "DOCS_NEEDED" as Decision,
       lender,
       maxPayment: Math.round(maxPayment),
       maxVehicle,
@@ -87,7 +89,7 @@ function getDecision(income: number, creditScore: number, downPayment: number) {
 
   return {
     tier,
-    decision: "APPROVED",
+    decision: "APPROVED" as Decision,
     lender,
     maxPayment: Math.round(maxPayment),
     maxVehicle,
@@ -95,7 +97,6 @@ function getDecision(income: number, creditScore: number, downPayment: number) {
   };
 }
 
-// ---------- UI ----------
 export default function UnderwritingPage() {
   const [dealId, setDealId] = useState("");
   const [deal, setDeal] = useState<Deal | null>(null);
@@ -112,13 +113,17 @@ export default function UnderwritingPage() {
     const fetchDeal = async () => {
       const res = await fetch("/api/deals");
       const data = await res.json();
-
       const found = data?.find((d: any) => d.id === dealId);
 
       if (found) {
+        const vehicleParts = [found.vehicleYear, found.vehicleMake, found.vehicleModel].filter(Boolean);
+
         setDeal({
           id: found.id,
-          customerName: `${found.firstName || ""} ${found.lastName || ""}`,
+          customerName: `${found.firstName || ""} ${found.lastName || ""}`.trim(),
+          stockNumber: found.stockNumber || "",
+          vin: found.vin || "",
+          vehicleLabel: vehicleParts.length ? vehicleParts.join(" ") : "—",
           income: Number(found.monthlyIncome || 0),
           creditScore: Number(found.creditScore || 0),
           downPayment: Number(found.downPayment || 0),
@@ -167,7 +172,6 @@ export default function UnderwritingPage() {
         SmartDrive Financial — Underwriting
       </h1>
 
-      {/* TOP DECISION PANEL */}
       <div className="mb-8 p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
         <div className="flex justify-between items-center">
           <div>
@@ -191,7 +195,7 @@ export default function UnderwritingPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-4 gap-6 text-sm">
+        <div className="mt-6 grid grid-cols-2 gap-6 text-sm md:grid-cols-6">
           <div>
             <div className="text-gray-400">Tier</div>
             <div className="font-semibold">{result.tier}</div>
@@ -208,32 +212,37 @@ export default function UnderwritingPage() {
             <div className="text-gray-400">Max Vehicle</div>
             <div className="font-semibold">${result.maxVehicle}</div>
           </div>
+          <div>
+            <div className="text-gray-400">Stock #</div>
+            <div className="font-semibold">{deal.stockNumber || "—"}</div>
+          </div>
+          <div>
+            <div className="text-gray-400">VIN</div>
+            <div className="font-semibold break-all">{deal.vin || "—"}</div>
+          </div>
         </div>
       </div>
 
-      {/* GRID */}
       <div className="grid md:grid-cols-2 gap-6">
-
-        {/* BORROWER CARD */}
         <div className="p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
-          <h2 className="text-lg font-semibold mb-4">Borrower Profile</h2>
+          <h2 className="text-lg font-semibold mb-4">Borrower & Vehicle Profile</h2>
 
           <div className="space-y-3 text-sm">
+            <div>Vehicle: {deal.vehicleLabel}</div>
+            <div>Stock #: {deal.stockNumber || "—"}</div>
+            <div>VIN: {deal.vin || "—"}</div>
             <div>Income: ${deal.income}</div>
             <div>Credit Score: {deal.creditScore}</div>
             <div>Down Payment: ${deal.downPayment}</div>
           </div>
         </div>
 
-        {/* DECISION CARD */}
         <div className="p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
           <h2 className="text-lg font-semibold mb-4">Decision Reason</h2>
           <p className="text-gray-300">{result.reason}</p>
         </div>
-
       </div>
 
-      {/* ACTION BAR */}
       <div className="mt-8 flex gap-4">
         <button
           onClick={() => updateDeal("APPROVED")}
