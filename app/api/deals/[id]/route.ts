@@ -1,5 +1,10 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import {
+  forbiddenResponse,
+  getRequestUser,
+  unauthorizedResponse,
+} from "@/lib/auth"
 
 type RouteContext = {
   params: Promise<{
@@ -7,19 +12,35 @@ type RouteContext = {
   }>
 }
 
-export async function GET(_req: Request, context: RouteContext) {
+async function getAuthorizedApplication(req: NextRequest, id: string) {
+  const user = await getRequestUser(req)
+  if (!user) return { error: unauthorizedResponse(), user: null, application: null }
+
+  const application = await prisma.application.findUnique({
+    where: { id },
+  })
+
+  if (!application) {
+    return {
+      error: NextResponse.json({ error: "Deal not found" }, { status: 404 }),
+      user,
+      application: null,
+    }
+  }
+
+  if (user.role !== "ADMIN" && application.teamId !== user.teamId) {
+    return { error: forbiddenResponse(), user, application: null }
+  }
+
+  return { error: null, user, application }
+}
+
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
-
-    const application = await prisma.application.findUnique({
-      where: { id },
-    })
-
-    if (!application) {
-      return NextResponse.json({ error: "Deal not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(application)
+    const result = await getAuthorizedApplication(req, id)
+    if (result.error) return result.error
+    return NextResponse.json(result.application)
   } catch (error) {
     console.error("GET DEAL ERROR:", error)
     return NextResponse.json(
@@ -29,9 +50,12 @@ export async function GET(_req: Request, context: RouteContext) {
   }
 }
 
-export async function PATCH(req: Request, context: RouteContext) {
+export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params
+    const result = await getAuthorizedApplication(req, id)
+    if (result.error) return result.error
+
     const body = await req.json()
 
     const updated = await prisma.application.update({
