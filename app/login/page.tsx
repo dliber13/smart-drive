@@ -163,7 +163,7 @@ export default function LoginPage() {
             First-time setup
           </button>
         </div>
-      </div>
+      </div> 
     </main>
   )
 }
