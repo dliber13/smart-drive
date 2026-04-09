@@ -9,6 +9,8 @@ type Deal = {
   lastName: string | null;
   email: string | null;
   phone: string | null;
+  stockNumber: string | null;
+  vin: string | null;
   vehicleYear: number | null;
   vehicleMake: string | null;
   vehicleModel: string | null;
@@ -27,6 +29,8 @@ type FormState = {
   lastName: string;
   email: string;
   phone: string;
+  stockNumber: string;
+  vin: string;
   vehicleYear: string;
   vehicleMake: string;
   vehicleModel: string;
@@ -43,6 +47,8 @@ const initialForm: FormState = {
   lastName: "",
   email: "",
   phone: "",
+  stockNumber: "",
+  vin: "",
   vehicleYear: "",
   vehicleMake: "",
   vehicleModel: "",
@@ -106,8 +112,7 @@ export default function DealerPage() {
       setLoadingDeals(true);
       const res = await fetch("/api/deals", { cache: "no-store" });
       const data = await res.json();
-      const normalized = Array.isArray(data) ? data : [];
-      setDeals(normalized);
+      setDeals(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to load deals:", error);
       setMessage("Failed to load deals.");
@@ -150,6 +155,8 @@ export default function DealerPage() {
         lastName: form.lastName || null,
         email: form.email || null,
         phone: form.phone || null,
+        stockNumber: form.stockNumber || null,
+        vin: form.vin || null,
         vehicleYear: toNumberOrNull(form.vehicleYear),
         vehicleMake: form.vehicleMake || null,
         vehicleModel: form.vehicleModel || null,
@@ -239,8 +246,9 @@ export default function DealerPage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-[21px] leading-[1.55] tracking-[-0.02em] text-black/62">
-              Enter borrower and vehicle details, push files into underwriting,
-              and keep visibility across every deal from intake to decision.
+              Enter borrower and vehicle details, including stock number and VIN,
+              push files into underwriting, and keep visibility across every deal
+              from intake to decision.
             </p>
           </div>
 
@@ -273,7 +281,6 @@ export default function DealerPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.02fr_0.98fr]">
-          {/* FORM PANEL */}
           <div className="relative overflow-hidden rounded-[36px] border border-black/10 bg-white/86 p-8 shadow-[0_45px_120px_rgba(0,0,0,0.14)] ring-1 ring-black/5 backdrop-blur-xl">
             <div className="absolute inset-x-0 top-0 h-[140px] bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0))]" />
 
@@ -289,95 +296,32 @@ export default function DealerPage() {
 
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <Field
-                    label="First Name"
-                    value={form.firstName}
-                    onChange={(v) => updateField("firstName", v)}
-                    placeholder="Douglas"
-                  />
-                  <Field
-                    label="Last Name"
-                    value={form.lastName}
-                    onChange={(v) => updateField("lastName", v)}
-                    placeholder="Liber"
-                  />
-                  <Field
-                    label="Email"
-                    value={form.email}
-                    onChange={(v) => updateField("email", v)}
-                    placeholder="name@email.com"
-                  />
-                  <Field
-                    label="Phone"
-                    value={form.phone}
-                    onChange={(v) => updateField("phone", v)}
-                    placeholder="(555) 555-5555"
-                  />
-                  <Field
-                    label="Vehicle Year"
-                    value={form.vehicleYear}
-                    onChange={(v) => updateField("vehicleYear", v)}
-                    placeholder="2022"
-                  />
-                  <Field
-                    label="Vehicle Make"
-                    value={form.vehicleMake}
-                    onChange={(v) => updateField("vehicleMake", v)}
-                    placeholder="Honda"
-                  />
-                  <Field
-                    label="Vehicle Model"
-                    value={form.vehicleModel}
-                    onChange={(v) => updateField("vehicleModel", v)}
-                    placeholder="Accord"
-                  />
-                  <Field
-                    label="Vehicle Price"
-                    value={form.vehiclePrice}
-                    onChange={(v) => updateField("vehiclePrice", v)}
-                    placeholder="24995"
-                  />
-                  <Field
-                    label="Down Payment"
-                    value={form.downPayment}
-                    onChange={(v) => updateField("downPayment", v)}
-                    placeholder="2000"
-                  />
-                  <Field
-                    label="Trade In"
-                    value={form.tradeIn}
-                    onChange={(v) => updateField("tradeIn", v)}
-                    placeholder="1500"
-                  />
-                  <Field
-                    label="Amount Financed"
-                    value={form.amountFinanced}
-                    onChange={(v) => updateField("amountFinanced", v)}
-                    placeholder="21495"
-                  />
-                  <Field
-                    label="Credit Score"
-                    value={form.creditScore}
-                    onChange={(v) => updateField("creditScore", v)}
-                    placeholder="620"
-                  />
+                  <Field label="First Name" value={form.firstName} onChange={(v) => updateField("firstName", v)} placeholder="Douglas" />
+                  <Field label="Last Name" value={form.lastName} onChange={(v) => updateField("lastName", v)} placeholder="Liber" />
+                  <Field label="Email" value={form.email} onChange={(v) => updateField("email", v)} placeholder="name@email.com" />
+                  <Field label="Phone" value={form.phone} onChange={(v) => updateField("phone", v)} placeholder="(555) 555-5555" />
+                  <Field label="Stock Number" value={form.stockNumber} onChange={(v) => updateField("stockNumber", v)} placeholder="A12345" />
+                  <Field label="VIN" value={form.vin} onChange={(v) => updateField("vin", v.toUpperCase())} placeholder="1HGCM82633A123456" />
+                  <Field label="Vehicle Year" value={form.vehicleYear} onChange={(v) => updateField("vehicleYear", v)} placeholder="2022" />
+                  <Field label="Vehicle Make" value={form.vehicleMake} onChange={(v) => updateField("vehicleMake", v)} placeholder="Honda" />
+                  <Field label="Vehicle Model" value={form.vehicleModel} onChange={(v) => updateField("vehicleModel", v)} placeholder="Accord" />
+                  <Field label="Vehicle Price" value={form.vehiclePrice} onChange={(v) => updateField("vehiclePrice", v)} placeholder="24995" />
+                  <Field label="Down Payment" value={form.downPayment} onChange={(v) => updateField("downPayment", v)} placeholder="2000" />
+                  <Field label="Trade In" value={form.tradeIn} onChange={(v) => updateField("tradeIn", v)} placeholder="1500" />
+                  <Field label="Amount Financed" value={form.amountFinanced} onChange={(v) => updateField("amountFinanced", v)} placeholder="21495" />
+                  <Field label="Credit Score" value={form.creditScore} onChange={(v) => updateField("creditScore", v)} placeholder="620" />
                 </div>
 
                 <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <Field
-                    label="Monthly Income"
-                    value={form.monthlyIncome}
-                    onChange={(v) => updateField("monthlyIncome", v)}
-                    placeholder="4200"
-                  />
+                  <Field label="Monthly Income" value={form.monthlyIncome} onChange={(v) => updateField("monthlyIncome", v)} placeholder="4200" />
 
                   <div className="rounded-[24px] border border-black/8 bg-[#fcfbf8] p-5 shadow-[inset_0_1px_0_rgba(0,0,0,0.03)]">
                     <div className="text-[12px] uppercase tracking-[0.28em] text-black/38">
-                      Submission standard
+                      Vehicle identification
                     </div>
                     <p className="mt-3 text-[16px] leading-7 text-black/60">
-                      Submit complete borrower and vehicle details so files route
-                      cleanly into underwriting with less friction and better visibility.
+                      Capture stock number and VIN on every file so the system stays tied
+                      to the exact unit being structured and underwritten.
                     </p>
                   </div>
                 </div>
@@ -412,7 +356,6 @@ export default function DealerPage() {
             </div>
           </div>
 
-          {/* DEAL QUEUE */}
           <div className="relative overflow-hidden rounded-[36px] border border-black/10 bg-white/86 p-8 shadow-[0_45px_120px_rgba(0,0,0,0.14)] ring-1 ring-black/5 backdrop-blur-xl">
             <div className="absolute inset-x-0 top-0 h-[140px] bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0))]" />
 
@@ -468,6 +411,14 @@ export default function DealerPage() {
                           </div>
 
                           <div className="mt-4 grid grid-cols-1 gap-3 text-[15px] text-black/62 sm:grid-cols-2">
+                            <div>
+                              <span className="text-black/36">Stock #:</span>{" "}
+                              {deal.stockNumber || "—"}
+                            </div>
+                            <div>
+                              <span className="text-black/36">VIN:</span>{" "}
+                              {deal.vin || "—"}
+                            </div>
                             <div>
                               <span className="text-black/36">Vehicle:</span>{" "}
                               {buildVehicleLabel(deal)}
