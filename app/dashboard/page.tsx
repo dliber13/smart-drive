@@ -1,10 +1,13 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import { requireUser } from "@/lib/auth"
 
 type RecentApplication = {
   id: string
   firstName: string | null
   lastName: string | null
+  stockNumber: string | null
+  vin: string | null
   status: string
   monthlyIncome: number | null
   creditScore: number | null
@@ -38,17 +41,27 @@ function buildVehicleLabel(app: RecentApplication) {
 function statusStyle(status: string) {
   switch (status) {
     case "APPROVED":
-      return "bg-green-100 text-green-700"
+      return "bg-[#eef6f2] text-[#2f6f55]"
     case "DECLINED":
-      return "bg-red-100 text-red-700"
+    case "DENIED":
+      return "bg-[#f8ece8] text-[#8a4a3d]"
     case "FUNDED":
-      return "bg-blue-100 text-blue-700"
+      return "bg-[#edf2f8] text-[#415a77]"
+    case "DOCS_NEEDED":
+      return "bg-[#f8f2e8] text-[#8a6a3d]"
     default:
       return "bg-gray-100 text-gray-700"
   }
 }
 
 export default async function DashboardPage() {
+  const user = await requireUser()
+
+  const scope =
+    user.role === "ADMIN"
+      ? {}
+      : { teamId: user.teamId ?? "__no_team__" }
+
   let total = 0
   let pending = 0
   let approved = 0
@@ -57,19 +70,27 @@ export default async function DashboardPage() {
   let recent: RecentApplication[] = []
 
   try {
-    total = await prisma.application.count()
-    pending = await prisma.application.count({ where: { status: "PENDING" } })
-    approved = await prisma.application.count({ where: { status: "APPROVED" } })
-    funded = await prisma.application.count({ where: { status: "FUNDED" } })
-    declined = await prisma.application.count({ where: { status: "DECLINED" } })
+    total = await prisma.application.count({ where: scope })
+    pending = await prisma.application.count({ where: { ...scope, status: "PENDING" } })
+    approved = await prisma.application.count({ where: { ...scope, status: "APPROVED" } })
+    funded = await prisma.application.count({ where: { ...scope, status: "FUNDED" } })
+    declined = await prisma.application.count({
+      where: {
+        ...scope,
+        OR: [{ status: "DECLINED" }, { status: "DENIED" }],
+      },
+    })
 
     recent = await prisma.application.findMany({
+      where: scope,
       orderBy: { createdAt: "desc" },
       take: 12,
       select: {
         id: true,
         firstName: true,
         lastName: true,
+        stockNumber: true,
+        vin: true,
         status: true,
         monthlyIncome: true,
         creditScore: true,
@@ -80,68 +101,48 @@ export default async function DashboardPage() {
       },
     })
   } catch (e) {
-    console.error(e)
+    console.error("DASHBOARD PAGE ERROR:", e)
   }
 
   return (
     <main className="min-h-screen bg-[#f7f5f2] p-6">
       <div className="mx-auto max-w-7xl">
-
-        {/* HEADER */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
               SmartDrive Financial
             </h1>
             <p className="text-sm text-gray-500">
-              Underwriting Dashboard
+              Underwriting Dashboard · {user.role} · {user.team?.name || "All Teams"}
             </p>
           </div>
 
-          <Link
-            href="/dealer"
-            className="rounded-full bg-black px-5 py-2 text-sm text-white hover:opacity-90"
-          >
-            New Deal
-          </Link>
+          <div className="flex items-center gap-3">
+            {user.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm text-black/70"
+              >
+                Admin
+              </Link>
+            )}
+            <Link
+              href="/dealer"
+              className="rounded-full bg-black px-5 py-2 text-sm text-white"
+            >
+              New Deal
+            </Link>
+          </div>
         </div>
 
-        {/* KPI ROW */}
         <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Total Deals</p>
-            <p className="mt-2 text-3xl font-semibold">{total}</p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Pending</p>
-            <p className="mt-2 text-3xl font-semibold">{pending}</p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Approved</p>
-            <p className="mt-2 text-3xl font-semibold text-green-600">
-              {approved}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Funded</p>
-            <p className="mt-2 text-3xl font-semibold text-blue-600">
-              {funded}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Declined</p>
-            <p className="mt-2 text-3xl font-semibold text-red-600">
-              {declined}
-            </p>
-          </div>
+          <Kpi label="Total Deals" value={total} />
+          <Kpi label="Pending" value={pending} />
+          <Kpi label="Approved" value={approved} valueClass="text-[#2f6f55]" />
+          <Kpi label="Funded" value={funded} valueClass="text-[#415a77]" />
+          <Kpi label="Declined" value={declined} valueClass="text-[#8a4a3d]" />
         </div>
 
-        {/* TABLE CARD */}
         <div className="rounded-3xl bg-white shadow-sm">
           <div className="flex items-center justify-between border-b px-6 py-4">
             <h2 className="text-lg font-semibold">Recent Deals</h2>
@@ -152,6 +153,8 @@ export default async function DashboardPage() {
               <thead className="text-xs text-gray-500">
                 <tr>
                   <th className="px-6 py-3 text-left">Applicant</th>
+                  <th className="px-6 py-3 text-left">Stock #</th>
+                  <th className="px-6 py-3 text-left">VIN</th>
                   <th className="px-6 py-3 text-left">Status</th>
                   <th className="px-6 py-3 text-left">Income</th>
                   <th className="px-6 py-3 text-left">Score</th>
@@ -164,7 +167,7 @@ export default async function DashboardPage() {
               <tbody>
                 {recent.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-gray-400">
+                    <td colSpan={9} className="px-6 py-10 text-center text-gray-400">
                       No deals yet
                     </td>
                   </tr>
@@ -175,12 +178,16 @@ export default async function DashboardPage() {
                         {(app.firstName || "") + " " + (app.lastName || "")}
                       </td>
 
+                      <td className="px-6 py-4">{app.stockNumber || "-"}</td>
+
                       <td className="px-6 py-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle(
-                            app.status
-                          )}`}
-                        >
+                        <span className="font-mono text-xs">
+                          {app.vin || "-"}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle(app.status)}`}>
                           {app.status}
                         </span>
                       </td>
@@ -216,8 +223,24 @@ export default async function DashboardPage() {
             </table>
           </div>
         </div>
-
       </div>
     </main>
+  )
+}
+
+function Kpi({
+  label,
+  value,
+  valueClass = "",
+}: {
+  label: string
+  value: number
+  valueClass?: string
+}) {
+  return (
+    <div className="rounded-2xl bg-white p-6 shadow-sm">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`mt-2 text-3xl font-semibold ${valueClass}`}>{value}</p>
+    </div>
   )
 }
