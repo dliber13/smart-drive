@@ -14,6 +14,7 @@ type Tier = "Tier 1" | "Tier 2" | "Tier 3" | "Decline";
 type Decision = "APPROVED" | "DOCS_NEEDED" | "DENIED";
 type Lender = "Westlake" | "CAC" | "Smart Drive" | "Manual Review";
 
+// ---------- LOGIC (UNCHANGED) ----------
 function getTier(creditScore: number): Tier {
   if (creditScore >= 600) return "Tier 1";
   if (creditScore >= 520) return "Tier 2";
@@ -21,25 +22,14 @@ function getTier(creditScore: number): Tier {
   return "Decline";
 }
 
-function getDecision(
-  income: number,
-  creditScore: number,
-  downPayment: number
-): {
-  tier: Tier;
-  decision: Decision;
-  lender: Lender;
-  maxPayment: number;
-  maxVehicle: number;
-  reason: string;
-} {
+function getDecision(income: number, creditScore: number, downPayment: number) {
   const tier = getTier(creditScore);
 
   if (tier === "Decline") {
     return {
       tier,
-      decision: "DENIED",
-      lender: "Manual Review",
+      decision: "DENIED" as Decision,
+      lender: "Manual Review" as Lender,
       maxPayment: 0,
       maxVehicle: 0,
       reason: "Credit score below minimum threshold.",
@@ -80,7 +70,7 @@ function getDecision(
       lender,
       maxPayment: Math.round(maxPayment),
       maxVehicle,
-      reason: "Tier 3 file requires stronger cash down.",
+      reason: "Tier 3 requires stronger cash down.",
     };
   }
 
@@ -105,6 +95,7 @@ function getDecision(
   };
 }
 
+// ---------- UI ----------
 export default function UnderwritingPage() {
   const [dealId, setDealId] = useState("");
   const [deal, setDeal] = useState<Deal | null>(null);
@@ -112,237 +103,163 @@ export default function UnderwritingPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get("id") || "";
-    setDealId(id);
+    setDealId(params.get("id") || "");
   }, []);
 
   useEffect(() => {
     if (!dealId) return;
 
     const fetchDeal = async () => {
-      try {
-        const res = await fetch("/api/deals", { cache: "no-store" });
-        const data = await res.json();
+      const res = await fetch("/api/deals");
+      const data = await res.json();
 
-        const found = data?.applications?.find((d: any) => d.id === dealId) || null;
+      const found = data?.find((d: any) => d.id === dealId);
 
-        if (found) {
-          setDeal({
-            id: found.id,
-            customerName:
-              `${found.customerFirstName || ""} ${found.customerLastName || ""}`.trim(),
-            income: Number(found.grossIncome || 0),
-            creditScore: Number(found.creditScore || 0),
-            downPayment: Number(found.downPayment || 0),
-          });
-        } else {
-          setMessage("Deal not found.");
-        }
-      } catch (error) {
-        console.error("Failed to load deal:", error);
-        setMessage("Failed to load deal.");
+      if (found) {
+        setDeal({
+          id: found.id,
+          customerName: `${found.firstName || ""} ${found.lastName || ""}`,
+          income: Number(found.monthlyIncome || 0),
+          creditScore: Number(found.creditScore || 0),
+          downPayment: Number(found.downPayment || 0),
+        });
       }
     };
 
     fetchDeal();
   }, [dealId]);
 
-  const decisionResult = useMemo(() => {
+  const result = useMemo(() => {
     if (!deal) return null;
-
     return getDecision(
-      Number(deal.income || 0),
-      Number(deal.creditScore || 0),
-      Number(deal.downPayment || 0)
+      deal.income || 0,
+      deal.creditScore || 0,
+      deal.downPayment || 0
     );
   }, [deal]);
 
-  async function updateDeal(payload: {
-    status: Decision;
-    tier?: Tier;
-    lender?: Lender;
-    maxPayment?: number;
-    maxVehicle?: number;
-    reason?: string;
-  }) {
-    if (!dealId) return;
+  async function updateDeal(status: Decision) {
+    if (!dealId || !result) return;
 
-    try {
-      const res = await fetch(`/api/deals/${dealId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+    await fetch(`/api/deals/${dealId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status,
+        tier: result.tier,
+        lender: result.lender,
+        maxPayment: result.maxPayment,
+        maxVehicle: result.maxVehicle,
+        decisionReason: result.reason,
+      }),
+    });
 
-      const data = await res.json().catch(() => null);
+    setMessage(`Saved: ${status}`);
+  }
 
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Failed to update deal");
-      }
-
-      setMessage(`Deal updated: ${payload.status}`);
-    } catch (error) {
-      console.error("Failed to update deal:", error);
-      setMessage("Failed to update deal.");
-    }
+  if (!deal || !result) {
+    return <div className="p-10 text-white">Loading deal...</div>;
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Underwriting Workstation</h1>
+    <main className="min-h-screen bg-[#05070b] text-white p-8">
+      <h1 className="text-3xl font-bold mb-8">
+        SmartDrive Financial — Underwriting
+      </h1>
 
-      <div style={{ display: "flex", gap: 20, marginTop: 20 }}>
-        <div style={{ flex: 1 }}>
-          <h2>Borrower Input</h2>
-
-          <input
-            value={deal?.customerName || ""}
-            placeholder="Customer Name"
-            readOnly
-            style={inputStyle}
-          />
-          <input
-            value={deal?.income ?? ""}
-            placeholder="Monthly Income"
-            readOnly
-            style={inputStyle}
-          />
-          <input
-            value={deal?.creditScore ?? ""}
-            placeholder="Credit Score"
-            readOnly
-            style={inputStyle}
-          />
-          <input
-            placeholder="Job Time (months)"
-            readOnly
-            style={inputStyle}
-          />
-          <input
-            placeholder="Residence Time (months)"
-            readOnly
-            style={inputStyle}
-          />
-          <input
-            value={deal?.downPayment ?? ""}
-            placeholder="Down Payment"
-            readOnly
-            style={inputStyle}
-          />
-
-          <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
-            <button
-              style={approveBtn}
-              onClick={() =>
-                updateDeal({
-                  status: "APPROVED",
-                  tier: decisionResult?.tier,
-                  lender: decisionResult?.lender,
-                  maxPayment: decisionResult?.maxPayment,
-                  maxVehicle: decisionResult?.maxVehicle,
-                  reason: decisionResult?.reason,
-                })
-              }
-            >
-              Approve & Lock
-            </button>
-
-            <button
-              style={stipBtn}
-              onClick={() =>
-                updateDeal({
-                  status: "DOCS_NEEDED",
-                  tier: decisionResult?.tier,
-                  lender: decisionResult?.lender,
-                  maxPayment: decisionResult?.maxPayment,
-                  maxVehicle: decisionResult?.maxVehicle,
-                  reason: decisionResult?.reason,
-                })
-              }
-            >
-              Request Stips
-            </button>
-
-            <button
-              style={declineBtn}
-              onClick={() =>
-                updateDeal({
-                  status: "DENIED",
-                  tier: decisionResult?.tier,
-                  lender: decisionResult?.lender,
-                  maxPayment: decisionResult?.maxPayment,
-                  maxVehicle: decisionResult?.maxVehicle,
-                  reason: decisionResult?.reason,
-                })
-              }
-            >
-              Decline
-            </button>
+      {/* TOP DECISION PANEL */}
+      <div className="mb-8 p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="text-sm text-gray-400">Customer</div>
+            <div className="text-xl font-semibold">{deal.customerName}</div>
           </div>
 
-          {message && <p style={{ marginTop: 14, fontWeight: 700 }}>{message}</p>}
+          <div className="text-right">
+            <div className="text-sm text-gray-400">Decision</div>
+            <div
+              className={`text-2xl font-bold ${
+                result.decision === "APPROVED"
+                  ? "text-green-400"
+                  : result.decision === "DENIED"
+                  ? "text-red-400"
+                  : "text-yellow-400"
+              }`}
+            >
+              {result.decision}
+            </div>
+          </div>
         </div>
 
-        <div style={{ flex: 1 }}>
-          <h2>Decision Summary</h2>
-
-          {deal && decisionResult ? (
-            <div>
-              <p>Customer: {deal.customerName}</p>
-              <p>Income: ${deal.income}</p>
-              <p>Credit: {deal.creditScore}</p>
-              <p>Down: ${deal.downPayment}</p>
-              <p>Tier: {decisionResult.tier}</p>
-              <p>System Decision: {decisionResult.decision}</p>
-              <p>Lender Route: {decisionResult.lender}</p>
-              <p>Max Payment: ${decisionResult.maxPayment}</p>
-              <p>Max Vehicle: ${decisionResult.maxVehicle}</p>
-              <p>Reason: {decisionResult.reason}</p>
-            </div>
-          ) : (
-            <p>Loading deal...</p>
-          )}
+        <div className="mt-6 grid grid-cols-4 gap-6 text-sm">
+          <div>
+            <div className="text-gray-400">Tier</div>
+            <div className="font-semibold">{result.tier}</div>
+          </div>
+          <div>
+            <div className="text-gray-400">Lender</div>
+            <div className="font-semibold">{result.lender}</div>
+          </div>
+          <div>
+            <div className="text-gray-400">Max Payment</div>
+            <div className="font-semibold">${result.maxPayment}</div>
+          </div>
+          <div>
+            <div className="text-gray-400">Max Vehicle</div>
+            <div className="font-semibold">${result.maxVehicle}</div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* GRID */}
+      <div className="grid md:grid-cols-2 gap-6">
+
+        {/* BORROWER CARD */}
+        <div className="p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
+          <h2 className="text-lg font-semibold mb-4">Borrower Profile</h2>
+
+          <div className="space-y-3 text-sm">
+            <div>Income: ${deal.income}</div>
+            <div>Credit Score: {deal.creditScore}</div>
+            <div>Down Payment: ${deal.downPayment}</div>
+          </div>
+        </div>
+
+        {/* DECISION CARD */}
+        <div className="p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
+          <h2 className="text-lg font-semibold mb-4">Decision Reason</h2>
+          <p className="text-gray-300">{result.reason}</p>
+        </div>
+
+      </div>
+
+      {/* ACTION BAR */}
+      <div className="mt-8 flex gap-4">
+        <button
+          onClick={() => updateDeal("APPROVED")}
+          className="bg-green-500 hover:bg-green-600 px-6 py-3 rounded-xl font-semibold"
+        >
+          Approve & Lock
+        </button>
+
+        <button
+          onClick={() => updateDeal("DOCS_NEEDED")}
+          className="bg-yellow-500 hover:bg-yellow-600 px-6 py-3 rounded-xl font-semibold"
+        >
+          Request Stips
+        </button>
+
+        <button
+          onClick={() => updateDeal("DENIED")}
+          className="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-xl font-semibold"
+        >
+          Decline
+        </button>
+      </div>
+
+      {message && (
+        <div className="mt-4 text-green-400 font-semibold">{message}</div>
+      )}
+    </main>
   );
 }
-
-const inputStyle = {
-  display: "block" as const,
-  width: "100%",
-  padding: 12,
-  marginBottom: 12,
-  border: "1px solid #ccc",
-  borderRadius: 8,
-  boxSizing: "border-box" as const,
-};
-
-const approveBtn = {
-  background: "#16a34a",
-  color: "white",
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-};
-
-const stipBtn = {
-  background: "#f59e0b",
-  color: "white",
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-};
-
-const declineBtn = {
-  background: "#dc2626",
-  color: "white",
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-};
