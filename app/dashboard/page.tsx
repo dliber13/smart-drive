@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma"
 import Link from "next/link"
+import { requireUser } from "@/lib/auth"
 
 type RecentApplication = {
   id: string
@@ -54,6 +55,13 @@ function statusStyle(status: string) {
 }
 
 export default async function DashboardPage() {
+  const user = await requireUser()
+
+  const scope =
+    user.role === "ADMIN"
+      ? {}
+      : { teamId: user.teamId ?? "__no_team__" }
+
   let total = 0
   let pending = 0
   let approved = 0
@@ -62,13 +70,19 @@ export default async function DashboardPage() {
   let recent: RecentApplication[] = []
 
   try {
-    total = await prisma.application.count()
-    pending = await prisma.application.count({ where: { status: "PENDING" } })
-    approved = await prisma.application.count({ where: { status: "APPROVED" } })
-    funded = await prisma.application.count({ where: { status: "FUNDED" } })
-    declined = await prisma.application.count({ where: { status: { in: ["DECLINED", "DENIED"] } } })
+    total = await prisma.application.count({ where: scope })
+    pending = await prisma.application.count({ where: { ...scope, status: "PENDING" } })
+    approved = await prisma.application.count({ where: { ...scope, status: "APPROVED" } })
+    funded = await prisma.application.count({ where: { ...scope, status: "FUNDED" } })
+    declined = await prisma.application.count({
+      where: {
+        ...scope,
+        OR: [{ status: "DECLINED" }, { status: "DENIED" }],
+      },
+    })
 
     recent = await prisma.application.findMany({
+      where: scope,
       orderBy: { createdAt: "desc" },
       take: 12,
       select: {
@@ -99,49 +113,34 @@ export default async function DashboardPage() {
               SmartDrive Financial
             </h1>
             <p className="text-sm text-gray-500">
-              Underwriting Dashboard
+              Underwriting Dashboard · {user.role} · {user.team?.name || "All Teams"}
             </p>
           </div>
 
-          <Link
-            href="/dealer"
-            className="rounded-full bg-black px-5 py-2 text-sm text-white hover:opacity-90"
-          >
-            New Deal
-          </Link>
+          <div className="flex items-center gap-3">
+            {user.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm text-black/70"
+              >
+                Admin
+              </Link>
+            )}
+            <Link
+              href="/dealer"
+              className="rounded-full bg-black px-5 py-2 text-sm text-white"
+            >
+              New Deal
+            </Link>
+          </div>
         </div>
 
         <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Total Deals</p>
-            <p className="mt-2 text-3xl font-semibold">{total}</p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Pending</p>
-            <p className="mt-2 text-3xl font-semibold">{pending}</p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Approved</p>
-            <p className="mt-2 text-3xl font-semibold text-[#2f6f55]">
-              {approved}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Funded</p>
-            <p className="mt-2 text-3xl font-semibold text-[#415a77]">
-              {funded}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <p className="text-xs text-gray-500">Declined</p>
-            <p className="mt-2 text-3xl font-semibold text-[#8a4a3d]">
-              {declined}
-            </p>
-          </div>
+          <Kpi label="Total Deals" value={total} />
+          <Kpi label="Pending" value={pending} />
+          <Kpi label="Approved" value={approved} valueClass="text-[#2f6f55]" />
+          <Kpi label="Funded" value={funded} valueClass="text-[#415a77]" />
+          <Kpi label="Declined" value={declined} valueClass="text-[#8a4a3d]" />
         </div>
 
         <div className="rounded-3xl bg-white shadow-sm">
@@ -226,5 +225,22 @@ export default async function DashboardPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+function Kpi({
+  label,
+  value,
+  valueClass = "",
+}: {
+  label: string
+  value: number
+  valueClass?: string
+}) {
+  return (
+    <div className="rounded-2xl bg-white p-6 shadow-sm">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`mt-2 text-3xl font-semibold ${valueClass}`}>{value}</p>
+    </div>
   )
 }
