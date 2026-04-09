@@ -12,13 +12,13 @@ model Application {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // Dealer / applicant info
+  // Basic applicant info
   firstName      String?
   lastName       String?
   email          String?
   phone          String?
 
-  // Deal structure
+  // Deal info
   vehicleYear    Int?
   vehicleMake    String?
   vehicleModel   String?
@@ -31,10 +31,10 @@ model Application {
   creditScore    Int?
   monthlyIncome  Float?
 
-  // Workflow status
+  // Workflow
   status         String   @default("PENDING")
 
-  // Underwriting outputs
+  // ✅ UNDERWRITING (NEW — THIS IS THE WHOLE POINT)
   tier           String?
   lender         String?
   maxPayment     Float?
