@@ -33,28 +33,34 @@ export default function HomePage() {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-10 text-[15px] font-medium text-black/52 md:flex">
-            <Link href="/dealer" className="transition hover:text-black">
-              Dealer
-            </Link>
-            <Link href="/dashboard" className="transition hover:text-black">
-              Dashboard
-            </Link>
-          </nav>
+          <div className="hidden items-center gap-4 md:flex">
+            <nav className="flex items-center gap-10 text-[15px] font-medium text-black/52">
+              <Link href="/dealer" className="transition hover:text-black">
+                Dealer
+              </Link>
+              <Link href="/dashboard" className="transition hover:text-black">
+                Dashboard
+              </Link>
+            </nav>
+
+            <button className="rounded-full border border-black/10 bg-white/85 px-5 py-3 text-[14px] font-semibold text-[#111111] shadow-[0_10px_24px_rgba(0,0,0,0.04)] transition hover:bg-white">
+              Request access
+            </button>
+          </div>
         </div>
       </header>
 
       {/* HERO */}
       <section className="relative z-10">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-8 pb-18 pt-8 lg:grid-cols-[1.03fr_0.97fr]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-16 px-8 pb-20 pt-8 lg:grid-cols-[1.03fr_0.97fr]">
           {/* LEFT */}
           <div className="max-w-4xl">
             <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/80 px-5 py-3 text-[12px] font-medium uppercase tracking-[0.28em] text-black/50 shadow-[0_12px_30px_rgba(0,0,0,0.04)] backdrop-blur">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#b89662]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-[#c6a96b] to-[#a8894f]" />
               Built for modern auto finance
             </div>
 
-            <h1 className="max-w-5xl text-[76px] font-semibold leading-[0.86] tracking-[-0.085em] text-[#111111] sm:text-[98px] xl:text-[122px]">
+            <h1 className="max-w-4xl text-[84px] font-semibold leading-[0.9] tracking-[-0.07em] text-[#111111] sm:text-[104px] xl:text-[124px]">
               Control the decision.
               <br />
               Control the outcome.
@@ -83,31 +89,32 @@ export default function HomePage() {
               </Link>
             </div>
 
+            {/* STATS BAR */}
             <div className="mt-14 grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
                 <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
-                  Speed
+                  Decision Time
                 </div>
-                <div className="mt-3 text-[30px] font-semibold leading-none tracking-[-0.05em]">
-                  Underwrite instantly
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
-                <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
-                  Precision
-                </div>
-                <div className="mt-3 text-[30px] font-semibold leading-none tracking-[-0.05em]">
-                  Route lenders smarter
+                <div className="mt-3 text-[34px] font-semibold leading-none tracking-[-0.05em]">
+                  42 sec
                 </div>
               </div>
 
               <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
                 <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
-                  Visibility
+                  Match Rate
                 </div>
-                <div className="mt-3 text-[30px] font-semibold leading-none tracking-[-0.05em]">
-                  Control every file
+                <div className="mt-3 text-[34px] font-semibold leading-none tracking-[-0.05em]">
+                  92%
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-black/8 bg-white/74 p-6 shadow-[0_18px_42px_rgba(0,0,0,0.05)]">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-black/36">
+                  Monthly Volume
+                </div>
+                <div className="mt-3 text-[34px] font-semibold leading-none tracking-[-0.05em]">
+                  1,284
                 </div>
               </div>
             </div>
@@ -119,22 +126,34 @@ export default function HomePage() {
             <div className="relative overflow-hidden rounded-[42px] border border-black/10 bg-white/86 p-8 shadow-[0_45px_120px_rgba(0,0,0,0.14)] backdrop-blur-xl">
               <div className="absolute inset-x-0 top-0 h-[150px] bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0))]" />
 
-              <div className="relative flex items-start justify-between">
+              <div className="relative flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-[12px] uppercase tracking-[0.30em] text-black/38">
-                    Live decision proof
+                  <div className="flex items-center gap-3 text-[12px] uppercase tracking-[0.30em] text-black/38">
+                    <span>Live decision proof</span>
+                    <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-semibold tracking-[0.18em] text-emerald-700">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      LIVE
+                    </span>
                   </div>
+
                   <div className="mt-4 text-[64px] font-semibold leading-none tracking-[-0.07em] text-[#111111]">
                     APPROVED
                   </div>
                 </div>
 
-                <div className="rounded-full border border-black/8 bg-[#f3ede3] px-5 py-2.5 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#111111]">
+                <div className="rounded-full border border-black/8 bg-gradient-to-r from-[#efe4d2] to-[#e2d3bb] px-5 py-2.5 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#111111]">
                   Tier 1
                 </div>
               </div>
 
-              <div className="mt-8 rounded-[30px] border border-black/8 bg-[#fcfbf8] p-7">
+              <div className="mt-6 flex items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  Rate locked
+                </span>
+              </div>
+
+              <div className="mt-8 rounded-[30px] border border-black/8 bg-[#fcfbf8] p-7 shadow-[inset_0_1px_0_rgba(0,0,0,0.04)]">
                 <div className="mb-5 text-[12px] uppercase tracking-[0.28em] text-black/38">
                   Key decision metrics
                 </div>
@@ -182,11 +201,17 @@ export default function HomePage() {
                 <div className="mb-4 text-[12px] uppercase tracking-[0.28em] text-black/38">
                   Why this matters
                 </div>
-                <p className="text-[20px] leading-8 tracking-[-0.02em] text-black/64">
+                <p className="text-[22px] leading-9 tracking-[-0.02em] text-black/60">
                   Clean lender alignment, clear payment tolerance, and structured
                   approval logic reduce friction, improve file quality, and help
-                  finance teams move faster with better control.
+                  finance teams move faster with better control across every decision.
                 </p>
+
+                <div className="mt-6">
+                  <button className="rounded-full border border-black/10 bg-[#111111] px-5 py-3 text-[14px] font-semibold text-white shadow-[0_12px_28px_rgba(0,0,0,0.10)] transition hover:bg-black">
+                    Request access
+                  </button>
+                </div>
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-3">
