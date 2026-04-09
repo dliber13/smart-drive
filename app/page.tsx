@@ -5,7 +5,9 @@ export default function HomePage() {
     <main className="min-h-screen bg-[#05070b] text-white">
       {/* NAV */}
       <div className="flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold tracking-wider">SMART DRIVE</h1>
+        <h1 className="text-2xl font-bold tracking-wider">
+          SmartDrive Financial
+        </h1>
 
         <div className="flex gap-6 text-sm text-gray-400">
           <Link href="/dealer" className="hover:text-white">Dealer</Link>
@@ -16,13 +18,13 @@ export default function HomePage() {
       {/* HERO */}
       <section className="max-w-7xl mx-auto px-8 py-20">
         <h2 className="text-6xl font-bold leading-tight">
-          Underwriting.
+          SmartDrive Financial.
           <br />
-          Reimagined.
+          Underwriting. Reimagined.
         </h2>
 
         <p className="mt-6 max-w-xl text-gray-400 text-lg">
-          A modern decision engine built for speed, precision, and control.
+          A modern underwriting platform built for speed, precision, and control.
           Instantly evaluate deals, route lenders, and lock approvals.
         </p>
 
@@ -72,7 +74,7 @@ export default function HomePage() {
 
       {/* FOOTER */}
       <div className="border-t border-gray-800 px-8 py-6 text-sm text-gray-500 text-center">
-        © {new Date().getFullYear()} Smart Drive
+        © {new Date().getFullYear()} SmartDrive Financial
       </div>
     </main>
   )
