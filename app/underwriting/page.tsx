@@ -11,6 +11,9 @@ type Deal = {
   income?: number;
   creditScore?: number;
   downPayment?: number;
+  amountFinanced?: number;
+  vehiclePrice?: number;
+  existingDealStrength?: number | null;
 };
 
 type Tier = "Tier 1" | "Tier 2" | "Tier 3" | "Decline";
@@ -97,6 +100,43 @@ function getDecision(income: number, creditScore: number, downPayment: number) {
   };
 }
 
+function calculateDealStrength({
+  creditScore,
+  income,
+  maxPayment,
+  amountFinanced,
+  vehiclePrice,
+}: {
+  creditScore: number;
+  income: number;
+  maxPayment: number;
+  amountFinanced: number;
+  vehiclePrice: number;
+}) {
+  let score = 5;
+
+  if (creditScore >= 700) score += 2;
+  else if (creditScore >= 620) score += 1;
+  else if (creditScore < 520) score -= 1.5;
+
+  const pti = income > 0 ? maxPayment / income : 1;
+  if (pti < 0.15) score += 2;
+  else if (pti < 0.2) score += 1;
+  else if (pti > 0.25) score -= 1.5;
+
+  const ltv = vehiclePrice > 0 ? amountFinanced / vehiclePrice : 1.25;
+  if (ltv < 0.95) score += 1;
+  else if (ltv > 1.2) score -= 1;
+
+  return Math.max(1, Math.min(10, Number(score.toFixed(1))));
+}
+
+function getStrengthTone(score: number) {
+  if (score >= 8) return "text-green-400";
+  if (score >= 6) return "text-yellow-400";
+  return "text-red-400";
+}
+
 export default function UnderwritingPage() {
   const [dealId, setDealId] = useState("");
   const [deal, setDeal] = useState<Deal | null>(null);
@@ -127,6 +167,9 @@ export default function UnderwritingPage() {
           income: Number(found.monthlyIncome || 0),
           creditScore: Number(found.creditScore || 0),
           downPayment: Number(found.downPayment || 0),
+          amountFinanced: Number(found.amountFinanced || 0),
+          vehiclePrice: Number(found.vehiclePrice || 0),
+          existingDealStrength: found.dealStrength ?? null,
         });
       }
     };
@@ -143,8 +186,20 @@ export default function UnderwritingPage() {
     );
   }, [deal]);
 
+  const dealStrength = useMemo(() => {
+    if (!deal || !result) return null;
+
+    return calculateDealStrength({
+      creditScore: deal.creditScore || 0,
+      income: deal.income || 0,
+      maxPayment: result.maxPayment || 0,
+      amountFinanced: deal.amountFinanced || 0,
+      vehiclePrice: deal.vehiclePrice || 0,
+    });
+  }, [deal, result]);
+
   async function updateDeal(status: Decision) {
-    if (!dealId || !result) return;
+    if (!dealId || !result || dealStrength === null) return;
 
     await fetch(`/api/deals/${dealId}`, {
       method: "PATCH",
@@ -156,13 +211,14 @@ export default function UnderwritingPage() {
         maxPayment: result.maxPayment,
         maxVehicle: result.maxVehicle,
         decisionReason: result.reason,
+        dealStrength,
       }),
     });
 
     setMessage(`Saved: ${status}`);
   }
 
-  if (!deal || !result) {
+  if (!deal || !result || dealStrength === null) {
     return <div className="p-10 text-white">Loading deal...</div>;
   }
 
@@ -195,7 +251,7 @@ export default function UnderwritingPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-6 text-sm md:grid-cols-6">
+        <div className="mt-6 grid grid-cols-2 gap-6 text-sm md:grid-cols-7">
           <div>
             <div className="text-gray-400">Tier</div>
             <div className="font-semibold">{result.tier}</div>
@@ -211,6 +267,12 @@ export default function UnderwritingPage() {
           <div>
             <div className="text-gray-400">Max Vehicle</div>
             <div className="font-semibold">${result.maxVehicle}</div>
+          </div>
+          <div>
+            <div className="text-gray-400">Deal Strength</div>
+            <div className={`font-semibold ${getStrengthTone(dealStrength)}`}>
+              {dealStrength}/10
+            </div>
           </div>
           <div>
             <div className="text-gray-400">Stock #</div>
@@ -234,12 +296,24 @@ export default function UnderwritingPage() {
             <div>Income: ${deal.income}</div>
             <div>Credit Score: {deal.creditScore}</div>
             <div>Down Payment: ${deal.downPayment}</div>
+            <div>Amount Financed: ${deal.amountFinanced || 0}</div>
+            <div>Vehicle Price: ${deal.vehiclePrice || 0}</div>
           </div>
         </div>
 
         <div className="p-6 rounded-2xl border border-gray-800 bg-[#0c111b]">
           <h2 className="text-lg font-semibold mb-4">Decision Reason</h2>
           <p className="text-gray-300">{result.reason}</p>
+
+          <div className="mt-6 rounded-xl border border-gray-700 p-4">
+            <div className="text-sm text-gray-400 mb-1">Deal Strength</div>
+            <div className={`text-3xl font-bold ${getStrengthTone(dealStrength)}`}>
+              {dealStrength}/10
+            </div>
+            <div className="mt-2 text-sm text-gray-400">
+              Combines credit, payment-to-income, and finance-to-value position.
+            </div>
+          </div>
         </div>
       </div>
 
