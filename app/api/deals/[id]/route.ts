@@ -67,6 +67,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         maxPayment: body.maxPayment ?? undefined,
         maxVehicle: body.maxVehicle ?? undefined,
         decisionReason: body.decisionReason ?? undefined,
+        dealStrength: body.dealStrength ?? undefined,
       },
     })
 
