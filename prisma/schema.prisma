@@ -40,19 +40,16 @@ model Application {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // Ownership / visibility
   ownerId        String?
   owner          User?    @relation("OwnerApplications", fields: [ownerId], references: [id])
   teamId         String?
   team           Team?    @relation(fields: [teamId], references: [id])
 
-  // Applicant
   firstName      String?
   lastName       String?
   email          String?
   phone          String?
 
-  // Vehicle / inventory
   stockNumber    String?
   vin            String?
   vehicleYear    Int?
@@ -60,22 +57,21 @@ model Application {
   vehicleModel   String?
   vehiclePrice   Float?
 
-  // Deal structure
   downPayment    Float?
   tradeIn        Float?
   amountFinanced Float?
 
-  // Credit / income
   creditScore    Int?
   monthlyIncome  Float?
 
-  // Workflow
   status         String   @default("PENDING")
 
-  // Underwriting outputs
   tier           String?
   lender         String?
   maxPayment     Float?
   maxVehicle     Float?
   decisionReason String?
+
+  // NEW
+  dealStrength   Float?
 }
