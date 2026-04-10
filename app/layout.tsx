@@ -1,8 +1,9 @@
-import "./globals.css"
+import type { Metadata } from "next"
+import { BRANDING } from "@/lib/branding"
 
-export const metadata = {
-  title: "SmartDrive Financial",
-  description: "Underwriting Platform",
+export const metadata: Metadata = {
+  title: BRANDING.platformName,
+  description: BRANDING.tagline,
 }
 
 export default function RootLayout({
