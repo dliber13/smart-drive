@@ -14,6 +14,7 @@ type RecentApplication = {
   vehicleYear: number | null
   vehicleMake: string | null
   vehicleModel: string | null
+  dealStrength: number | null
   createdAt: Date
 }
 
@@ -52,6 +53,13 @@ function statusStyle(status: string) {
     default:
       return "bg-gray-100 text-gray-700"
   }
+}
+
+function strengthStyle(value: number | null) {
+  if (value === null || value === undefined) return "text-black/45"
+  if (value >= 8) return "text-[#2f6f55]"
+  if (value >= 6) return "text-[#8a6a3d]"
+  return "text-[#8a4a3d]"
 }
 
 export default async function DashboardPage() {
@@ -97,6 +105,7 @@ export default async function DashboardPage() {
         vehicleYear: true,
         vehicleMake: true,
         vehicleModel: true,
+        dealStrength: true,
         createdAt: true,
       },
     })
@@ -154,8 +163,8 @@ export default async function DashboardPage() {
                 <tr>
                   <th className="px-6 py-3 text-left">Applicant</th>
                   <th className="px-6 py-3 text-left">Stock #</th>
-                  <th className="px-6 py-3 text-left">VIN</th>
                   <th className="px-6 py-3 text-left">Status</th>
+                  <th className="px-6 py-3 text-left">Strength</th>
                   <th className="px-6 py-3 text-left">Income</th>
                   <th className="px-6 py-3 text-left">Score</th>
                   <th className="px-6 py-3 text-left">Vehicle</th>
@@ -181,15 +190,13 @@ export default async function DashboardPage() {
                       <td className="px-6 py-4">{app.stockNumber || "-"}</td>
 
                       <td className="px-6 py-4">
-                        <span className="font-mono text-xs">
-                          {app.vin || "-"}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4">
                         <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle(app.status)}`}>
                           {app.status}
                         </span>
+                      </td>
+
+                      <td className={`px-6 py-4 font-semibold ${strengthStyle(app.dealStrength)}`}>
+                        {app.dealStrength ? `${app.dealStrength}/10` : "-"}
                       </td>
 
                       <td className="px-6 py-4">
