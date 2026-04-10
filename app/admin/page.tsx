@@ -1,14 +1,12 @@
 import { PrismaClient } from "@prisma/client"
-import { calculateDealStrength } from "@/lib/dealStrength"
 
 const prisma = new PrismaClient()
 
 export default async function AdminPage() {
   const userCount = await prisma.user.count()
   const applicationCount = await prisma.application.count()
-
   const applications = await prisma.application.findMany({
-    take: 5,
+    take: 10,
     orderBy: { createdAt: "desc" },
   })
 
@@ -23,41 +21,21 @@ export default async function AdminPage() {
       </div>
 
       <div style={{ marginTop: "40px" }}>
-        <h2>Quick Actions</h2>
-        <ul>
-          <li>View Underwriting Queue</li>
-          <li>Manage Users</li>
-          <li>Review Deals</li>
-        </ul>
-      </div>
-
-      <div style={{ marginTop: "40px" }}>
-        <h2>Recent Deals</h2>
+        <h2>Applications Debug View</h2>
 
         {applications.length === 0 ? (
-          <p>No deals yet.</p>
+          <p>No applications found.</p>
         ) : (
-          applications.map((app) => {
-            const result = calculateDealStrength(app)
-
-            return (
-              <div key={app.id} style={{ marginBottom: "16px" }}>
-                <p>
-                  <strong>Deal ID:</strong> {app.id}
-                </p>
-                <p>
-                  <strong>Score:</strong> {result.score} ({result.tier})
-                </p>
-                <p>
-                  <strong>Credit Score:</strong> {app.creditScore ?? "N/A"}
-                </p>
-                <p>
-                  <strong>Monthly Income:</strong> {app.monthlyIncome ?? "N/A"}
-                </p>
-                <hr style={{ marginTop: "12px", opacity: 0.2 }} />
-              </div>
-            )
-          })
+          applications.map((app: any) => (
+            <div key={app.id} style={{ marginBottom: "16px" }}>
+              <p><strong>ID:</strong> {app.id}</p>
+              <p><strong>Credit Score:</strong> {String(app.creditScore ?? "N/A")}</p>
+              <p><strong>Monthly Income:</strong> {String(app.monthlyIncome ?? "N/A")}</p>
+              <p><strong>LTV:</strong> {String(app.ltv ?? "N/A")}</p>
+              <p><strong>Employment Months:</strong> {String(app.employmentMonths ?? "N/A")}</p>
+              <hr style={{ marginTop: "12px", opacity: 0.2 }} />
+            </div>
+          ))
         )}
       </div>
     </div>
