@@ -7,25 +7,35 @@ export async function GET() {
   try {
     const app = await prisma.application.create({
       data: {
-        firstName: "Test",
-        lastName: "User",
+        firstName: "Locked",
+        lastName: "Test",
+
+        // ❌ TRY COMMENTING THESE OUT LATER TO SEE THE LOCK
         identityType: "SSN",
         identityValue: "123456789",
         issuingCountry: "US",
-        identityStatus: "PENDING",
+        identityStatus: "VERIFIED",
       },
     })
 
-    return NextResponse.json(app)
-  } catch (error: any) {
-    console.error("TEST APPLICATION ERROR:", error)
+    // 🔒 LOCK LOGIC
+    if (!app.identityType || app.identityStatus !== "VERIFIED") {
+      return NextResponse.json({
+        error: "APPLICATION BLOCKED",
+        reason: "Identity verification required before submission",
+      })
+    }
 
+    return NextResponse.json({
+      success: true,
+      message: "Application allowed",
+      app,
+    })
+  } catch (error: any) {
     return NextResponse.json(
       {
         error: true,
         message: error?.message || "Unknown error",
-        code: error?.code || null,
-        meta: error?.meta || null,
       },
       { status: 500 }
     )
