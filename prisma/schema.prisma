@@ -1,19 +1,16 @@
-model Application {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
+generator client {
+  provider = "prisma-client-js"
+}
 
-  // EXISTING CORE FIELDS
-  firstName     String
-  lastName      String
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  // 🔐 IDENTITY SYSTEM (NEW)
-  identityType  IdentityType
-  identityValue String
-  issuingCountry String?
-  identityStatus IdentityStatus @default(PENDING)
-
-  // RELATION
-  ownerId String?
+enum UserRole {
+  ADMIN
+  CONTROLLER
+  SALES
 }
 
 enum IdentityType {
@@ -28,4 +25,71 @@ enum IdentityStatus {
   PENDING
   VERIFIED
   REJECTED
+}
+
+model Team {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  users        User[]
+  applications Application[]
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  fullName     String
+  passwordHash String
+  role         UserRole      @default(SALES)
+  teamId       String?
+  team         Team?         @relation(fields: [teamId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  applications Application[] @relation("OwnerApplications")
+}
+
+model Application {
+  id              String         @id @default(cuid())
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  ownerId         String?
+  owner           User?          @relation("OwnerApplications", fields: [ownerId], references: [id])
+  teamId          String?
+  team            Team?          @relation(fields: [teamId], references: [id])
+
+  firstName       String?
+  lastName        String?
+  email           String?
+  phone           String?
+
+  stockNumber     String?
+  vin             String?
+  vehicleYear     Int?
+  vehicleMake     String?
+  vehicleModel    String?
+  vehiclePrice    Float?
+
+  downPayment     Float?
+  tradeIn         Float?
+  amountFinanced  Float?
+
+  creditScore     Int?
+  monthlyIncome   Float?
+
+  status          String         @default("PENDING")
+
+  tier            String?
+  lender          String?
+  maxPayment      Float?
+  maxVehicle      Float?
+  decisionReason  String?
+  dealStrength    Float?
+
+  identityType    IdentityType?
+  identityValue   String?
+  issuingCountry  String?
+  identityStatus  IdentityStatus @default(PENDING)
 }
