@@ -7,10 +7,9 @@ export async function GET() {
   try {
     const app = await prisma.application.create({
       data: {
-        firstName: "Locked",
+        firstName: "Allowed",
         lastName: "Test",
 
-        // ❌ TRY COMMENTING THESE OUT LATER TO SEE THE LOCK
         identityType: "SSN",
         identityValue: "123456789",
         issuingCountry: "US",
@@ -18,7 +17,7 @@ export async function GET() {
       },
     })
 
-    // 🔒 LOCK LOGIC
+    // 🔒 LOCK CHECK
     if (!app.identityType || app.identityStatus !== "VERIFIED") {
       return NextResponse.json({
         error: "APPLICATION BLOCKED",
