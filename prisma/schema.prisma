@@ -37,12 +37,15 @@ model User {
 }
 
 model Application {
-  id              String   @id @default(cuid())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id              String    @id @default(cuid())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   ownerId         String?
+  owner           User?     @relation("OwnerApplications", fields: [ownerId], references: [id])
+
   teamId          String?
+  team            Team?     @relation(fields: [teamId], references: [id])
 
   firstName       String?
   lastName        String?
@@ -63,7 +66,7 @@ model Application {
   creditScore     Int?
   monthlyIncome   Float?
 
-  status          String   @default("PENDING")
+  status          String    @default("PENDING")
 
   tier            String?
   lender          String?
@@ -72,9 +75,8 @@ model Application {
   decisionReason  String?
   dealStrength    Float?
 
-  // ✅ IDENTITY SYSTEM (NOW MATCHES DB)
   identityType    String?
   identityValue   String?
   issuingCountry  String?
-  identityStatus  String? @default("PENDING")
+  identityStatus  String?   @default("PENDING")
 }
