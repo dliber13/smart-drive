@@ -13,20 +13,6 @@ enum UserRole {
   SALES
 }
 
-enum IdentityType {
-  SSN
-  ITIN
-  PASSPORT
-  MATRICULA
-  OTHER
-}
-
-enum IdentityStatus {
-  PENDING
-  VERIFIED
-  REJECTED
-}
-
 model Team {
   id           String        @id @default(cuid())
   name         String        @unique
@@ -51,14 +37,12 @@ model User {
 }
 
 model Application {
-  id              String         @id @default(cuid())
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   ownerId         String?
-  owner           User?          @relation("OwnerApplications", fields: [ownerId], references: [id])
   teamId          String?
-  team            Team?          @relation(fields: [teamId], references: [id])
 
   firstName       String?
   lastName        String?
@@ -79,7 +63,7 @@ model Application {
   creditScore     Int?
   monthlyIncome   Float?
 
-  status          String         @default("PENDING")
+  status          String   @default("PENDING")
 
   tier            String?
   lender          String?
@@ -88,8 +72,9 @@ model Application {
   decisionReason  String?
   dealStrength    Float?
 
-  identityType    IdentityType?
+  // ✅ IDENTITY SYSTEM (NOW MATCHES DB)
+  identityType    String?
   identityValue   String?
   issuingCountry  String?
-  identityStatus  IdentityStatus @default(PENDING)
+  identityStatus  String? @default("PENDING")
 }
