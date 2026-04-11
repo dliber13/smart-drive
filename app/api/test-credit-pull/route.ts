@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server"
+import { canPullCredit, getCurrentUserRole } from "@/lib/access"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const currentUserRole: string = "SALES"
+    const currentUserRole = getCurrentUserRole(request)
 
-    if (currentUserRole !== "ADMIN" && currentUserRole !== "CONTROLLER") {
+    if (!canPullCredit(currentUserRole)) {
       return NextResponse.json(
         {
           success: false,
