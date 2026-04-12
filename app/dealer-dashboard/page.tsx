@@ -3,9 +3,11 @@
 import { CSSProperties, useEffect, useMemo, useState } from "react";
 
 type TimelineItem = {
-  label: string;
-  complete: boolean;
-  date: string;
+  id: string;
+  fromStatus: string | null;
+  toStatus: string;
+  note: string | null;
+  createdAt: string;
 };
 
 type ApplicationRecord = {
@@ -44,6 +46,10 @@ type ApplicationRecord = {
   maxVehicle: number | null;
   decisionReason: string | null;
   dealStrength: number | null;
+
+  fundingDate: string | null;
+  fundingAmount: number | null;
+  lenderConfirmation: string | null;
 
   timeline: TimelineItem[];
 };
@@ -95,9 +101,7 @@ export default function DealerDashboardPage() {
 
       if (rows.length > 0) {
         setSelectedId((current: string) => {
-          const stillExists = rows.some(
-            (row: ApplicationRecord) => row.id === current
-          );
+          const stillExists = rows.some((row) => row.id === current);
           return stillExists ? current : rows[0].id;
         });
       } else {
@@ -116,10 +120,7 @@ export default function DealerDashboardPage() {
   }
 
   const selectedApplication = useMemo(() => {
-    return (
-      applications.find((item: ApplicationRecord) => item.id === selectedId) ||
-      null
-    );
+    return applications.find((item) => item.id === selectedId) || null;
   }, [applications, selectedId]);
 
   const counts = useMemo(() => {
@@ -185,11 +186,7 @@ export default function DealerDashboardPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={loadApplications}
-                style={styles.secondaryButton}
-              >
+              <button type="button" onClick={loadApplications} style={styles.secondaryButton}>
                 Refresh
               </button>
             </div>
@@ -200,7 +197,7 @@ export default function DealerDashboardPage() {
               <div style={styles.emptyState}>No deals found yet.</div>
             ) : (
               <div style={styles.queueList}>
-                {applications.map((app: ApplicationRecord) => {
+                {applications.map((app) => {
                   const active = app.id === selectedId;
 
                   return (
@@ -261,9 +258,7 @@ export default function DealerDashboardPage() {
             <div style={styles.panelHeader}>
               <div>
                 <h2 style={styles.panelTitle}>Deal Status</h2>
-                <p style={styles.panelSubtitle}>
-                  Outcome visibility and next steps
-                </p>
+                <p style={styles.panelSubtitle}>Outcome visibility and next steps</p>
               </div>
             </div>
 
@@ -276,22 +271,11 @@ export default function DealerDashboardPage() {
                   <div style={styles.infoGrid}>
                     <InfoRow
                       label="Borrower"
-                      value={`${selectedApplication.firstName || ""} ${
-                        selectedApplication.lastName || ""
-                      }`.trim() || "N/A"}
+                      value={`${selectedApplication.firstName || ""} ${selectedApplication.lastName || ""}`.trim() || "N/A"}
                     />
-                    <InfoRow
-                      label="Phone"
-                      value={selectedApplication.phone || "N/A"}
-                    />
-                    <InfoRow
-                      label="Email"
-                      value={selectedApplication.email || "N/A"}
-                    />
-                    <InfoRow
-                      label="Identity Type"
-                      value={selectedApplication.identityType || "N/A"}
-                    />
+                    <InfoRow label="Phone" value={selectedApplication.phone || "N/A"} />
+                    <InfoRow label="Email" value={selectedApplication.email || "N/A"} />
+                    <InfoRow label="Identity Type" value={selectedApplication.identityType || "N/A"} />
                     <InfoRow
                       label="Identity Status"
                       value={selectedApplication.identityStatus || "N/A"}
@@ -303,10 +287,7 @@ export default function DealerDashboardPage() {
                           : undefined
                       }
                     />
-                    <InfoRow
-                      label="Issuing Country"
-                      value={selectedApplication.issuingCountry || "N/A"}
-                    />
+                    <InfoRow label="Issuing Country" value={selectedApplication.issuingCountry || "N/A"} />
                   </div>
                 </div>
 
@@ -325,10 +306,7 @@ export default function DealerDashboardPage() {
                           : undefined
                       }
                     />
-                    <InfoRow
-                      label="Stock Number"
-                      value={selectedApplication.stockNumber || "N/A"}
-                    />
+                    <InfoRow label="Stock Number" value={selectedApplication.stockNumber || "N/A"} />
                     <InfoRow
                       label="Vehicle"
                       value={
@@ -367,14 +345,8 @@ export default function DealerDashboardPage() {
                 <div style={styles.detailCard}>
                   <h3 style={styles.detailTitle}>Controller Outcome</h3>
                   <div style={styles.infoGrid}>
-                    <InfoRow
-                      label="Lender"
-                      value={selectedApplication.lender || "Pending"}
-                    />
-                    <InfoRow
-                      label="Tier"
-                      value={selectedApplication.tier || "Pending"}
-                    />
+                    <InfoRow label="Lender" value={selectedApplication.lender || "Pending"} />
+                    <InfoRow label="Tier" value={selectedApplication.tier || "Pending"} />
                     <InfoRow
                       label="Max Payment"
                       value={
@@ -407,24 +379,46 @@ export default function DealerDashboardPage() {
                 </div>
 
                 <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Status Timeline</h3>
+                  <h3 style={styles.detailTitle}>Funding Details</h3>
+                  <div style={styles.infoGrid}>
+                    <InfoRow
+                      label="Funding Date"
+                      value={selectedApplication.fundingDate ? displayDate(selectedApplication.fundingDate) : "Pending"}
+                    />
+                    <InfoRow
+                      label="Funding Amount"
+                      value={
+                        selectedApplication.fundingAmount != null
+                          ? formatCurrency(selectedApplication.fundingAmount)
+                          : "Pending"
+                      }
+                    />
+                    <InfoRow
+                      label="Lender Confirmation"
+                      value={selectedApplication.lenderConfirmation || "Pending"}
+                    />
+                  </div>
+                </div>
+
+                <div style={styles.detailCard}>
+                  <h3 style={styles.detailTitle}>Status History</h3>
                   <div style={styles.timelineStack}>
-                    {selectedApplication.timeline?.map((item) => (
-                      <div key={`${selectedApplication.id}-${item.label}`} style={styles.timelineRow}>
-                        <div
-                          style={{
-                            ...styles.timelineDot,
-                            ...(item.complete ? styles.timelineDotComplete : styles.timelineDotPending),
-                          }}
-                        />
-                        <div style={styles.timelineContent}>
-                          <div style={styles.timelineLabel}>{item.label}</div>
-                          <div style={styles.timelineDate}>
-                            {item.complete ? displayDate(item.date) : "Pending"}
+                    {selectedApplication.timeline?.length ? (
+                      selectedApplication.timeline.map((item) => (
+                        <div key={item.id} style={styles.timelineRow}>
+                          <div style={{ ...styles.timelineDot, ...styles.timelineDotComplete }} />
+                          <div style={styles.timelineContent}>
+                            <div style={styles.timelineLabel}>
+                              {item.fromStatus ? `${item.fromStatus} → ${item.toStatus}` : item.toStatus}
+                            </div>
+                            <div style={styles.timelineDate}>{displayDate(item.createdAt)}</div>
+                            <div style={styles.timelineNote}>{item.note || "No note recorded"}</div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <div style={styles.emptyState}>No recorded status history yet.</div>
+                    )}
                   </div>
                 </div>
 
@@ -869,9 +863,6 @@ const styles: Record<string, CSSProperties> = {
   timelineDotComplete: {
     backgroundColor: "#1f7a37",
   },
-  timelineDotPending: {
-    backgroundColor: "#d1d5db",
-  },
   timelineContent: {
     display: "flex",
     flexDirection: "column",
@@ -885,6 +876,10 @@ const styles: Record<string, CSSProperties> = {
   timelineDate: {
     fontSize: "13px",
     color: "rgba(17,17,17,0.55)",
+  },
+  timelineNote: {
+    fontSize: "13px",
+    color: "rgba(17,17,17,0.72)",
   },
   noticeStack: {
     display: "flex",
