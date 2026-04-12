@@ -6,7 +6,7 @@ type ApplicationRecord = {
   id: string
   createdAt: string
   updatedAt: string
-
+ 
   firstName: string | null
   lastName: string | null
   phone: string | null
