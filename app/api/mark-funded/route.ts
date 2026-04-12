@@ -3,6 +3,14 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+function asNumber(value: unknown, fallback: number | null = null) {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return fallback;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -14,11 +22,32 @@ export async function POST(req: Request) {
         ? body.id
         : "";
 
+    const fundingAmount = asNumber(body?.fundingAmount);
+    const lenderConfirmation =
+      typeof body?.lenderConfirmation === "string" && body.lenderConfirmation.trim()
+        ? body.lenderConfirmation.trim()
+        : null;
+
+    const fundingDate =
+      typeof body?.fundingDate === "string" && body.fundingDate.trim()
+        ? new Date(body.fundingDate)
+        : new Date();
+
     if (!applicationId) {
       return NextResponse.json(
         {
           success: false,
           reason: "Missing applicationId",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (fundingDate && Number.isNaN(fundingDate.getTime())) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Invalid fundingDate",
         },
         { status: 400 }
       );
@@ -51,17 +80,33 @@ export async function POST(req: Request) {
       );
     }
 
-    const updatedApplication = await prisma.application.update({
-      where: { id: applicationId },
-      data: {
-        status: "FUNDED",
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedApplication = await tx.application.update({
+        where: { id: applicationId },
+        data: {
+          status: "FUNDED",
+          fundingDate,
+          fundingAmount,
+          lenderConfirmation,
+        },
+      });
+
+      await tx.statusHistory.create({
+        data: {
+          applicationId,
+          fromStatus: currentStatus,
+          toStatus: "FUNDED",
+          note: "Application marked funded",
+        },
+      });
+
+      return updatedApplication;
     });
 
     return NextResponse.json({
       success: true,
       message: "Application marked as funded",
-      application: updatedApplication,
+      application: result,
     });
   } catch (error: any) {
     console.error("Mark funded error:", error);
