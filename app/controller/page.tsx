@@ -92,7 +92,12 @@ export default function ControllerPage() {
       setApplications(rows)
 
       if (rows.length > 0) {
-        setSelectedId((current) => current || rows[0].id)
+        setSelectedId((current) => {
+          const stillExists = rows.some((row) => row.id === current)
+          return stillExists ? current : rows[0].id
+        })
+      } else {
+        setSelectedId("")
       }
 
       setMessageType("success")
@@ -229,6 +234,85 @@ export default function ControllerPage() {
     }
   }
 
+  async function markFunded() {
+    if (!selectedApplication) {
+      alert("No application selected")
+      return
+    }
+
+    setProcessing(true)
+
+    try {
+      const response = await fetch("/api/application-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": "CONTROLLER",
+        },
+        body: JSON.stringify({
+          applicationId: selectedApplication.id,
+          newStatus: "FUNDED",
+          decisionReason: decisionForm.decisionReason || "Marked funded by controller",
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data?.reason || data?.message || "Funding update failed")
+        return
+      }
+
+      alert("Deal marked FUNDED")
+      await loadApplications()
+    } catch (error) {
+      console.error(error)
+      alert("Funding update failed")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  async function moveBackToSubmitted() {
+    if (!selectedApplication) {
+      alert("No application selected")
+      return
+    }
+
+    setProcessing(true)
+
+    try {
+      const response = await fetch("/api/application-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": "CONTROLLER",
+        },
+        body: JSON.stringify({
+          applicationId: selectedApplication.id,
+          newStatus: "SUBMITTED",
+          decisionReason:
+            decisionForm.decisionReason || "Moved back to submitted for re-review",
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data?.reason || data?.message || "Status reset failed")
+        return
+      }
+
+      alert("Deal moved back to SUBMITTED")
+      await loadApplications()
+    } catch (error) {
+      console.error(error)
+      alert("Status reset failed")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   return (
     <main style={styles.page}>
       <div style={styles.container}>
@@ -238,7 +322,7 @@ export default function ControllerPage() {
             <h1 style={styles.pageTitle}>Controller Dashboard</h1>
             <p style={styles.pageSubtitle}>
               Review submitted applications, enforce credit access control, and
-              set underwriting direction from one command screen.
+              manage lifecycle from submitted through funding.
             </p>
           </div>
 
@@ -269,9 +353,9 @@ export default function ControllerPage() {
           <section style={styles.leftPanel}>
             <div style={styles.panelHeader}>
               <div>
-                <h2 style={styles.panelTitle}>Submitted Queue</h2>
+                <h2 style={styles.panelTitle}>Application Queue</h2>
                 <p style={styles.panelSubtitle}>
-                  Files ready for controller review
+                  Review and manage file progression
                 </p>
               </div>
 
@@ -315,6 +399,8 @@ export default function ControllerPage() {
                               ? styles.approvedBadge
                               : app.status === "FUNDED"
                               ? styles.fundedBadge
+                              : app.status === "REJECTED"
+                              ? styles.rejectedBadge
                               : styles.draftBadge),
                           }}
                         >
@@ -363,7 +449,7 @@ export default function ControllerPage() {
               <div>
                 <h2 style={styles.panelTitle}>Controller Review</h2>
                 <p style={styles.panelSubtitle}>
-                  Decision controls and file details
+                  Decision controls and funding workflow
                 </p>
               </div>
 
@@ -537,6 +623,30 @@ export default function ControllerPage() {
                       }}
                     >
                       {processing ? "Processing..." : "Reject Deal"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={markFunded}
+                      disabled={processing}
+                      style={{
+                        ...styles.fundedButton,
+                        ...(processing ? styles.disabledButton : {}),
+                      }}
+                    >
+                      {processing ? "Processing..." : "Mark Funded"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={moveBackToSubmitted}
+                      disabled={processing}
+                      style={{
+                        ...styles.secondaryButton,
+                        ...(processing ? styles.disabledButton : {}),
+                      }}
+                    >
+                      {processing ? "Processing..." : "Move to Submitted"}
                     </button>
                   </div>
                 </div>
@@ -767,6 +877,16 @@ const styles: Record<string, CSSProperties> = {
     color: "#ffffff",
     cursor: "pointer",
   },
+  fundedButton: {
+    borderRadius: "18px",
+    border: "none",
+    backgroundColor: "#0b7f5b",
+    padding: "14px 24px",
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "#ffffff",
+    cursor: "pointer",
+  },
   emptyState: {
     borderRadius: "18px",
     padding: "24px",
@@ -834,6 +954,10 @@ const styles: Record<string, CSSProperties> = {
   fundedBadge: {
     backgroundColor: "#e6faf4",
     color: "#007a5a",
+  },
+  rejectedBadge: {
+    backgroundColor: "#fde4e4",
+    color: "#b42318",
   },
   draftBadge: {
     backgroundColor: "#f1ece5",
