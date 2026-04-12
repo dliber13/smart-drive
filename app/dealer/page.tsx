@@ -90,6 +90,12 @@ export default function DealerPage() {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
+  function showTopMessage(type: "success" | "error" | "info", text: string) {
+    setMessageType(type)
+    setMessage(text)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
   const checklist = useMemo<ChecklistItem[]>(() => {
     return [
       { label: "First name entered", complete: !!form.firstName.trim() },
@@ -156,17 +162,18 @@ export default function DealerPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setMessageType("error")
-        setMessage(data?.reason || data?.message || "Draft save failed")
+        const errorText = data?.reason || data?.message || "Draft save failed"
+        showTopMessage("error", errorText)
+        alert(errorText)
         return
       }
 
-      setMessageType("success")
-      setMessage("Draft saved successfully")
+      showTopMessage("success", "Draft saved successfully")
+      alert("Draft saved successfully")
     } catch (error) {
       console.error(error)
-      setMessageType("error")
-      setMessage("Draft save failed")
+      showTopMessage("error", "Draft save failed")
+      alert("Draft save failed")
     } finally {
       setSaving(false)
     }
@@ -185,29 +192,28 @@ export default function DealerPage() {
         },
         body: JSON.stringify({
           ...buildPayload(form),
-          identityStatus: "VERIFIED",
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setMessageType("error")
-        setMessage(
+        const errorText =
           data?.reason ||
-            data?.message ||
-            "Application blocked. Review submission requirements."
-        )
+          data?.message ||
+          "Application blocked. Review submission requirements."
+        showTopMessage("error", errorText)
+        alert(errorText)
         return
       }
 
-      setMessageType("success")
-      setMessage("Application submitted successfully")
+      showTopMessage("success", "Application submitted successfully")
+      alert("Application submitted successfully")
       setForm(initialForm)
     } catch (error) {
       console.error(error)
-      setMessageType("error")
-      setMessage("Application submission failed")
+      showTopMessage("error", "Application submission failed")
+      alert("Application submission failed")
     } finally {
       setSubmitting(false)
     }
