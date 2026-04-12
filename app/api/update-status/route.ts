@@ -3,21 +3,42 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-function normalizeStatus(value: unknown) {
+const ALLOWED_STATUSES = [
+  "DRAFT",
+  "READY",
+  "SUBMITTED",
+  "APPROVED",
+  "REJECTED",
+  "FUNDED",
+] as const;
+
+type AllowedStatus = (typeof ALLOWED_STATUSES)[number];
+
+function normalizeStatus(value: unknown): AllowedStatus | null {
   const status = String(value ?? "").trim().toUpperCase();
 
-  if (
-    status === "DRAFT" ||
-    status === "READY" ||
-    status === "SUBMITTED" ||
-    status === "APPROVED" ||
-    status === "REJECTED" ||
-    status === "FUNDED"
-  ) {
-    return status;
+  if (ALLOWED_STATUSES.includes(status as AllowedStatus)) {
+    return status as AllowedStatus;
   }
 
   return null;
+}
+
+function canTransition(currentStatus: string, nextStatus: AllowedStatus) {
+  const current = currentStatus.toUpperCase();
+
+  if (current === nextStatus) return true;
+
+  const allowedTransitions: Record<string, AllowedStatus[]> = {
+    DRAFT: ["READY", "SUBMITTED", "REJECTED"],
+    READY: ["SUBMITTED", "REJECTED", "DRAFT"],
+    SUBMITTED: ["APPROVED", "REJECTED", "READY"],
+    APPROVED: ["FUNDED", "SUBMITTED", "REJECTED"],
+    REJECTED: ["SUBMITTED", "READY"],
+    FUNDED: ["FUNDED"],
+  };
+
+  return allowedTransitions[current]?.includes(nextStatus) ?? false;
 }
 
 export async function POST(req: Request) {
@@ -49,6 +70,34 @@ export async function POST(req: Request) {
           success: false,
           reason:
             "Invalid status. Allowed values: DRAFT, READY, SUBMITTED, APPROVED, REJECTED, FUNDED",
+        },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.application.findUnique({
+      where: { id: applicationId },
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Application not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    const currentStatus = String(existing.status ?? "DRAFT").toUpperCase();
+
+    if (!canTransition(currentStatus, nextStatus)) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: `Invalid status transition from ${currentStatus} to ${nextStatus}`,
+          currentStatus,
+          requestedStatus: nextStatus,
         },
         { status: 400 }
       );
