@@ -35,95 +35,131 @@ function normalizeStatus(value: unknown) {
   return "DRAFT";
 }
 
-function buildApplicantName(app: Record<string, unknown>) {
-  const first =
-    asString(app.firstName) ||
-    asString(app.applicantFirstName) ||
-    asString(app.borrowerFirstName);
-
-  const last =
-    asString(app.lastName) ||
-    asString(app.applicantLastName) ||
-    asString(app.borrowerLastName);
-
-  const combined = `${first} ${last}`.trim();
-
-  if (combined) return combined;
-
-  return (
-    asString(app.applicantName) ||
-    asString(app.fullName) ||
-    asString(app.customerName) ||
-    "Unnamed Applicant"
-  );
-}
-
-function buildVehicleLabel(app: Record<string, unknown>) {
-  const year = asString(app.vehicleYear);
-  const make = asString(app.vehicleMake) || asString(app.make);
-  const model = asString(app.vehicleModel) || asString(app.model);
-
-  const combined = `${year} ${make} ${model}`.replace(/\s+/g, " ").trim();
-
-  if (combined) return combined;
-
-  return asString(app.vehicle) || asString(app.vehicleDescription) || "Vehicle not listed";
-}
-
-function formatDate(value: unknown) {
-  if (!value) return null;
-
-  const date = new Date(value as string);
-
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date.toISOString();
-}
-
 export async function GET(request: Request) {
   try {
-    const currentUserRole = getCurrentUserRole(request);
+    const role = getCurrentUserRole(request);
 
-    if (
-      currentUserRole !== "ADMIN" &&
-      currentUserRole !== "CONTROLLER" &&
-      currentUserRole !== "SALES"
-    ) {
+    if (role !== "ADMIN" && role !== "CONTROLLER" && role !== "SALES") {
       return NextResponse.json(
         {
           success: false,
-          reason: "Unauthorized to access dealer dashboard",
-          currentUserRole,
+          reason: "Unauthorized",
+          currentUserRole: role,
         },
         { status: 403 }
       );
     }
 
-    const records = (await prisma.application.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
+    const records = await prisma.application.findMany({
+      orderBy: { createdAt: "desc" },
       take: 50,
-    })) as unknown as Record<string, unknown>[];
+    });
 
-    const applications = records.map((app) => ({
-      id: asString(app.id),
-      applicantName: buildApplicantName(app),
-      status: normalizeStatus(app.status),
-      lender: asString(app.lender) || "—",
-      tier: asString(app.tier) || "—",
-      maxPayment: asNumber(app.maxPayment),
-      maxVehicle: asNumber(app.maxVehicle),
-      decisionReason: asString(app.decisionReason) || "—",
-      vehicle: buildVehicleLabel(app),
-      createdAt: formatDate(app.createdAt) || formatDate(app.updatedAt),
-    }));
+    const applications = records.map((app: any) => {
+      const status = normalizeStatus(app.status);
+
+      return {
+        id: app.id,
+        createdAt: app.createdAt?.toISOString() || "",
+        updatedAt: app.updatedAt?.toISOString() || "",
+
+        firstName: asString(app.firstName) || null,
+        lastName: asString(app.lastName) || null,
+        phone: asString(app.phone) || null,
+        email: asString(app.email) || null,
+
+        identityType: asString(app.identityType) || null,
+        identityValue: asString(app.identityValue) || null,
+        issuingCountry: asString(app.issuingCountry) || null,
+        identityStatus: asString(app.identityStatus) || null,
+
+        stockNumber: asString(app.stockNumber) || null,
+        vin: asString(app.vin) || null,
+        vehicleYear: asNumber(app.vehicleYear),
+        vehicleMake: asString(app.vehicleMake) || null,
+        vehicleModel: asString(app.vehicleModel) || null,
+        vehiclePrice: asNumber(app.vehiclePrice),
+
+        downPayment: asNumber(app.downPayment),
+        tradeIn: asNumber(app.tradeIn),
+        amountFinanced: asNumber(app.amountFinanced),
+
+        creditScore: asNumber(app.creditScore),
+        monthlyIncome: asNumber(app.monthlyIncome),
+
+        status,
+        lender: asString(app.lender) || null,
+        tier: asString(app.tier) || null,
+        maxPayment: asNumber(app.maxPayment),
+        maxVehicle: asNumber(app.maxVehicle),
+        decisionReason: asString(app.decisionReason) || null,
+        dealStrength: asNumber(app.dealStrength),
+
+        timeline: [
+          {
+            label: "Draft Created",
+            complete: true,
+            date: app.createdAt?.toISOString() || "",
+          },
+          {
+            label: "Ready",
+            complete:
+              status === "READY" ||
+              status === "SUBMITTED" ||
+              status === "APPROVED" ||
+              status === "REJECTED" ||
+              status === "FUNDED",
+            date:
+              status === "READY" ||
+              status === "SUBMITTED" ||
+              status === "APPROVED" ||
+              status === "REJECTED" ||
+              status === "FUNDED"
+                ? app.updatedAt?.toISOString() || ""
+                : "",
+          },
+          {
+            label: "Submitted",
+            complete:
+              status === "SUBMITTED" ||
+              status === "APPROVED" ||
+              status === "REJECTED" ||
+              status === "FUNDED",
+            date:
+              status === "SUBMITTED" ||
+              status === "APPROVED" ||
+              status === "REJECTED" ||
+              status === "FUNDED"
+                ? app.updatedAt?.toISOString() || ""
+                : "",
+          },
+          {
+            label: "Approved",
+            complete: status === "APPROVED" || status === "FUNDED",
+            date:
+              status === "APPROVED" || status === "FUNDED"
+                ? app.updatedAt?.toISOString() || ""
+                : "",
+          },
+          {
+            label: "Rejected",
+            complete: status === "REJECTED",
+            date: status === "REJECTED" ? app.updatedAt?.toISOString() || "" : "",
+          },
+          {
+            label: "Funded",
+            complete: status === "FUNDED",
+            date: status === "FUNDED" ? app.updatedAt?.toISOString() || "" : "",
+          },
+        ],
+      };
+    });
 
     return NextResponse.json({
       success: true,
       count: applications.length,
       applications,
-      currentUserRole,
+      currentUserRole: role,
     });
   } catch (error: any) {
     console.error("Dealer dashboard API error:", error);
