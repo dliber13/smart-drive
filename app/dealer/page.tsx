@@ -2,7 +2,16 @@
 
 import { useMemo, useState } from "react"
 
-type IdentityType = "SSN" | "ITIN" | "PASSPORT" | "MATRICULA" | "OTHER" | ""
+type IdentityType =
+  | "SSN"
+  | "ITIN"
+  | "DRIVERS_LICENSE"
+  | "STATE_ID"
+  | "PASSPORT"
+  | "MATRICULA"
+  | "OTHER"
+  | ""
+
 type IdentityStatus = "PENDING" | "VERIFIED" | "REJECTED"
 
 type FormState = {
@@ -292,6 +301,8 @@ export default function DealerPage() {
                     { label: "Select identity type", value: "" },
                     { label: "SSN", value: "SSN" },
                     { label: "ITIN", value: "ITIN" },
+                    { label: "Driver's License", value: "DRIVERS_LICENSE" },
+                    { label: "State ID (Non-Driver)", value: "STATE_ID" },
                     { label: "Passport", value: "PASSPORT" },
                     { label: "Matricula", value: "MATRICULA" },
                     { label: "Other", value: "OTHER" },
