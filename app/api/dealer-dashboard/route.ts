@@ -53,107 +53,66 @@ export async function GET(request: Request) {
     const records = await prisma.application.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
+      include: {
+        statusHistory: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
     });
 
-    const applications = records.map((app: any) => {
-      const status = normalizeStatus(app.status);
+    const applications = records.map((app: any) => ({
+      id: app.id,
+      createdAt: app.createdAt?.toISOString() || "",
+      updatedAt: app.updatedAt?.toISOString() || "",
 
-      return {
-        id: app.id,
-        createdAt: app.createdAt?.toISOString() || "",
-        updatedAt: app.updatedAt?.toISOString() || "",
+      firstName: asString(app.firstName) || null,
+      lastName: asString(app.lastName) || null,
+      phone: asString(app.phone) || null,
+      email: asString(app.email) || null,
 
-        firstName: asString(app.firstName) || null,
-        lastName: asString(app.lastName) || null,
-        phone: asString(app.phone) || null,
-        email: asString(app.email) || null,
+      identityType: asString(app.identityType) || null,
+      identityValue: asString(app.identityValue) || null,
+      issuingCountry: asString(app.issuingCountry) || null,
+      identityStatus: asString(app.identityStatus) || null,
 
-        identityType: asString(app.identityType) || null,
-        identityValue: asString(app.identityValue) || null,
-        issuingCountry: asString(app.issuingCountry) || null,
-        identityStatus: asString(app.identityStatus) || null,
+      stockNumber: asString(app.stockNumber) || null,
+      vin: asString(app.vin) || null,
+      vehicleYear: asNumber(app.vehicleYear),
+      vehicleMake: asString(app.vehicleMake) || null,
+      vehicleModel: asString(app.vehicleModel) || null,
+      vehiclePrice: asNumber(app.vehiclePrice),
 
-        stockNumber: asString(app.stockNumber) || null,
-        vin: asString(app.vin) || null,
-        vehicleYear: asNumber(app.vehicleYear),
-        vehicleMake: asString(app.vehicleMake) || null,
-        vehicleModel: asString(app.vehicleModel) || null,
-        vehiclePrice: asNumber(app.vehiclePrice),
+      downPayment: asNumber(app.downPayment),
+      tradeIn: asNumber(app.tradeIn),
+      amountFinanced: asNumber(app.amountFinanced),
 
-        downPayment: asNumber(app.downPayment),
-        tradeIn: asNumber(app.tradeIn),
-        amountFinanced: asNumber(app.amountFinanced),
+      creditScore: asNumber(app.creditScore),
+      monthlyIncome: asNumber(app.monthlyIncome),
 
-        creditScore: asNumber(app.creditScore),
-        monthlyIncome: asNumber(app.monthlyIncome),
+      status: normalizeStatus(app.status),
+      lender: asString(app.lender) || null,
+      tier: asString(app.tier) || null,
+      maxPayment: asNumber(app.maxPayment),
+      maxVehicle: asNumber(app.maxVehicle),
+      decisionReason: asString(app.decisionReason) || null,
+      dealStrength: asNumber(app.dealStrength),
 
-        status,
-        lender: asString(app.lender) || null,
-        tier: asString(app.tier) || null,
-        maxPayment: asNumber(app.maxPayment),
-        maxVehicle: asNumber(app.maxVehicle),
-        decisionReason: asString(app.decisionReason) || null,
-        dealStrength: asNumber(app.dealStrength),
+      fundingDate: app.fundingDate ? app.fundingDate.toISOString() : null,
+      fundingAmount: asNumber(app.fundingAmount),
+      lenderConfirmation: asString(app.lenderConfirmation) || null,
 
-        timeline: [
-          {
-            label: "Draft Created",
-            complete: true,
-            date: app.createdAt?.toISOString() || "",
-          },
-          {
-            label: "Ready",
-            complete:
-              status === "READY" ||
-              status === "SUBMITTED" ||
-              status === "APPROVED" ||
-              status === "REJECTED" ||
-              status === "FUNDED",
-            date:
-              status === "READY" ||
-              status === "SUBMITTED" ||
-              status === "APPROVED" ||
-              status === "REJECTED" ||
-              status === "FUNDED"
-                ? app.updatedAt?.toISOString() || ""
-                : "",
-          },
-          {
-            label: "Submitted",
-            complete:
-              status === "SUBMITTED" ||
-              status === "APPROVED" ||
-              status === "REJECTED" ||
-              status === "FUNDED",
-            date:
-              status === "SUBMITTED" ||
-              status === "APPROVED" ||
-              status === "REJECTED" ||
-              status === "FUNDED"
-                ? app.updatedAt?.toISOString() || ""
-                : "",
-          },
-          {
-            label: "Approved",
-            complete: status === "APPROVED" || status === "FUNDED",
-            date:
-              status === "APPROVED" || status === "FUNDED"
-                ? app.updatedAt?.toISOString() || ""
-                : "",
-          },
-          {
-            label: "Rejected",
-            complete: status === "REJECTED",
-            date: status === "REJECTED" ? app.updatedAt?.toISOString() || "" : "",
-          },
-          {
-            label: "Funded",
-            complete: status === "FUNDED",
-            date: status === "FUNDED" ? app.updatedAt?.toISOString() || "" : "",
-          },
-        ],
-      };
-    });
+      timeline: Array.isArray(app.statusHistory)
+        ? app.statusHistory.map((item: any) => ({
+            id: item.id,
+            fromStatus: item.fromStatus,
+            toStatus: item.toStatus,
+            note: item.note,
+            createdAt: item.createdAt?.toISOString() || "",
+          }))
+        : [],
+    }));
 
     return NextResponse.json({
       success: true,
