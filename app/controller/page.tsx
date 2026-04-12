@@ -88,12 +88,15 @@ export default function ControllerPage() {
         return
       }
 
-      const rows = Array.isArray(data?.applications) ? data.applications : []
+      const rows: ApplicationRecord[] = Array.isArray(data?.applications)
+        ? data.applications
+        : []
+
       setApplications(rows)
 
       if (rows.length > 0) {
-        setSelectedId((current) => {
-          const stillExists = rows.some((row) => row.id === current)
+        setSelectedId((current: string) => {
+          const stillExists = rows.some((row: ApplicationRecord) => row.id === current)
           return stillExists ? current : rows[0].id
         })
       } else {
@@ -112,7 +115,7 @@ export default function ControllerPage() {
   }
 
   const selectedApplication = useMemo(() => {
-    return applications.find((item) => item.id === selectedId) || null
+    return applications.find((item: ApplicationRecord) => item.id === selectedId) || null
   }, [applications, selectedId])
 
   function updateDecisionField(
@@ -374,7 +377,7 @@ export default function ControllerPage() {
               <div style={styles.emptyState}>No applications found yet.</div>
             ) : (
               <div style={styles.queueList}>
-                {applications.map((app) => {
+                {applications.map((app: ApplicationRecord) => {
                   const active = app.id === selectedId
                   return (
                     <button
