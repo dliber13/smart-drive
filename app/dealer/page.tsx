@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { CSSProperties, useMemo, useState } from "react"
 
 type IdentityType =
   | "SSN"
@@ -220,50 +220,47 @@ export default function DealerPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f4ee] px-6 py-8 text-[#111111]">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <main style={styles.page}>
+      <div style={styles.container}>
+        <div style={styles.headerRow}>
           <div>
-            <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">
-              Smart Drive Elite
-            </div>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em]">
-              Deal Intake
-            </h1>
-            <p className="mt-2 max-w-2xl text-[15px] leading-7 text-black/60">
+            <div style={styles.kicker}>Smart Drive Elite</div>
+            <h1 style={styles.pageTitle}>Deal Intake</h1>
+            <p style={styles.pageSubtitle}>
               Create a structured application for controller review and
               underwriting. Identity must be complete and verified before a file
               can be submitted.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <StatusPill label={currentStatus} />
-            <RoleBadge label="SALES" />
+          <div style={styles.badgeRow}>
+            <div style={styles.statusPill}>{currentStatus}</div>
+            <div style={styles.roleBadge}>SALES</div>
           </div>
         </div>
 
         {message ? (
           <div
-            className={`mb-6 rounded-2xl border px-5 py-4 text-sm ${
-              messageType === "success"
-                ? "border-green-200 bg-green-50 text-green-700"
+            style={{
+              ...styles.messageBox,
+              ...(messageType === "success"
+                ? styles.messageSuccess
                 : messageType === "error"
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-black/10 bg-white text-black/70"
-            }`}
+                ? styles.messageError
+                : styles.messageInfo),
+            }}
           >
             {message}
           </div>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
-          <div className="space-y-6">
+        <div style={styles.grid}>
+          <div style={styles.leftColumn}>
             <SectionCard
               title="Applicant Information"
               subtitle="Core borrower details"
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <div style={styles.twoColumnGrid}>
                 <Field
                   label="First Name"
                   value={form.firstName}
@@ -296,7 +293,7 @@ export default function DealerPage() {
               subtitle="Required before submission"
               highlight
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <div style={styles.twoColumnGrid}>
                 <SelectField
                   label="Identity Type"
                   value={form.identityType}
@@ -342,7 +339,7 @@ export default function DealerPage() {
             </SectionCard>
 
             <SectionCard title="Vehicle Information" subtitle="Unit details">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div style={styles.twoColumnGrid}>
                 <Field
                   label="Stock Number"
                   value={form.stockNumber}
@@ -383,7 +380,7 @@ export default function DealerPage() {
             </SectionCard>
 
             <SectionCard title="Deal Structure" subtitle="Financial structure">
-              <div className="grid gap-4 md:grid-cols-3">
+              <div style={styles.threeColumnGrid}>
                 <Field
                   label="Down Payment"
                   value={form.downPayment}
@@ -409,7 +406,7 @@ export default function DealerPage() {
               title="Borrower Financials"
               subtitle="Optional intake financials"
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <div style={styles.twoColumnGrid}>
                 <Field
                   label="Credit Score"
                   value={form.creditScore}
@@ -425,12 +422,15 @@ export default function DealerPage() {
               </div>
             </SectionCard>
 
-            <div className="flex flex-col gap-3 rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_50px_rgba(0,0,0,0.04)] md:flex-row">
+            <div style={styles.actionBar}>
               <button
                 type="button"
                 onClick={saveDraft}
                 disabled={saving}
-                className="rounded-[18px] border border-black/10 bg-white px-6 py-4 text-sm font-semibold text-black/75 transition hover:bg-black/5 disabled:opacity-60"
+                style={{
+                  ...styles.secondaryButton,
+                  ...(saving ? styles.disabledButton : {}),
+                }}
               >
                 {saving ? "Saving Draft..." : "Save Draft"}
               </button>
@@ -439,19 +439,22 @@ export default function DealerPage() {
                 type="button"
                 onClick={submitApplication}
                 disabled={!canSubmit || submitting}
-                className="rounded-[18px] bg-[#111111] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                style={{
+                  ...styles.primaryButton,
+                  ...(!canSubmit || submitting ? styles.disabledButton : {}),
+                }}
               >
                 {submitting ? "Submitting..." : "Submit Application"}
               </button>
             </div>
           </div>
 
-          <div className="space-y-6 lg:sticky lg:top-6 lg:self-start">
+          <div style={styles.rightColumn}>
             <SectionCard
               title="Submission Readiness"
               subtitle="Everything the file must prove"
             >
-              <div className="space-y-3">
+              <div style={styles.stack}>
                 {checklist.map((item) => (
                   <ChecklistRow
                     key={item.label}
@@ -466,7 +469,7 @@ export default function DealerPage() {
               title="Current Status"
               subtitle="Live workflow state"
             >
-              <div className="space-y-4">
+              <div style={styles.stack}>
                 <InfoRow label="Current Status" value={currentStatus} />
                 <InfoRow
                   label="Next Step"
@@ -487,16 +490,16 @@ export default function DealerPage() {
             </SectionCard>
 
             <SectionCard title="Block Reasons" subtitle="Why submission is held">
-              <div className="space-y-2">
+              <div style={styles.stack}>
                 {canSubmit ? (
-                  <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  <div style={{ ...styles.noticeBox, ...styles.noticeSuccess }}>
                     File meets submission requirements.
                   </div>
                 ) : (
                   blockReasons.map((reason) => (
                     <div
                       key={reason}
-                      className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                      style={{ ...styles.noticeBox, ...styles.noticeError }}
                     >
                       {reason}
                     </div>
@@ -506,14 +509,14 @@ export default function DealerPage() {
             </SectionCard>
 
             <SectionCard title="Access Control" subtitle="Role restrictions">
-              <div className="space-y-3 text-sm text-black/70">
-                <div className="rounded-2xl border border-black/8 bg-[#faf7f1] px-4 py-3">
+              <div style={styles.stack}>
+                <div style={styles.softCard}>
                   Sales can create and save intake files.
                 </div>
-                <div className="rounded-2xl border border-black/8 bg-[#faf7f1] px-4 py-3">
+                <div style={styles.softCard}>
                   Sales cannot pull credit.
                 </div>
-                <div className="rounded-2xl border border-black/8 bg-[#faf7f1] px-4 py-3">
+                <div style={styles.softCard}>
                   Identity must be verified before submission.
                 </div>
               </div>
@@ -566,17 +569,14 @@ function SectionCard({
 }) {
   return (
     <section
-      className={`rounded-[28px] border p-6 shadow-[0_18px_50px_rgba(0,0,0,0.04)] ${
-        highlight
-          ? "border-[#d8c7a1] bg-[#fffaf1]"
-          : "border-black/8 bg-white"
-      }`}
+      style={{
+        ...styles.sectionCard,
+        ...(highlight ? styles.highlightCard : {}),
+      }}
     >
-      <div className="mb-5">
-        <h2 className="text-xl font-semibold tracking-[-0.02em]">{title}</h2>
-        {subtitle ? (
-          <p className="mt-1 text-sm text-black/55">{subtitle}</p>
-        ) : null}
+      <div style={styles.sectionHeader}>
+        <h2 style={styles.sectionTitle}>{title}</h2>
+        {subtitle ? <p style={styles.sectionSubtitle}>{subtitle}</p> : null}
       </div>
       {children}
     </section>
@@ -595,15 +595,13 @@ function Field({
   placeholder: string
 }) {
   return (
-    <label className="block">
-      <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-black/40">
-        {label}
-      </div>
+    <label style={styles.labelWrap}>
+      <div style={styles.fieldLabel}>{label}</div>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-[18px] border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-black/25"
+        style={styles.input}
       />
     </label>
   )
@@ -621,14 +619,12 @@ function SelectField({
   options: { label: string; value: string }[]
 }) {
   return (
-    <label className="block">
-      <div className="mb-2 text-[11px] uppercase tracking-[0.22em] text-black/40">
-        {label}
-      </div>
+    <label style={styles.labelWrap}>
+      <div style={styles.fieldLabel}>{label}</div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[18px] border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-black/25"
+        style={styles.input}
       >
         {options.map((option) => (
           <option key={`${label}-${option.value}`} value={option.value}>
@@ -648,14 +644,13 @@ function ChecklistRow({
   complete: boolean
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-black/8 bg-[#faf7f1] px-4 py-3 text-sm">
-      <span className="text-black/75">{label}</span>
+    <div style={styles.checkRow}>
+      <span style={styles.checkRowLabel}>{label}</span>
       <span
-        className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
-          complete
-            ? "bg-green-100 text-green-700"
-            : "bg-red-100 text-red-700"
-        }`}
+        style={{
+          ...styles.checkBadge,
+          ...(complete ? styles.completeBadge : styles.missingBadge),
+        }}
       >
         {complete ? "Complete" : "Missing"}
       </span>
@@ -673,16 +668,17 @@ function InfoRow({
   emphasize?: "success" | "danger"
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-black/8 bg-[#faf7f1] px-4 py-3">
-      <div className="text-sm text-black/50">{label}</div>
+    <div style={styles.infoRow}>
+      <div style={styles.infoLabel}>{label}</div>
       <div
-        className={`text-right text-sm font-semibold ${
-          emphasize === "success"
-            ? "text-green-700"
+        style={{
+          ...styles.infoValue,
+          ...(emphasize === "success"
+            ? styles.successText
             : emphasize === "danger"
-            ? "text-red-700"
-            : "text-black/80"
-        }`}
+            ? styles.dangerText
+            : {}),
+        }}
       >
         {value}
       </div>
@@ -691,17 +687,296 @@ function InfoRow({
 }
 
 function StatusPill({ label }: { label: string }) {
-  return (
-    <div className="rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-black/70">
-      {label}
-    </div>
-  )
+  return <div style={styles.statusPill}>{label}</div>
 }
 
 function RoleBadge({ label }: { label: string }) {
-  return (
-    <div className="rounded-full bg-[#111111] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white">
-      {label}
-    </div>
-  )
+  return <div style={styles.roleBadge}>{label}</div>
+}
+
+const styles: Record<string, CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    backgroundColor: "#f7f4ee",
+    padding: "32px 24px",
+    color: "#111111",
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  },
+  container: {
+    maxWidth: "1280px",
+    margin: "0 auto",
+  },
+  headerRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    gap: "16px",
+    marginBottom: "32px",
+  },
+  kicker: {
+    fontSize: "12px",
+    textTransform: "uppercase",
+    letterSpacing: "0.28em",
+    color: "rgba(17,17,17,0.45)",
+  },
+  pageTitle: {
+    marginTop: "12px",
+    marginBottom: "8px",
+    fontSize: "56px",
+    lineHeight: 1,
+    fontWeight: 700,
+    letterSpacing: "-0.04em",
+  },
+  pageSubtitle: {
+    maxWidth: "760px",
+    fontSize: "16px",
+    lineHeight: 1.7,
+    color: "rgba(17,17,17,0.65)",
+    margin: 0,
+  },
+  badgeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+  statusPill: {
+    border: "1px solid rgba(17,17,17,0.1)",
+    backgroundColor: "#ffffff",
+    borderRadius: "999px",
+    padding: "12px 16px",
+    fontSize: "11px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.2em",
+    color: "rgba(17,17,17,0.75)",
+  },
+  roleBadge: {
+    borderRadius: "999px",
+    padding: "12px 16px",
+    fontSize: "11px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.2em",
+    color: "#ffffff",
+    backgroundColor: "#111111",
+  },
+  messageBox: {
+    marginBottom: "24px",
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.1)",
+    padding: "16px 18px",
+    fontSize: "14px",
+  },
+  messageSuccess: {
+    backgroundColor: "#eefaf1",
+    borderColor: "#b7e3c2",
+    color: "#1f7a37",
+  },
+  messageError: {
+    backgroundColor: "#fff1f1",
+    borderColor: "#efc0c0",
+    color: "#b42318",
+  },
+  messageInfo: {
+    backgroundColor: "#ffffff",
+    borderColor: "rgba(17,17,17,0.1)",
+    color: "rgba(17,17,17,0.75)",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.4fr) minmax(320px, 0.8fr)",
+    gap: "24px",
+    alignItems: "start",
+  },
+  leftColumn: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px",
+  },
+  rightColumn: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "24px",
+    position: "sticky",
+    top: "24px",
+  },
+  sectionCard: {
+    backgroundColor: "#ffffff",
+    border: "1px solid rgba(17,17,17,0.08)",
+    borderRadius: "28px",
+    padding: "24px",
+    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
+  },
+  highlightCard: {
+    backgroundColor: "#fffaf1",
+    borderColor: "#d8c7a1",
+  },
+  sectionHeader: {
+    marginBottom: "20px",
+  },
+  sectionTitle: {
+    margin: 0,
+    fontSize: "28px",
+    lineHeight: 1.1,
+    fontWeight: 700,
+    letterSpacing: "-0.02em",
+  },
+  sectionSubtitle: {
+    marginTop: "6px",
+    marginBottom: 0,
+    fontSize: "14px",
+    color: "rgba(17,17,17,0.55)",
+  },
+  twoColumnGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "16px",
+  },
+  threeColumnGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "16px",
+  },
+  labelWrap: {
+    display: "block",
+  },
+  fieldLabel: {
+    marginBottom: "8px",
+    fontSize: "11px",
+    textTransform: "uppercase",
+    letterSpacing: "0.22em",
+    color: "rgba(17,17,17,0.45)",
+    fontWeight: 700,
+  },
+  input: {
+    width: "100%",
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.1)",
+    backgroundColor: "#ffffff",
+    padding: "14px 16px",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+  actionBar: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px",
+    backgroundColor: "#ffffff",
+    border: "1px solid rgba(17,17,17,0.08)",
+    borderRadius: "28px",
+    padding: "20px",
+    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
+  },
+  secondaryButton: {
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.1)",
+    backgroundColor: "#ffffff",
+    padding: "14px 24px",
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "rgba(17,17,17,0.75)",
+    cursor: "pointer",
+  },
+  primaryButton: {
+    borderRadius: "18px",
+    border: "none",
+    backgroundColor: "#111111",
+    padding: "14px 24px",
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "#ffffff",
+    cursor: "pointer",
+  },
+  disabledButton: {
+    opacity: 0.45,
+    cursor: "not-allowed",
+  },
+  stack: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  checkRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.08)",
+    backgroundColor: "#faf7f1",
+    padding: "14px 16px",
+  },
+  checkRowLabel: {
+    fontSize: "14px",
+    color: "rgba(17,17,17,0.75)",
+  },
+  checkBadge: {
+    borderRadius: "999px",
+    padding: "6px 12px",
+    fontSize: "11px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.18em",
+  },
+  completeBadge: {
+    backgroundColor: "#dff5e6",
+    color: "#1f7a37",
+  },
+  missingBadge: {
+    backgroundColor: "#fde4e4",
+    color: "#b42318",
+  },
+  infoRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "16px",
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.08)",
+    backgroundColor: "#faf7f1",
+    padding: "14px 16px",
+  },
+  infoLabel: {
+    fontSize: "14px",
+    color: "rgba(17,17,17,0.5)",
+  },
+  infoValue: {
+    fontSize: "14px",
+    fontWeight: 700,
+    textAlign: "right",
+    color: "rgba(17,17,17,0.82)",
+  },
+  successText: {
+    color: "#1f7a37",
+  },
+  dangerText: {
+    color: "#b42318",
+  },
+  noticeBox: {
+    borderRadius: "18px",
+    padding: "14px 16px",
+    fontSize: "14px",
+    border: "1px solid transparent",
+  },
+  noticeSuccess: {
+    backgroundColor: "#eefaf1",
+    borderColor: "#b7e3c2",
+    color: "#1f7a37",
+  },
+  noticeError: {
+    backgroundColor: "#fff1f1",
+    borderColor: "#efc0c0",
+    color: "#b42318",
+  },
+  softCard: {
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.08)",
+    backgroundColor: "#faf7f1",
+    padding: "14px 16px",
+    fontSize: "14px",
+    color: "rgba(17,17,17,0.72)",
+  },
 }
