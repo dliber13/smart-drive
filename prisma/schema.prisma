@@ -51,6 +51,25 @@ model Application {
   statusHistory     StatusHistory[]
 }
 
+model Vehicle {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+
+  stockNumber   String   @unique
+  year          Int?
+  make          String?
+  model         String?
+
+  mileage       Int?
+  dateInStock   DateTime?
+
+  askingPrice   Float?
+  totalCost     Float?
+
+  jdTrade       Float?
+  jdRetail      Float?
+}
+
 model StatusHistory {
   id            String      @id @default(cuid())
   createdAt     DateTime    @default(now())
@@ -63,5 +82,4 @@ model StatusHistory {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
-  @@index([createdAt])
 }
