@@ -1,169 +1,248 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { CSSProperties, FormEvent, useState } from "react"
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<"login" | "bootstrap">("login")
-  const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
-  const [submitting, setSubmitting] = useState(false)
+  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
+    "info"
+  )
 
-  useEffect(() => {
-    fetch("/api/auth/me", { cache: "no-store" }).then(async (res) => {
-      if (res.ok) {
-        const data = await res.json()
-        if (data?.user?.role === "ADMIN") {
-          window.location.href = "/admin"
-        } else {
-          window.location.href = "/dealer"
-        }
-      }
-    })
-  }, [])
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitting(true)
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoading(true)
     setMessage("")
 
-    const endpoint =
-      mode === "bootstrap" ? "/api/auth/bootstrap" : "/api/auth/login"
-
-    const payload =
-      mode === "bootstrap"
-        ? { fullName, email, password }
-        : { email, password }
-
     try {
-      const res = await fetch(endpoint, {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       })
 
-      const data = await res.json()
+      const data = await response.json().catch(() => null)
 
-      if (!res.ok) {
-        setMessage(data?.error || "Request failed")
+      if (!response.ok) {
+        setMessageType("error")
+        setMessage(data?.message || "Sign in failed")
         return
       }
 
-      if (mode === "bootstrap" || data?.user?.role === "ADMIN") {
-        window.location.href = "/admin"
-      } else {
-        window.location.href = "/dealer"
+      setMessageType("success")
+      setMessage("Sign in successful")
+
+      if (data?.redirectTo) {
+        window.location.href = data.redirectTo
+        return
       }
+
+      window.location.href = "/controller"
     } catch (error) {
       console.error(error)
-      setMessage("Request failed")
+      setMessageType("error")
+      setMessage("Something went wrong during sign in")
     } finally {
-      setSubmitting(false)
+      setLoading(false)
     }
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f4ee] px-6 py-12 text-[#111111]">
-      <div className="mx-auto max-w-md rounded-[32px] border border-black/8 bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.06)]">
-        <div className="mb-8">
-          <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">
-            SmartDrive Financial
-          </div>
-          <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.05em]">
-            {mode === "bootstrap" ? "Create Admin" : "Sign In"}
-          </h1>
-          <p className="mt-3 text-[16px] leading-7 text-black/60">
-            {mode === "bootstrap"
-              ? "Set up the first administrator account for the platform."
-              : "Use your assigned email and password to access the platform."}
+    <main style={styles.page}>
+      <div style={styles.shell}>
+        <div style={styles.brandBlock}>
+          <div style={styles.kicker}>Smart Drive Elite</div>
+          <h1 style={styles.title}>Sign In</h1>
+          <p style={styles.subtitle}>
+            Use your assigned email and password to access the platform.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {mode === "bootstrap" && (
-            <label className="block">
-              <div className="mb-3 text-[12px] uppercase tracking-[0.28em] text-black/38">
-                Full Name
-              </div>
+        <section style={styles.card}>
+          {message ? (
+            <div
+              style={{
+                ...styles.message,
+                ...(messageType === "success"
+                  ? styles.messageSuccess
+                  : messageType === "error"
+                  ? styles.messageError
+                  : styles.messageInfo),
+              }}
+            >
+              {message}
+            </div>
+          ) : null}
+
+          <form onSubmit={handleSubmit} style={styles.form}>
+            <label style={styles.labelWrap}>
+              <div style={styles.label}>Email</div>
               <input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-[20px] border border-black/10 bg-white px-5 py-4 outline-none"
-                placeholder="Admin Name"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                style={styles.input}
+                autoComplete="email"
               />
             </label>
-          )}
 
-          <label className="block">
-            <div className="mb-3 text-[12px] uppercase tracking-[0.28em] text-black/38">
-              Email
+            <label style={styles.labelWrap}>
+              <div style={styles.label}>Password</div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                style={styles.input}
+                autoComplete="current-password"
+              />
+            </label>
+
+            <div style={styles.buttonRow}>
+              <button type="submit" disabled={loading} style={styles.primaryButton}>
+                {loading ? "Signing In..." : "Sign In"}
+              </button>
+
+              <a href="/admin" style={styles.secondaryButton}>
+                First-Time Setup
+              </a>
             </div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-[20px] border border-black/10 bg-white px-5 py-4 outline-none"
-              placeholder="you@company.com"
-            />
-          </label>
-
-          <label className="block">
-            <div className="mb-3 text-[12px] uppercase tracking-[0.28em] text-black/38">
-              Password
-            </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-[20px] border border-black/10 bg-white px-5 py-4 outline-none"
-              placeholder="••••••••"
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-[20px] bg-[#111111] px-6 py-4 text-[16px] font-semibold text-white disabled:opacity-60"
-          >
-            {submitting
-              ? "Please wait..."
-              : mode === "bootstrap"
-              ? "Create Admin"
-              : "Sign In"}
-          </button>
-        </form>
-
-        {message && (
-          <div className="mt-5 rounded-[18px] border border-black/8 bg-[#fcfbf8] px-4 py-3 text-[14px] text-[#8a4a3d]">
-            {message}
-          </div>
-        )}
-
-        <div className="mt-6 flex items-center justify-between text-sm text-black/55">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("login")
-              setMessage("")
-            }}
-            className="hover:text-black"
-          >
-            Sign In
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setMode("bootstrap")
-              setMessage("")
-            }}
-            className="hover:text-black"
-          >
-            First-time setup
-          </button>
-        </div>
-      </div>  
+          </form>
+        </section>
+      </div>
     </main>
   )
+}
+
+const styles: Record<string, CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    backgroundColor: "#f7f4ee",
+    color: "#111111",
+    fontFamily:
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    padding: "32px 20px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shell: {
+    width: "100%",
+    maxWidth: "520px",
+  },
+  brandBlock: {
+    marginBottom: "24px",
+  },
+  kicker: {
+    fontSize: "12px",
+    textTransform: "uppercase",
+    letterSpacing: "0.28em",
+    color: "rgba(17,17,17,0.45)",
+    marginBottom: "12px",
+  },
+  title: {
+    margin: 0,
+    fontSize: "56px",
+    lineHeight: 1,
+    fontWeight: 700,
+    letterSpacing: "-0.04em",
+  },
+  subtitle: {
+    marginTop: "16px",
+    marginBottom: 0,
+    fontSize: "16px",
+    lineHeight: 1.7,
+    color: "rgba(17,17,17,0.65)",
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    border: "1px solid rgba(17,17,17,0.08)",
+    borderRadius: "28px",
+    padding: "28px",
+    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
+  },
+  labelWrap: {
+    display: "block",
+  },
+  label: {
+    marginBottom: "8px",
+    fontSize: "11px",
+    textTransform: "uppercase",
+    letterSpacing: "0.22em",
+    color: "rgba(17,17,17,0.45)",
+    fontWeight: 700,
+  },
+  input: {
+    width: "100%",
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.1)",
+    backgroundColor: "#ffffff",
+    padding: "14px 16px",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+  buttonRow: {
+    display: "flex",
+    gap: "12px",
+    flexWrap: "wrap",
+    marginTop: "6px",
+  },
+  primaryButton: {
+    borderRadius: "18px",
+    border: "none",
+    backgroundColor: "#111111",
+    padding: "14px 22px",
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "#ffffff",
+    cursor: "pointer",
+  },
+  secondaryButton: {
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.1)",
+    backgroundColor: "#ffffff",
+    padding: "14px 22px",
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "rgba(17,17,17,0.78)",
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+  },
+  message: {
+    marginBottom: "18px",
+    borderRadius: "18px",
+    border: "1px solid rgba(17,17,17,0.1)",
+    padding: "14px 16px",
+    fontSize: "14px",
+  },
+  messageSuccess: {
+    backgroundColor: "#eefaf1",
+    borderColor: "#b7e3c2",
+    color: "#1f7a37",
+  },
+  messageError: {
+    backgroundColor: "#fff1f1",
+    borderColor: "#efc0c0",
+    color: "#b42318",
+  },
+  messageInfo: {
+    backgroundColor: "#ffffff",
+    borderColor: "rgba(17,17,17,0.1)",
+    color: "rgba(17,17,17,0.75)",
+  },
 }
