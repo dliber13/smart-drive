@@ -53,6 +53,8 @@ export async function POST(req: Request) {
         : "";
 
     const nextStatus = normalizeStatus(body?.status);
+    const note =
+      typeof body?.note === "string" && body.note.trim() ? body.note.trim() : null;
 
     if (!applicationId) {
       return NextResponse.json(
@@ -103,15 +105,28 @@ export async function POST(req: Request) {
       );
     }
 
-    const updatedApplication = await prisma.application.update({
-      where: { id: applicationId },
-      data: { status: nextStatus },
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedApplication = await tx.application.update({
+        where: { id: applicationId },
+        data: { status: nextStatus },
+      });
+
+      await tx.statusHistory.create({
+        data: {
+          applicationId,
+          fromStatus: currentStatus,
+          toStatus: nextStatus,
+          note,
+        },
+      });
+
+      return updatedApplication;
     });
 
     return NextResponse.json({
       success: true,
       message: "Application status updated successfully",
-      application: updatedApplication,
+      application: result,
     });
   } catch (error: any) {
     console.error("Update status error:", error);
