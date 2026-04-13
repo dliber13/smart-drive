@@ -1,82 +1,170 @@
-import { NextRequest, NextResponse } from "next/server"
-import prisma from "@/lib/prisma"
-import {
-  forbiddenResponse,
-  getRequestUser,
-  unauthorizedResponse,
-} from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 type RouteContext = {
   params: Promise<{
-    id: string
-  }>
+    id: string;
+  }>;
+};
+
+function getUserRole(request: NextRequest) {
+  return (request.headers.get("x-user-role") || "").toUpperCase();
 }
 
-async function getAuthorizedApplication(req: NextRequest, id: string) {
-  const user = await getRequestUser(req)
-  if (!user) return { error: unauthorizedResponse(), user: null, application: null }
+function isAllowedRole(role: string) {
+  return role === "ADMIN" || role === "CONTROLLER" || role === "SALES";
+}
 
-  const application = await prisma.application.findUnique({
-    where: { id },
-  })
+function parseOptionalNumber(value: unknown) {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return undefined;
+}
 
-  if (!application) {
-    return {
-      error: NextResponse.json({ error: "Deal not found" }, { status: 404 }),
-      user,
-      application: null,
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    const role = getUserRole(request);
+
+    if (!isAllowedRole(role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Unauthorized",
+        },
+        { status: 403 }
+      );
     }
-  }
 
-  if (user.role !== "ADMIN" && application.teamId !== user.teamId) {
-    return { error: forbiddenResponse(), user, application: null }
-  }
+    const { id } = await context.params;
 
-  return { error: null, user, application }
-}
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Missing deal id",
+        },
+        { status: 400 }
+      );
+    }
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  try {
-    const { id } = await context.params
-    const result = await getAuthorizedApplication(req, id)
-    if (result.error) return result.error
-    return NextResponse.json(result.application)
-  } catch (error) {
-    console.error("GET DEAL ERROR:", error)
+    const application = await prisma.application.findUnique({
+      where: { id },
+      include: {
+        statusHistory: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    });
+
+    if (!application) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Deal not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      application,
+    });
+  } catch (error: any) {
+    console.error("Deal GET error:", error);
+
     return NextResponse.json(
-      { error: "Failed to fetch deal" },
+      {
+        success: false,
+        message: error?.message || "Failed to load deal",
+      },
       { status: 500 }
-    )
+    );
   }
 }
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = await context.params
-    const result = await getAuthorizedApplication(req, id)
-    if (result.error) return result.error
+    const role = getUserRole(request);
 
-    const body = await req.json()
+    if (role !== "ADMIN" && role !== "CONTROLLER") {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Unauthorized",
+        },
+        { status: 403 }
+      );
+    }
 
-    const updated = await prisma.application.update({
+    const { id } = await context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Missing deal id",
+        },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+
+    const existing = await prisma.application.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Deal not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    const updatedApplication = await prisma.application.update({
       where: { id },
       data: {
-        status: body.status ?? undefined,
-        tier: body.tier ?? undefined,
-        lender: body.lender ?? undefined,
-        maxPayment: body.maxPayment ?? undefined,
-        maxVehicle: body.maxVehicle ?? undefined,
-        decisionReason: body.decisionReason ?? undefined,
-        dealStrength: body.dealStrength ?? undefined,
+        lender:
+          typeof body?.lender === "string" ? body.lender.trim() || null : undefined,
+        tier:
+          typeof body?.tier === "string" ? body.tier.trim() || null : undefined,
+        maxPayment: parseOptionalNumber(body?.maxPayment),
+        maxVehicle: parseOptionalNumber(body?.maxVehicle),
+        decisionReason:
+          typeof body?.decisionReason === "string"
+            ? body.decisionReason.trim() || null
+            : undefined,
+        dealStrength: parseOptionalNumber(body?.dealStrength),
+        status:
+          typeof body?.status === "string"
+            ? body.status.trim().toUpperCase()
+            : undefined,
       },
-    })
+    });
 
-    return NextResponse.json(updated)
-  } catch (error) {
-    console.error("UPDATE DEAL ERROR:", error)
+    return NextResponse.json({
+      success: true,
+      application: updatedApplication,
+    });
+  } catch (error: any) {
+    console.error("Deal PATCH error:", error);
+
     return NextResponse.json(
-      { error: "Failed to update deal" },
+      {
+        success: false,
+        message: error?.message || "Failed to update deal",
+      },
       { status: 500 }
-    )
+    );
   }
 }
