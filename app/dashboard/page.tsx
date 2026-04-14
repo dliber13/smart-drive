@@ -1,253 +1,165 @@
-import prisma from "@/lib/prisma"
-import Link from "next/link"
-import { requireUser } from "@/lib/auth"
+import Link from "next/link";
+import prisma from "@/lib/prisma";
 
-type RecentApplication = {
-  id: string
-  firstName: string | null
-  lastName: string | null
-  stockNumber: string | null
-  vin: string | null
-  status: string
-  monthlyIncome: number | null
-  creditScore: number | null
-  vehicleYear: number | null
-  vehicleMake: string | null
-  vehicleModel: string | null
-  dealStrength: number | null
-  createdAt: Date
-}
+export const dynamic = "force-dynamic";
 
-function formatCurrency(value: number | null) {
-  if (!value) return "-"
+function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
-  }).format(value)
-}
-
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(value)
-}
-
-function buildVehicleLabel(app: RecentApplication) {
-  const parts = [app.vehicleYear, app.vehicleMake, app.vehicleModel].filter(Boolean)
-  return parts.length ? parts.join(" ") : "-"
-}
-
-function statusStyle(status: string) {
-  switch (status) {
-    case "APPROVED":
-      return "bg-[#eef6f2] text-[#2f6f55]"
-    case "DECLINED":
-    case "DENIED":
-      return "bg-[#f8ece8] text-[#8a4a3d]"
-    case "FUNDED":
-      return "bg-[#edf2f8] text-[#415a77]"
-    case "DOCS_NEEDED":
-      return "bg-[#f8f2e8] text-[#8a6a3d]"
-    default:
-      return "bg-gray-100 text-gray-700"
-  }
-}
-
-function strengthStyle(value: number | null) {
-  if (value === null || value === undefined) return "text-black/45"
-  if (value >= 8) return "text-[#2f6f55]"
-  if (value >= 6) return "text-[#8a6a3d]"
-  return "text-[#8a4a3d]"
+  }).format(value || 0);
 }
 
 export default async function DashboardPage() {
-  const user = await requireUser()
-
-  const scope =
-    user.role === "ADMIN"
-      ? {}
-      : { teamId: user.teamId ?? "__no_team__" }
-
-  let total = 0
-  let pending = 0
-  let approved = 0
-  let funded = 0
-  let declined = 0
-  let recent: RecentApplication[] = []
+  let total = 0;
+  let submitted = 0;
+  let approved = 0;
+  let funded = 0;
+  let recentApplications: any[] = [];
 
   try {
-    total = await prisma.application.count({ where: scope })
-    pending = await prisma.application.count({ where: { ...scope, status: "PENDING" } })
-    approved = await prisma.application.count({ where: { ...scope, status: "APPROVED" } })
-    funded = await prisma.application.count({ where: { ...scope, status: "FUNDED" } })
-    declined = await prisma.application.count({
-      where: {
-        ...scope,
-        OR: [{ status: "DECLINED" }, { status: "DENIED" }],
-      },
-    })
+    total = await prisma.application.count();
+    submitted = await prisma.application.count({
+      where: { status: "SUBMITTED" },
+    });
+    approved = await prisma.application.count({
+      where: { status: "APPROVED" },
+    });
+    funded = await prisma.application.count({
+      where: { status: "FUNDED" },
+    });
 
-    recent = await prisma.application.findMany({
-      where: scope,
+    recentApplications = await prisma.application.findMany({
       orderBy: { createdAt: "desc" },
-      take: 12,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        stockNumber: true,
-        vin: true,
-        status: true,
-        monthlyIncome: true,
-        creditScore: true,
-        vehicleYear: true,
-        vehicleMake: true,
-        vehicleModel: true,
-        dealStrength: true,
-        createdAt: true,
-      },
-    })
-  } catch (e) {
-    console.error("DASHBOARD PAGE ERROR:", e)
+      take: 10,
+    });
+  } catch (error) {
+    console.error("Dashboard load error:", error);
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f5f2] p-6">
+    <main className="min-h-screen bg-[#f7f4ee] px-6 py-10 text-[#111111]">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              SmartDrive Financial
+            <div className="text-[12px] uppercase tracking-[0.28em] text-black/45">
+              Smart Drive Elite
+            </div>
+            <h1 className="mt-3 text-5xl font-semibold tracking-[-0.05em]">
+              Dashboard
             </h1>
-            <p className="text-sm text-gray-500">
-              Underwriting Dashboard · {user.role} · {user.team?.name || "All Teams"}
+            <p className="mt-3 max-w-3xl text-[16px] leading-7 text-black/60">
+              High-level operational view of submitted files, approvals, and funded deals.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {user.role === "ADMIN" && (
-              <Link
-                href="/admin"
-                className="rounded-full border border-black/10 bg-white px-5 py-2 text-sm text-black/70"
-              >
-                Admin
-              </Link>
-            )}
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/dealer"
-              className="rounded-full bg-black px-5 py-2 text-sm text-white"
+              className="rounded-[18px] border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black/70 transition hover:bg-white"
             >
-              New Deal
+              Dealer Intake
+            </Link>
+            <Link
+              href="/controller"
+              className="rounded-[18px] bg-black px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              Controller
             </Link>
           </div>
         </div>
 
-        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <Kpi label="Total Deals" value={total} />
-          <Kpi label="Pending" value={pending} />
-          <Kpi label="Approved" value={approved} valueClass="text-[#2f6f55]" />
-          <Kpi label="Funded" value={funded} valueClass="text-[#415a77]" />
-          <Kpi label="Declined" value={declined} valueClass="text-[#8a4a3d]" />
-        </div>
-
-        <div className="rounded-3xl bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b px-6 py-4">
-            <h2 className="text-lg font-semibold">Recent Deals</h2>
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Total Files
+            </div>
+            <div className="mt-3 text-[36px] font-semibold tracking-[-0.05em]">
+              {total}
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-xs text-gray-500">
-                <tr>
-                  <th className="px-6 py-3 text-left">Applicant</th>
-                  <th className="px-6 py-3 text-left">Stock #</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-left">Strength</th>
-                  <th className="px-6 py-3 text-left">Income</th>
-                  <th className="px-6 py-3 text-left">Score</th>
-                  <th className="px-6 py-3 text-left">Vehicle</th>
-                  <th className="px-6 py-3 text-left">Date</th>
-                  <th className="px-6 py-3 text-right">Action</th>
-                </tr>
-              </thead>
+          <div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Submitted
+            </div>
+            <div className="mt-3 text-[36px] font-semibold tracking-[-0.05em]">
+              {submitted}
+            </div>
+          </div>
 
-              <tbody>
-                {recent.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-10 text-center text-gray-400">
-                      No deals yet
-                    </td>
+          <div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Approved
+            </div>
+            <div className="mt-3 text-[36px] font-semibold tracking-[-0.05em]">
+              {approved}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-black/8 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Funded
+            </div>
+            <div className="mt-3 text-[36px] font-semibold tracking-[-0.05em]">
+              {funded}
+            </div>
+          </div>
+        </div>
+
+        <section className="rounded-[32px] border border-black/8 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+          <div className="mb-5">
+            <h2 className="text-[28px] font-semibold tracking-[-0.03em]">
+              Recent Applications
+            </h2>
+            <p className="mt-2 text-sm text-black/55">
+              Latest application activity across the platform.
+            </p>
+          </div>
+
+          {recentApplications.length === 0 ? (
+            <div className="rounded-[20px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
+              No applications found yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-separate border-spacing-y-3">
+                <thead>
+                  <tr className="text-left text-[11px] uppercase tracking-[0.22em] text-black/38">
+                    <th className="px-3 py-2">Applicant</th>
+                    <th className="px-3 py-2">Vehicle</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Income</th>
+                    <th className="px-3 py-2">Amount Financed</th>
                   </tr>
-                ) : (
-                  recent.map((app) => (
-                    <tr key={app.id} className="border-t">
-                      <td className="px-6 py-4">
-                        {(app.firstName || "") + " " + (app.lastName || "")}
+                </thead>
+                <tbody>
+                  {recentApplications.map((app) => (
+                    <tr key={app.id} className="rounded-[18px] bg-[#faf7f1]">
+                      <td className="px-3 py-4 font-semibold">
+                        {app.firstName || "Unknown"} {app.lastName || "Applicant"}
                       </td>
-
-                      <td className="px-6 py-4">{app.stockNumber || "-"}</td>
-
-                      <td className="px-6 py-4">
-                        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle(app.status)}`}>
-                          {app.status}
-                        </span>
+                      <td className="px-3 py-4 text-black/65">
+                        {[app.vehicleYear, app.vehicleMake, app.vehicleModel]
+                          .filter(Boolean)
+                          .join(" ") || "N/A"}
                       </td>
-
-                      <td className={`px-6 py-4 font-semibold ${strengthStyle(app.dealStrength)}`}>
-                        {app.dealStrength ? `${app.dealStrength}/10` : "-"}
+                      <td className="px-3 py-4 text-black/65">{app.status || "DRAFT"}</td>
+                      <td className="px-3 py-4 text-black/65">
+                        {app.monthlyIncome != null ? formatCurrency(app.monthlyIncome) : "N/A"}
                       </td>
-
-                      <td className="px-6 py-4">
-                        {formatCurrency(app.monthlyIncome)}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {app.creditScore ?? "-"}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {buildVehicleLabel(app)}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        {formatDate(app.createdAt)}
-                      </td>
-
-                      <td className="px-6 py-4 text-right">
-                        <Link
-                          href={`/underwriting?id=${app.id}`}
-                          className="rounded-lg border px-3 py-1 text-xs hover:bg-gray-50"
-                        >
-                          Open UW
-                        </Link>
+                      <td className="px-3 py-4 text-black/65">
+                        {app.amountFinanced != null ? formatCurrency(app.amountFinanced) : "N/A"}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </main>
-  )
-}
-
-function Kpi({
-  label,
-  value,
-  valueClass = "",
-}: {
-  label: string
-  value: number
-  valueClass?: string
-}) {
-  return (
-    <div className="rounded-2xl bg-white p-6 shadow-sm">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className={`mt-2 text-3xl font-semibold ${valueClass}`}>{value}</p>
-    </div>
-  )
+  );
 }
