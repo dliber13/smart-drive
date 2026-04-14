@@ -1,19 +1,23 @@
-import type { Metadata } from "next"
-import { BRANDING } from "@/lib/branding"
+import type { Metadata } from "next";
+import "./globals.css";
+import SiteFooter from "@/components/site-footer";
 
 export const metadata: Metadata = {
-  title: BRANDING.platformName,
-  description: BRANDING.tagline,
-}
+  title: "Smart Drive Elite",
+  description: "Automotive underwriting and deal structuring platform",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
-  )
+  );
 }
