@@ -1,23 +1,43 @@
-import prisma from "@/lib/prisma"
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
-import { createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from "crypto"
-import type { NextRequest } from "next/server"
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from "crypto";
+import type { NextRequest } from "next/server";
 
-const SESSION_COOKIE = "sdf_session"
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
+const SESSION_COOKIE = "sdf_session";
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 type SessionPayload = {
-  userId: string
-  exp: number
-}
+  userId: string;
+  exp: number;
+};
+
+type AppRole = "ADMIN" | "CONTROLLER" | "SALES";
+
+type AuthUser = {
+  id: string;
+  role: AppRole;
+  email: string | null;
+  team: null;
+};
 
 function getAuthSecret() {
-  const secret = process.env.AUTH_SECRET
+  const secret = process.env.AUTH_SECRET;
+
   if (!secret) {
-    throw new Error("Missing AUTH_SECRET environment variable")
+    throw new Error("Missing AUTH_SECRET environment variable");
   }
-  return secret
+
+  return secret;
+}
+
+function getDefaultRole(): AppRole {
+  const value = String(process.env.DEFAULT_APP_ROLE ?? "ADMIN").toUpperCase();
+
+  if (value === "ADMIN" || value === "CONTROLLER" || value === "SALES") {
+    return value;
+  }
+
+  return "ADMIN";
 }
 
 function base64UrlEncode(input: string) {
@@ -25,66 +45,76 @@ function base64UrlEncode(input: string) {
     .toString("base64")
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
-    .replace(/=+$/g, "")
+    .replace(/=+$/g, "");
 }
 
 function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, "+").replace(/_/g, "/")
-  const padLength = (4 - (normalized.length % 4)) % 4
-  return Buffer.from(normalized + "=".repeat(padLength), "base64").toString("utf8")
+  const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padLength = (4 - (normalized.length % 4)) % 4;
+
+  return Buffer.from(normalized + "=".repeat(padLength), "base64").toString("utf8");
 }
 
 function sign(value: string) {
-  return createHmac("sha256", getAuthSecret()).update(value).digest("hex")
+  return createHmac("sha256", getAuthSecret()).update(value).digest("hex");
 }
 
 export function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex")
-  const hash = pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex")
-  return `${salt}:${hash}`
+  const salt = randomBytes(16).toString("hex");
+  const hash = pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex");
+
+  return `${salt}:${hash}`;
 }
 
 export function verifyPassword(password: string, storedHash: string) {
-  const [salt, originalHash] = storedHash.split(":")
-  if (!salt || !originalHash) return false
+  const [salt, originalHash] = storedHash.split(":");
 
-  const derived = pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex")
-  const a = Buffer.from(originalHash, "hex")
-  const b = Buffer.from(derived, "hex")
-  if (a.length !== b.length) return false
-  return timingSafeEqual(a, b)
+  if (!salt || !originalHash) return false;
+
+  const derived = pbkdf2Sync(password, salt, 100_000, 64, "sha512").toString("hex");
+  const a = Buffer.from(originalHash, "hex");
+  const b = Buffer.from(derived, "hex");
+
+  if (a.length !== b.length) return false;
+
+  return timingSafeEqual(a, b);
 }
 
 export function createSessionToken(userId: string) {
   const payload: SessionPayload = {
     userId,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
-  }
+  };
 
-  const encoded = base64UrlEncode(JSON.stringify(payload))
-  const signature = sign(encoded)
-  return `${encoded}.${signature}`
+  const encoded = base64UrlEncode(JSON.stringify(payload));
+  const signature = sign(encoded);
+
+  return `${encoded}.${signature}`;
 }
 
 export function verifySessionToken(token: string | undefined | null): SessionPayload | null {
-  if (!token) return null
+  if (!token) return null;
 
-  const [encoded, signature] = token.split(".")
-  if (!encoded || !signature) return null
+  const [encoded, signature] = token.split(".");
 
-  const expectedSignature = sign(encoded)
-  const a = Buffer.from(signature)
-  const b = Buffer.from(expectedSignature)
-  if (a.length !== b.length) return null
-  if (!timingSafeEqual(a, b)) return null
+  if (!encoded || !signature) return null;
+
+  const expectedSignature = sign(encoded);
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expectedSignature);
+
+  if (a.length !== b.length) return null;
+  if (!timingSafeEqual(a, b)) return null;
 
   try {
-    const payload = JSON.parse(base64UrlDecode(encoded)) as SessionPayload
-    if (!payload.userId || !payload.exp) return null
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null
-    return payload
+    const payload = JSON.parse(base64UrlDecode(encoded)) as SessionPayload;
+
+    if (!payload.userId || !payload.exp) return null;
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+
+    return payload;
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -96,58 +126,61 @@ export function sessionCookieOptions() {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_TTL_SECONDS,
-  }
+  };
+}
+
+function sessionToUser(session: SessionPayload | null): AuthUser | null {
+  if (!session) return null;
+
+  return {
+    id: session.userId,
+    role: getDefaultRole(),
+    email: null,
+    team: null,
+  };
 }
 
 export async function getCurrentUser() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(SESSION_COOKIE)?.value
-  const session = verifySessionToken(token)
-  if (!session) return null
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const session = verifySessionToken(token);
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    include: { team: true },
-  })
-
-  return user
+  return sessionToUser(session);
 }
 
 export async function requireUser() {
-  const user = await getCurrentUser()
-  if (!user) redirect("/login")
-  return user
+  const user = await getCurrentUser();
+
+  if (!user) redirect("/login");
+
+  return user;
 }
 
 export async function requireAdmin() {
-  const user = await requireUser()
-  if (user.role !== "ADMIN") redirect("/dealer")
-  return user
+  const user = await requireUser();
+
+  if (user.role !== "ADMIN") redirect("/dealer");
+
+  return user;
 }
 
 export async function getRequestUser(req: NextRequest) {
-  const token = req.cookies.get(SESSION_COOKIE)?.value
-  const session = verifySessionToken(token)
-  if (!session) return null
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  const session = verifySessionToken(token);
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    include: { team: true },
-  })
-
-  return user
+  return sessionToUser(session);
 }
 
 export function unauthorizedResponse() {
   return new Response(JSON.stringify({ error: "Unauthorized" }), {
     status: 401,
     headers: { "Content-Type": "application/json" },
-  })
+  });
 }
 
 export function forbiddenResponse() {
   return new Response(JSON.stringify({ error: "Forbidden" }), {
     status: 403,
     headers: { "Content-Type": "application/json" },
-  })
+  });
 }
