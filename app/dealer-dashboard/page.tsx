@@ -59,6 +59,7 @@ type DealerDashboardResponse = {
   applications: Application[];
   currentUserRole: string;
   message?: string;
+  reason?: string;
 };
 
 function formatCurrency(value: number | null | undefined) {
