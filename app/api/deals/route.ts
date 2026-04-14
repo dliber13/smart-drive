@@ -1,74 +1,56 @@
-import { NextRequest, NextResponse } from "next/server"
-import prisma from "@/lib/prisma"
-import { getRequestUser, unauthorizedResponse } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
-  const user = await getRequestUser(req)
-  if (!user) return unauthorizedResponse()
+export const dynamic = "force-dynamic";
 
-  try {
-    const where =
-      user.role === "ADMIN"
-        ? {}
-        : { teamId: user.teamId ?? "__no_team__" }
-
-    const applications = await prisma.application.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    })
-
-    return NextResponse.json(applications)
-  } catch (error) {
-    console.error("GET DEALS ERROR:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch deals" },
-      { status: 500 }
-    )
-  }
+function getUserRole(request: NextRequest) {
+  return (request.headers.get("x-user-role") || "").toUpperCase();
 }
 
-export async function POST(req: NextRequest) {
-  const user = await getRequestUser(req)
-  if (!user) return unauthorizedResponse()
+function isAllowedRole(role: string) {
+  return role === "ADMIN" || role === "CONTROLLER" || role === "SALES";
+}
 
+export async function GET(request: NextRequest) {
   try {
-    const body = await req.json()
+    const role = getUserRole(request);
 
-    const application = await prisma.application.create({
-      data: {
-        ownerId: user.id,
-        teamId: user.teamId,
+    if (!isAllowedRole(role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "Unauthorized",
+        },
+        { status: 403 }
+      );
+    }
 
-        firstName: body.firstName ?? null,
-        lastName: body.lastName ?? null,
-        email: body.email ?? null,
-        phone: body.phone ?? null,
-
-        stockNumber: body.stockNumber ?? null,
-        vin: body.vin ?? null,
-        vehicleYear: body.vehicleYear ?? null,
-        vehicleMake: body.vehicleMake ?? null,
-        vehicleModel: body.vehicleModel ?? null,
-        vehiclePrice: body.vehiclePrice ?? null,
-
-        downPayment: body.downPayment ?? null,
-        tradeIn: body.tradeIn ?? null,
-        amountFinanced: body.amountFinanced ?? null,
-
-        creditScore: body.creditScore ?? null,
-        monthlyIncome: body.monthlyIncome ?? null,
-
-        status: "PENDING",
+    const applications = await prisma.application.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: {
+        statusHistory: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
-    })
+    });
 
-    return NextResponse.json(application)
-  } catch (error) {
-    console.error("CREATE DEAL ERROR:", error)
+    return NextResponse.json({
+      success: true,
+      count: applications.length,
+      applications,
+    });
+  } catch (error: any) {
+    console.error("Deals GET error:", error);
+
     return NextResponse.json(
-      { error: "Failed to create deal" },
+      {
+        success: false,
+        message: error?.message || "Failed to load deals",
+      },
       { status: 500 }
-    )
+    );
   }
 }
