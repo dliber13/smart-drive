@@ -1,21 +1,40 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getRequestUser } from "@/lib/auth"
+import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 
-export async function GET(req: NextRequest) {
-  const user = await getRequestUser(req)
+export const dynamic = "force-dynamic";
 
-  if (!user) {
-    return NextResponse.json({ user: null }, { status: 401 })
+export async function GET() {
+  try {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          user: null,
+        },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        team: null,
+      },
+    });
+  } catch (error: any) {
+    console.error("Auth me route error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: error?.message || "Failed to load current user",
+      },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      teamId: user.teamId,
-      teamName: user.team?.name ?? null,
-    },
-  })
 }
