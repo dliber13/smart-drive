@@ -165,7 +165,7 @@ export default function DealerDashboardPage() {
       const data: DealerDashboardResponse = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || data.reason || "Failed to load dealer dashboard");
+        throw new Error(data.message || "Failed to load dealer dashboard");
       }
 
       setApplications(data.applications || []);
