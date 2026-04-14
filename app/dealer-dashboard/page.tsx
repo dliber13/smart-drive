@@ -1,44 +1,38 @@
 "use client";
 
-import { CSSProperties, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type TimelineItem = {
+type StatusHistoryItem = {
   id: string;
+  createdAt: string;
   fromStatus: string | null;
   toStatus: string;
   note: string | null;
-  createdAt: string;
 };
 
-type ApplicationRecord = {
+type Application = {
   id: string;
   createdAt: string;
   updatedAt: string;
-
   firstName: string | null;
   lastName: string | null;
   phone: string | null;
   email: string | null;
-
   identityType: string | null;
   identityValue: string | null;
   issuingCountry: string | null;
   identityStatus: string | null;
-
   stockNumber: string | null;
   vin: string | null;
   vehicleYear: number | null;
   vehicleMake: string | null;
   vehicleModel: string | null;
   vehiclePrice: number | null;
-
   downPayment: number | null;
   tradeIn: number | null;
   amountFinanced: number | null;
-
   creditScore: number | null;
   monthlyIncome: number | null;
-
   status: string | null;
   lender: string | null;
   tier: string | null;
@@ -46,206 +40,332 @@ type ApplicationRecord = {
   maxVehicle: number | null;
   decisionReason: string | null;
   dealStrength: number | null;
-
   fundingDate: string | null;
   fundingAmount: number | null;
   lenderConfirmation: string | null;
-
-  timeline: TimelineItem[];
+  statusHistory?: StatusHistoryItem[];
 };
 
-type DashboardResponse = {
+type DealerDashboardResponse = {
   success: boolean;
   count: number;
-  applications: ApplicationRecord[];
+  counts: {
+    draft: number;
+    submitted: number;
+    approved: number;
+    declined: number;
+    funded: number;
+  };
+  applications: Application[];
   currentUserRole: string;
+  message?: string;
 };
 
+function formatCurrency(value: number | null | undefined) {
+  if (value == null) return "N/A";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "N/A";
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getApplicantName(application: Application) {
+  const fullName = [application.firstName, application.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return fullName || "Unknown Applicant";
+}
+
+function getVehicleLabel(application: Application) {
+  const vehicle = [
+    application.vehicleYear,
+    application.vehicleMake,
+    application.vehicleModel,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  return vehicle || "No vehicle selected";
+}
+
+function getStatusTone(status: string | null | undefined) {
+  const normalized = String(status ?? "DRAFT").toUpperCase();
+
+  if (normalized === "APPROVED") {
+    return "bg-[#eef6f2] text-[#2f6f55] border-[#d7e9df]";
+  }
+
+  if (normalized === "DECLINED") {
+    return "bg-[#fbefee] text-[#b42318] border-[#f0c8c4]";
+  }
+
+  if (normalized === "FUNDED") {
+    return "bg-[#f3f0ff] text-[#5b3cc4] border-[#ddd2ff]";
+  }
+
+  if (normalized === "SUBMITTED") {
+    return "bg-[#f8f2e8] text-[#9a6700] border-[#ead7b0]";
+  }
+
+  return "bg-[#f5f3ee] text-[#5f5a52] border-[#e2ddd4]";
+}
+
 export default function DealerDashboardPage() {
-  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
-    "info"
-  );
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [counts, setCounts] = useState({
+    draft: 0,
+    submitted: 0,
+    approved: 0,
+    declined: 0,
+    funded: 0,
+  });
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [currentUserRole, setCurrentUserRole] = useState("SALES");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    loadApplications();
-  }, []);
-
-  async function loadApplications() {
-    setLoading(true);
-    setMessage("");
-
+  async function loadDashboard(refresh = false) {
     try {
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      setErrorMessage("");
+
       const response = await fetch("/api/dealer-dashboard", {
+        cache: "no-store",
         headers: {
           "x-user-role": "SALES",
         },
       });
 
-      const data: DashboardResponse | any = await response.json();
+      const data: DealerDashboardResponse = await response.json();
 
-      if (!response.ok) {
-        setMessageType("error");
-        setMessage(data?.reason || data?.message || "Failed to load dashboard");
-        return;
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.reason || "Failed to load dealer dashboard");
       }
 
-      const rows: ApplicationRecord[] = Array.isArray(data?.applications)
-        ? data.applications
-        : [];
+      setApplications(data.applications || []);
+      setCounts(
+        data.counts || {
+          draft: 0,
+          submitted: 0,
+          approved: 0,
+          declined: 0,
+          funded: 0,
+        }
+      );
+      setCurrentUserRole(data.currentUserRole || "SALES");
 
-      setApplications(rows);
-
-      if (rows.length > 0) {
-        setSelectedId((current: string) => {
-          const stillExists = rows.some((row) => row.id === current);
-          return stillExists ? current : rows[0].id;
+      if (data.applications?.length) {
+        setSelectedId((current) => {
+          const stillExists = data.applications.some((app) => app.id === current);
+          return stillExists ? current : data.applications[0].id;
         });
       } else {
         setSelectedId("");
       }
-
-      setMessageType("success");
-      setMessage("Dealer dashboard loaded");
-    } catch (error) {
-      console.error(error);
-      setMessageType("error");
-      setMessage("Failed to load dashboard");
+    } catch (error: any) {
+      setErrorMessage(error?.message || "Failed to load dealer dashboard");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
   }
 
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
   const selectedApplication = useMemo(() => {
-    return applications.find((item) => item.id === selectedId) || null;
+    return applications.find((application) => application.id === selectedId) || null;
   }, [applications, selectedId]);
 
-  const counts = useMemo(() => {
-    return {
-      total: applications.length,
-      submitted: applications.filter((a) => a.status === "SUBMITTED").length,
-      approved: applications.filter((a) => a.status === "APPROVED").length,
-      rejected: applications.filter((a) => a.status === "REJECTED").length,
-      funded: applications.filter((a) => a.status === "FUNDED").length,
-    };
-  }, [applications]);
-
   return (
-    <main style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.headerRow}>
+    <main className="min-h-screen bg-[#f7f4ee] px-6 py-8 text-[#111111]">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <div style={styles.kicker}>Smart Drive Elite</div>
-            <h1 style={styles.pageTitle}>Dealer Dashboard</h1>
-            <p style={styles.pageSubtitle}>
-              Track deal progress, underwriting outcomes, and funded contracts in one place.
+            <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">
+              Smart Drive Elite
+            </div>
+            <h1 className="mt-3 text-[64px] font-semibold leading-none tracking-[-0.06em]">
+              Dealer Dashboard
+            </h1>
+            <p className="mt-4 max-w-3xl text-[18px] leading-8 text-black/60">
+              Track submitted deals, approval movement, funding progress, and key
+              underwriting metrics from one dealer-facing view.
             </p>
           </div>
 
-          <div style={styles.badgeRow}>
-            <div style={styles.statusPill}>
-              {loading ? "LOADING" : `${applications.length} FILES`}
+          <div className="flex items-center gap-3">
+            <div className="rounded-full border border-black/10 bg-white px-5 py-3 text-[14px] font-semibold tracking-[0.18em] text-black/70">
+              {applications.length} FILES
             </div>
-            <div style={styles.roleBadge}>SALES</div>
+            <div className="rounded-full bg-black px-6 py-3 text-[14px] font-semibold tracking-[0.18em] text-white">
+              {currentUserRole}
+            </div>
           </div>
         </div>
 
-        <div style={styles.summaryGrid}>
-          <SummaryCard label="Total Deals" value={String(counts.total)} />
-          <SummaryCard label="Submitted" value={String(counts.submitted)} />
-          <SummaryCard label="Approved" value={String(counts.approved)} />
-          <SummaryCard label="Rejected" value={String(counts.rejected)} />
-          <SummaryCard label="Funded" value={String(counts.funded)} />
+        {errorMessage ? (
+          <div className="mb-8 rounded-[24px] border border-[#f0c8c4] bg-[#fbefee] px-6 py-5 text-[16px] text-[#b42318]">
+            {errorMessage}
+          </div>
+        ) : (
+          <div className="mb-8 rounded-[24px] border border-[#d7e9df] bg-[#eef6f2] px-6 py-5 text-[16px] text-[#2f6f55]">
+            Dealer dashboard loaded
+          </div>
+        )}
+
+        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-5">
+          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Draft
+            </div>
+            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
+              {counts.draft}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Submitted
+            </div>
+            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
+              {counts.submitted}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Approved
+            </div>
+            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
+              {counts.approved}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Declined
+            </div>
+            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
+              {counts.declined}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
+            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
+              Funded
+            </div>
+            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
+              {counts.funded}
+            </div>
+          </div>
         </div>
 
-        {message ? (
-          <div
-            style={{
-              ...styles.messageBox,
-              ...(messageType === "success"
-                ? styles.messageSuccess
-                : messageType === "error"
-                ? styles.messageError
-                : styles.messageInfo),
-            }}
-          >
-            {message}
-          </div>
-        ) : null}
-
-        <div style={styles.grid}>
-          <section style={styles.leftPanel}>
-            <div style={styles.panelHeader}>
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.02fr_1.18fr]">
+          <section className="rounded-[34px] border border-black/8 bg-white p-7 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+            <div className="mb-6 flex items-center justify-between gap-4">
               <div>
-                <h2 style={styles.panelTitle}>My Deal Queue</h2>
-                <p style={styles.panelSubtitle}>
-                  Submitted and in-progress applications
+                <h2 className="text-[28px] font-semibold tracking-[-0.03em]">
+                  Dealer Queue
+                </h2>
+                <p className="mt-2 text-[15px] text-black/55">
+                  Live view of your submitted and decisioned files.
                 </p>
               </div>
 
-              <button type="button" onClick={loadApplications} style={styles.secondaryButton}>
-                Refresh
+              <button
+                onClick={() => loadDashboard(true)}
+                className="rounded-[18px] border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black/70 transition hover:bg-[#faf7f1]"
+              >
+                {isRefreshing ? "Refreshing..." : "Refresh"}
               </button>
             </div>
 
-            {loading ? (
-              <div style={styles.emptyState}>Loading deals...</div>
+            {isLoading ? (
+              <div className="rounded-[22px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
+                Loading dashboard...
+              </div>
             ) : applications.length === 0 ? (
-              <div style={styles.emptyState}>No deals found yet.</div>
+              <div className="rounded-[22px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
+                No deals found yet.
+              </div>
             ) : (
-              <div style={styles.queueList}>
-                {applications.map((app) => {
-                  const active = app.id === selectedId;
+              <div className="space-y-4">
+                {applications.map((application) => {
+                  const isSelected = selectedId === application.id;
 
                   return (
                     <button
-                      key={app.id}
-                      type="button"
-                      onClick={() => setSelectedId(app.id)}
-                      style={{
-                        ...styles.queueCard,
-                        ...(active ? styles.queueCardActive : {}),
-                      }}
+                      key={application.id}
+                      onClick={() => setSelectedId(application.id)}
+                      className={`w-full rounded-[28px] border p-5 text-left transition ${
+                        isSelected
+                          ? "border-[#d8c19a] bg-[#fbf7ef] shadow-[0_18px_40px_rgba(0,0,0,0.04)]"
+                          : "border-black/8 bg-white hover:bg-[#faf7f1]"
+                      }`}
                     >
-                      <div style={styles.queueTopRow}>
-                        <div style={styles.queueName}>
-                          {app.firstName || "Unknown"} {app.lastName || "Borrower"}
+                      <div className="mb-4 flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-[15px] font-semibold">
+                            {getApplicantName(application)}
+                          </div>
+                          <div className="mt-1 text-[14px] text-black/55">
+                            {getVehicleLabel(application)}
+                          </div>
                         </div>
+
                         <div
-                          style={{
-                            ...styles.smallStatusBadge,
-                            ...(app.status === "SUBMITTED"
-                              ? styles.submittedBadge
-                              : app.status === "APPROVED"
-                              ? styles.approvedBadge
-                              : app.status === "FUNDED"
-                              ? styles.fundedBadge
-                              : app.status === "REJECTED"
-                              ? styles.rejectedBadge
-                              : app.status === "READY"
-                              ? styles.readyBadge
-                              : styles.draftBadge),
-                          }}
+                          className={`rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(
+                            application.status
+                          )}`}
                         >
-                          {app.status || "DRAFT"}
+                          {application.status || "DRAFT"}
                         </div>
                       </div>
 
-                      <div style={styles.queueMeta}>
-                        <span>{app.identityType || "No ID Type"}</span>
-                        <span>{app.identityStatus || "No ID Status"}</span>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>
-                          Vehicle:{" "}
-                          {[app.vehicleYear, app.vehicleMake, app.vehicleModel]
-                            .filter(Boolean)
-                            .join(" ") || "N/A"}
-                        </span>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-[14px] text-black/60">
+                        <div>
+                          <span className="font-medium text-black/40">Created:</span>{" "}
+                          {formatDate(application.createdAt)}
+                        </div>
+                        <div>
+                          <span className="font-medium text-black/40">Tier:</span>{" "}
+                          {application.tier || "N/A"}
+                        </div>
+                        <div>
+                          <span className="font-medium text-black/40">Max Payment:</span>{" "}
+                          {formatCurrency(application.maxPayment)}
+                        </div>
+                        <div>
+                          <span className="font-medium text-black/40">Vehicle Price:</span>{" "}
+                          {formatCurrency(application.vehiclePrice)}
+                        </div>
                       </div>
                     </button>
                   );
@@ -254,179 +374,266 @@ export default function DealerDashboardPage() {
             )}
           </section>
 
-          <section style={styles.rightPanel}>
-            <div style={styles.panelHeader}>
-              <div>
-                <h2 style={styles.panelTitle}>Deal Status</h2>
-                <p style={styles.panelSubtitle}>Outcome visibility and next steps</p>
-              </div>
+          <section className="rounded-[34px] border border-black/8 bg-white p-7 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+            <div className="mb-6">
+              <h2 className="text-[28px] font-semibold tracking-[-0.03em]">
+                Deal Detail
+              </h2>
+              <p className="mt-2 text-[15px] text-black/55">
+                Dealer-side file view with decision metrics and status history.
+              </p>
             </div>
 
             {!selectedApplication ? (
-              <div style={styles.emptyState}>Select a deal to view details.</div>
+              <div className="rounded-[22px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
+                Select a deal to view details.
+              </div>
             ) : (
-              <div style={styles.reviewStack}>
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Borrower Snapshot</h3>
-                  <div style={styles.infoGrid}>
-                    <InfoRow
-                      label="Borrower"
-                      value={`${selectedApplication.firstName || ""} ${selectedApplication.lastName || ""}`.trim() || "N/A"}
-                    />
-                    <InfoRow label="Phone" value={selectedApplication.phone || "N/A"} />
-                    <InfoRow label="Email" value={selectedApplication.email || "N/A"} />
-                    <InfoRow label="Identity Type" value={selectedApplication.identityType || "N/A"} />
-                    <InfoRow
-                      label="Identity Status"
-                      value={selectedApplication.identityStatus || "N/A"}
-                      emphasize={
-                        selectedApplication.identityStatus === "VERIFIED"
-                          ? "success"
-                          : selectedApplication.identityStatus === "REJECTED"
-                          ? "danger"
-                          : undefined
-                      }
-                    />
-                    <InfoRow label="Issuing Country" value={selectedApplication.issuingCountry || "N/A"} />
+              <div className="space-y-6">
+                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-[13px] uppercase tracking-[0.20em] text-black/36">
+                        Applicant
+                      </div>
+                      <div className="mt-2 text-[30px] font-semibold tracking-[-0.04em]">
+                        {getApplicantName(selectedApplication)}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(
+                        selectedApplication.status
+                      )}`}
+                    >
+                      {selectedApplication.status || "DRAFT"}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Phone
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.phone || "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Email
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.email || "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Identity Type
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.identityType || "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Identity Status
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.identityStatus || "N/A"}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Deal Structure</h3>
-                  <div style={styles.infoGrid}>
-                    <InfoRow
-                      label="Current Status"
-                      value={selectedApplication.status || "N/A"}
-                      emphasize={
-                        selectedApplication.status === "APPROVED" ||
-                        selectedApplication.status === "FUNDED"
-                          ? "success"
-                          : selectedApplication.status === "REJECTED"
-                          ? "danger"
-                          : undefined
-                      }
-                    />
-                    <InfoRow label="Stock Number" value={selectedApplication.stockNumber || "N/A"} />
-                    <InfoRow
-                      label="Vehicle"
-                      value={
-                        [selectedApplication.vehicleYear, selectedApplication.vehicleMake, selectedApplication.vehicleModel]
-                          .filter(Boolean)
-                          .join(" ") || "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Vehicle Price"
-                      value={
-                        selectedApplication.vehiclePrice != null
-                          ? formatCurrency(selectedApplication.vehiclePrice)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Amount Financed"
-                      value={
-                        selectedApplication.amountFinanced != null
-                          ? formatCurrency(selectedApplication.amountFinanced)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Monthly Income"
-                      value={
-                        selectedApplication.monthlyIncome != null
-                          ? formatCurrency(selectedApplication.monthlyIncome)
-                          : "N/A"
-                      }
-                    />
+                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="mb-5 text-[13px] uppercase tracking-[0.20em] text-black/36">
+                    Vehicle & Finance
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Vehicle
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {getVehicleLabel(selectedApplication)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Stock Number
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.stockNumber || "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Vehicle Price
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.vehiclePrice)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Amount Financed
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.amountFinanced)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Down Payment
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.downPayment)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Monthly Income
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.monthlyIncome)}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Controller Outcome</h3>
-                  <div style={styles.infoGrid}>
-                    <InfoRow label="Lender" value={selectedApplication.lender || "Pending"} />
-                    <InfoRow label="Tier" value={selectedApplication.tier || "Pending"} />
-                    <InfoRow
-                      label="Max Payment"
-                      value={
-                        selectedApplication.maxPayment != null
-                          ? formatCurrency(selectedApplication.maxPayment)
-                          : "Pending"
-                      }
-                    />
-                    <InfoRow
-                      label="Max Vehicle"
-                      value={
-                        selectedApplication.maxVehicle != null
-                          ? formatCurrency(selectedApplication.maxVehicle)
-                          : "Pending"
-                      }
-                    />
-                    <InfoRow
-                      label="Deal Strength"
-                      value={
-                        selectedApplication.dealStrength != null
-                          ? String(selectedApplication.dealStrength)
-                          : "Pending"
-                      }
-                    />
-                    <InfoRow
-                      label="Decision Reason"
-                      value={selectedApplication.decisionReason || "Pending"}
-                    />
+                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="mb-5 text-[13px] uppercase tracking-[0.20em] text-black/36">
+                    Controller Decision
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Lender
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.lender || "Pending"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Tier
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.tier || "Pending"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Max Payment
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.maxPayment)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Max Vehicle
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.maxVehicle)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Deal Strength
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.dealStrength ?? "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Funding Amount
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatCurrency(selectedApplication.fundingAmount)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                    <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                      Decision Reason
+                    </div>
+                    <div className="mt-2 text-[17px] font-semibold">
+                      {selectedApplication.decisionReason || "No decision note yet."}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Funding Date
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {formatDate(selectedApplication.fundingDate)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
+                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
+                        Lender Confirmation
+                      </div>
+                      <div className="mt-2 text-[18px] font-semibold">
+                        {selectedApplication.lenderConfirmation || "Pending"}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Funding Details</h3>
-                  <div style={styles.infoGrid}>
-                    <InfoRow
-                      label="Funding Date"
-                      value={selectedApplication.fundingDate ? displayDate(selectedApplication.fundingDate) : "Pending"}
-                    />
-                    <InfoRow
-                      label="Funding Amount"
-                      value={
-                        selectedApplication.fundingAmount != null
-                          ? formatCurrency(selectedApplication.fundingAmount)
-                          : "Pending"
-                      }
-                    />
-                    <InfoRow
-                      label="Lender Confirmation"
-                      value={selectedApplication.lenderConfirmation || "Pending"}
-                    />
+                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="mb-5 text-[13px] uppercase tracking-[0.20em] text-black/36">
+                    Status Timeline
                   </div>
-                </div>
 
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Status History</h3>
-                  <div style={styles.timelineStack}>
-                    {selectedApplication.timeline?.length ? (
-                      selectedApplication.timeline.map((item) => (
-                        <div key={item.id} style={styles.timelineRow}>
-                          <div style={{ ...styles.timelineDot, ...styles.timelineDotComplete }} />
-                          <div style={styles.timelineContent}>
-                            <div style={styles.timelineLabel}>
-                              {item.fromStatus ? `${item.fromStatus} → ${item.toStatus}` : item.toStatus}
+                  {!selectedApplication.statusHistory?.length ? (
+                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4 text-black/55">
+                      No status history recorded yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {selectedApplication.statusHistory.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-[20px] border border-black/8 bg-white px-5 py-4"
+                        >
+                          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                            <div className="text-[16px] font-semibold">
+                              {item.fromStatus || "START"} → {item.toStatus}
                             </div>
-                            <div style={styles.timelineDate}>{displayDate(item.createdAt)}</div>
-                            <div style={styles.timelineNote}>{item.note || "No note recorded"}</div>
+                            <div className="text-[14px] text-black/50">
+                              {formatDate(item.createdAt)}
+                            </div>
+                          </div>
+
+                          <div className="mt-2 text-[14px] text-black/60">
+                            {item.note || "No note provided."}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div style={styles.emptyState}>No recorded status history yet.</div>
-                    )}
-                  </div>
-                </div>
-
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>What This Means</h3>
-                  <div style={styles.noticeStack}>
-                    <StatusNotice status={selectedApplication.status || "DRAFT"} />
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -436,475 +643,3 @@ export default function DealerDashboardPage() {
     </main>
   );
 }
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={styles.summaryCard}>
-      <div style={styles.summaryLabel}>{label}</div>
-      <div style={styles.summaryValue}>{value}</div>
-    </div>
-  );
-}
-
-function InfoRow({
-  label,
-  value,
-  emphasize,
-}: {
-  label: string;
-  value: string;
-  emphasize?: "success" | "danger";
-}) {
-  return (
-    <div style={styles.infoRow}>
-      <div style={styles.infoLabel}>{label}</div>
-      <div
-        style={{
-          ...styles.infoValue,
-          ...(emphasize === "success"
-            ? styles.successText
-            : emphasize === "danger"
-            ? styles.dangerText
-            : {}),
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function StatusNotice({ status }: { status: string }) {
-  if (status === "FUNDED") {
-    return (
-      <div style={{ ...styles.noticeBox, ...styles.noticeSuccess }}>
-        Deal is funded. File has completed the underwriting lifecycle.
-      </div>
-    );
-  }
-
-  if (status === "APPROVED") {
-    return (
-      <div style={{ ...styles.noticeBox, ...styles.noticeSuccess }}>
-        Deal approved. Review lender, tier, max payment, and prepare for funding.
-      </div>
-    );
-  }
-
-  if (status === "REJECTED") {
-    return (
-      <div style={{ ...styles.noticeBox, ...styles.noticeError }}>
-        Deal rejected. Review controller decision reason for next action.
-      </div>
-    );
-  }
-
-  if (status === "SUBMITTED") {
-    return (
-      <div style={{ ...styles.noticeBox, ...styles.noticeInfo }}>
-        Deal has been submitted and is awaiting controller review.
-      </div>
-    );
-  }
-
-  if (status === "READY") {
-    return (
-      <div style={{ ...styles.noticeBox, ...styles.noticeInfo }}>
-        Deal is ready and can move into the submitted underwriting queue.
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ ...styles.noticeBox, ...styles.noticeInfo }}>
-      Deal is still in draft or pre-submission state.
-    </div>
-  );
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function displayDate(value: string) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#f7f4ee",
-    padding: "32px 24px",
-    color: "#111111",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  },
-  container: {
-    maxWidth: "1400px",
-    margin: "0 auto",
-  },
-  headerRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: "16px",
-    marginBottom: "24px",
-  },
-  kicker: {
-    fontSize: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "0.28em",
-    color: "rgba(17,17,17,0.45)",
-  },
-  pageTitle: {
-    marginTop: "12px",
-    marginBottom: "8px",
-    fontSize: "56px",
-    lineHeight: 1,
-    fontWeight: 700,
-    letterSpacing: "-0.04em",
-  },
-  pageSubtitle: {
-    maxWidth: "760px",
-    fontSize: "16px",
-    lineHeight: 1.7,
-    color: "rgba(17,17,17,0.65)",
-    margin: 0,
-  },
-  badgeRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  statusPill: {
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    borderRadius: "999px",
-    padding: "12px 16px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.2em",
-    color: "rgba(17,17,17,0.75)",
-  },
-  roleBadge: {
-    borderRadius: "999px",
-    padding: "12px 16px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.2em",
-    color: "#ffffff",
-    backgroundColor: "#111111",
-  },
-  summaryGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-    gap: "16px",
-    marginBottom: "24px",
-  },
-  summaryCard: {
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "24px",
-    padding: "20px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-  },
-  summaryLabel: {
-    fontSize: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "0.18em",
-    color: "rgba(17,17,17,0.45)",
-    fontWeight: 700,
-    marginBottom: "10px",
-  },
-  summaryValue: {
-    fontSize: "34px",
-    fontWeight: 800,
-    color: "#111111",
-  },
-  messageBox: {
-    marginBottom: "24px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    padding: "16px 18px",
-    fontSize: "14px",
-  },
-  messageSuccess: {
-    backgroundColor: "#eefaf1",
-    borderColor: "#b7e3c2",
-    color: "#1f7a37",
-  },
-  messageError: {
-    backgroundColor: "#fff1f1",
-    borderColor: "#efc0c0",
-    color: "#b42318",
-  },
-  messageInfo: {
-    backgroundColor: "#ffffff",
-    borderColor: "rgba(17,17,17,0.1)",
-    color: "rgba(17,17,17,0.75)",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "minmax(340px, 0.9fr) minmax(0, 1.3fr)",
-    gap: "24px",
-    alignItems: "start",
-  },
-  leftPanel: {
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "28px",
-    padding: "24px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-    minHeight: "70vh",
-  },
-  rightPanel: {
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "28px",
-    padding: "24px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-    minHeight: "70vh",
-  },
-  panelHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "16px",
-    marginBottom: "24px",
-  },
-  panelTitle: {
-    margin: 0,
-    fontSize: "28px",
-    lineHeight: 1.1,
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
-  },
-  panelSubtitle: {
-    marginTop: "6px",
-    marginBottom: 0,
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.55)",
-  },
-  secondaryButton: {
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    padding: "12px 18px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "rgba(17,17,17,0.75)",
-    cursor: "pointer",
-  },
-  emptyState: {
-    borderRadius: "18px",
-    padding: "24px",
-    backgroundColor: "#faf7f1",
-    border: "1px solid rgba(17,17,17,0.08)",
-    color: "rgba(17,17,17,0.65)",
-    fontSize: "15px",
-  },
-  queueList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-  },
-  queueCard: {
-    width: "100%",
-    textAlign: "left",
-    borderRadius: "20px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "18px",
-    cursor: "pointer",
-  },
-  queueCardActive: {
-    backgroundColor: "#fffaf1",
-    borderColor: "#d8c7a1",
-    boxShadow: "0 10px 24px rgba(0,0,0,0.05)",
-  },
-  queueTopRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "10px",
-  },
-  queueName: {
-    fontSize: "18px",
-    fontWeight: 700,
-    color: "#111111",
-  },
-  queueMeta: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "12px",
-    fontSize: "13px",
-    color: "rgba(17,17,17,0.62)",
-    marginTop: "6px",
-    flexWrap: "wrap",
-  },
-  smallStatusBadge: {
-    borderRadius: "999px",
-    padding: "6px 10px",
-    fontSize: "10px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.16em",
-  },
-  submittedBadge: {
-    backgroundColor: "#e8efff",
-    color: "#2457d6",
-  },
-  approvedBadge: {
-    backgroundColor: "#dff5e6",
-    color: "#1f7a37",
-  },
-  fundedBadge: {
-    backgroundColor: "#e6faf4",
-    color: "#007a5a",
-  },
-  rejectedBadge: {
-    backgroundColor: "#fde4e4",
-    color: "#b42318",
-  },
-  readyBadge: {
-    backgroundColor: "#ede9fe",
-    color: "#5b21b6",
-  },
-  draftBadge: {
-    backgroundColor: "#f1ece5",
-    color: "#6f6557",
-  },
-  reviewStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-  },
-  detailCard: {
-    borderRadius: "24px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "20px",
-  },
-  detailTitle: {
-    marginTop: 0,
-    marginBottom: "16px",
-    fontSize: "22px",
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
-  },
-  infoGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "12px",
-  },
-  infoRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "16px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#ffffff",
-    padding: "14px 16px",
-  },
-  infoLabel: {
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.5)",
-  },
-  infoValue: {
-    fontSize: "14px",
-    fontWeight: 700,
-    textAlign: "right",
-    color: "rgba(17,17,17,0.82)",
-  },
-  successText: {
-    color: "#1f7a37",
-  },
-  dangerText: {
-    color: "#b42318",
-  },
-  timelineStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  timelineRow: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "14px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#ffffff",
-    padding: "14px 16px",
-  },
-  timelineDot: {
-    width: "14px",
-    height: "14px",
-    borderRadius: "999px",
-    marginTop: "4px",
-    flexShrink: 0,
-  },
-  timelineDotComplete: {
-    backgroundColor: "#1f7a37",
-  },
-  timelineContent: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-  timelineLabel: {
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#111111",
-  },
-  timelineDate: {
-    fontSize: "13px",
-    color: "rgba(17,17,17,0.55)",
-  },
-  timelineNote: {
-    fontSize: "13px",
-    color: "rgba(17,17,17,0.72)",
-  },
-  noticeStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  noticeBox: {
-    borderRadius: "18px",
-    padding: "14px 16px",
-    fontSize: "14px",
-    border: "1px solid transparent",
-  },
-  noticeSuccess: {
-    backgroundColor: "#eefaf1",
-    borderColor: "#b7e3c2",
-    color: "#1f7a37",
-  },
-  noticeError: {
-    backgroundColor: "#fff1f1",
-    borderColor: "#efc0c0",
-    color: "#b42318",
-  },
-  noticeInfo: {
-    backgroundColor: "#eef3ff",
-    borderColor: "#c6d6ff",
-    color: "#2457d6",
-  },
-};
