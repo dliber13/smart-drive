@@ -148,7 +148,7 @@ export default function DealerDashboardPage() {
   async function loadDashboard(refresh = false) {
     try {
       if (refresh) {
-        setIsRefreshing(true);
+        setIsRefreshing(true); 
       } else {
         setIsLoading(true);
       }
