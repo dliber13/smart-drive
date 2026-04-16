@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AppRole {
+  ADMIN
+  CONTROLLER
+  SALES
+}
+
 model Application {
   id                 String          @id @default(cuid())
   createdAt          DateTime        @default(now())
@@ -91,7 +97,7 @@ model User {
 
   email        String   @unique
   passwordHash String
-  role         String
+  role         AppRole
 
   firstName    String?
   lastName     String?
