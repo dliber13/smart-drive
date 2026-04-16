@@ -147,7 +147,7 @@ export default function DealerPage() {
     setMessage("")
 
     try {
-      const response = await fetch("/api/submit-application", {
+      const response = await fetch("/api/save-application", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -155,25 +155,22 @@ export default function DealerPage() {
         },
         body: JSON.stringify({
           ...buildPayload(form),
-          identityStatus: form.identityStatus || "PENDING",
+          status: "DRAFT",
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        const errorText = data?.reason || data?.message || "Draft save failed"
+        const errorText = data?.message || "Draft save failed"
         showTopMessage("error", errorText)
-        alert(errorText)
         return
       }
 
       showTopMessage("success", "Draft saved successfully")
-      alert("Draft saved successfully")
     } catch (error) {
       console.error(error)
       showTopMessage("error", "Draft save failed")
-      alert("Draft save failed")
     } finally {
       setSaving(false)
     }
@@ -184,7 +181,7 @@ export default function DealerPage() {
     setMessage("")
 
     try {
-      const response = await fetch("/api/submit-application", {
+      const saveResponse = await fetch("/api/save-application", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -192,28 +189,41 @@ export default function DealerPage() {
         },
         body: JSON.stringify({
           ...buildPayload(form),
+          status: "DRAFT",
         }),
       })
 
-      const data = await response.json()
+      const saveData = await saveResponse.json()
 
-      if (!response.ok) {
+      if (!saveResponse.ok) {
+        const errorText = saveData?.message || "Failed to save before submit"
+        showTopMessage("error", errorText)
+        return
+      }
+
+      const submitResponse = await fetch("/api/submit-application", {
+        method: "POST",
+        headers: {
+          "x-user-role": "SALES",
+        },
+      })
+
+      const submitData = await submitResponse.json()
+
+      if (!submitResponse.ok) {
         const errorText =
-          data?.reason ||
-          data?.message ||
+          submitData?.message ||
+          submitData?.reason ||
           "Application blocked. Review submission requirements."
         showTopMessage("error", errorText)
-        alert(errorText)
         return
       }
 
       showTopMessage("success", "Application submitted successfully")
-      alert("Application submitted successfully")
       setForm(initialForm)
     } catch (error) {
       console.error(error)
       showTopMessage("error", "Application submission failed")
-      alert("Application submission failed")
     } finally {
       setSubmitting(false)
     }
@@ -684,14 +694,6 @@ function InfoRow({
       </div>
     </div>
   )
-}
-
-function StatusPill({ label }: { label: string }) {
-  return <div style={styles.statusPill}>{label}</div>
-}
-
-function RoleBadge({ label }: { label: string }) {
-  return <div style={styles.roleBadge}>{label}</div>
 }
 
 const styles: Record<string, CSSProperties> = {
