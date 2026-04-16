@@ -17,7 +17,8 @@ type AuthUser = {
   id: string;
   role: AppRole;
   email: string | null;
-  team: null;
+  firstName: string | null;
+  lastName: string | null;
 };
 
 function getAuthSecret() {
@@ -30,14 +31,14 @@ function getAuthSecret() {
   return secret;
 }
 
-function getDefaultRole(): AppRole {
-  const value = String(process.env.DEFAULT_APP_ROLE ?? "ADMIN").toUpperCase();
+function normalizeRole(value: string | null | undefined): AppRole {
+  const role = String(value ?? "SALES").toUpperCase();
 
-  if (value === "ADMIN" || value === "CONTROLLER" || value === "SALES") {
-    return value;
+  if (role === "ADMIN" || role === "CONTROLLER" || role === "SALES") {
+    return role;
   }
 
-  return "ADMIN";
+  return "SALES";
 }
 
 function base64UrlEncode(input: string) {
@@ -129,23 +130,33 @@ export function sessionCookieOptions() {
   };
 }
 
-function sessionToUser(session: SessionPayload | null): AuthUser | null {
-  if (!session) return null;
+async function loadUserById(userId: string): Promise<AuthUser | null> {
+  const prismaModule = await import("@/lib/prisma");
+  const prisma = prismaModule.default;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) return null;
 
   return {
-    id: session.userId,
-    role: getDefaultRole(),
-    email: null,
-    team: null,
+    id: user.id,
+    role: normalizeRole(user.role),
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
   };
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<AuthUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   const session = verifySessionToken(token);
 
-  return sessionToUser(session);
+  if (!session) return null;
+
+  return loadUserById(session.userId);
 }
 
 export async function requireUser() {
@@ -164,11 +175,13 @@ export async function requireAdmin() {
   return user;
 }
 
-export async function getRequestUser(req: NextRequest) {
+export async function getRequestUser(req: NextRequest): Promise<AuthUser | null> {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = verifySessionToken(token);
 
-  return sessionToUser(session);
+  if (!session) return null;
+
+  return loadUserById(session.userId);
 }
 
 export function unauthorizedResponse() {
