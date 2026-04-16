@@ -44,7 +44,13 @@ export default function LoginPage() {
         return
       }
 
-      window.location.href = "/controller"
+      if (data?.user?.role === "ADMIN") {
+        window.location.href = "/controller"
+      } else if (data?.user?.role === "CONTROLLER") {
+        window.location.href = "/controller"
+      } else {
+        window.location.href = "/dealer-dashboard"
+      }
     } catch (error) {
       console.error(error)
       setMessageType("error")
