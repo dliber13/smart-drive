@@ -8,7 +8,36 @@ export const dynamic = "force-dynamic";
 
 function canSaveDraft(role: string | null | undefined) {
   const normalized = String(role ?? "").toUpperCase();
-  return normalized === "ADMIN" || normalized === "CONTROLLER" || normalized === "SALES";
+  return (
+    normalized === "ADMIN" ||
+    normalized === "CONTROLLER" ||
+    normalized === "SALES"
+  );
+}
+
+function toIntOrNull(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+
+  const parsed =
+    typeof value === "number" ? Math.trunc(value) : parseInt(String(value), 10);
+
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function toFloatOrNull(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+
+  const parsed =
+    typeof value === "number" ? value : parseFloat(String(value));
+
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function toTextOrNull(value: unknown) {
+  if (value === null || value === undefined) return null;
+
+  const text = String(value).trim();
+  return text ? text : null;
 }
 
 export async function POST(request: Request) {
@@ -30,31 +59,31 @@ export async function POST(request: Request) {
 
     const application = await prisma.application.create({
       data: {
-        firstName: body?.firstName ?? null,
-        lastName: body?.lastName ?? null,
-        phone: body?.phone ?? null,
-        email: body?.email ?? null,
+        firstName: toTextOrNull(body?.firstName),
+        lastName: toTextOrNull(body?.lastName),
+        phone: toTextOrNull(body?.phone),
+        email: toTextOrNull(body?.email),
 
-        identityType: body?.identityType ?? null,
-        identityValue: body?.identityValue ?? null,
-        issuingCountry: body?.issuingCountry ?? null,
-        identityStatus: body?.identityStatus ?? "PENDING",
+        identityType: toTextOrNull(body?.identityType),
+        identityValue: toTextOrNull(body?.identityValue),
+        issuingCountry: toTextOrNull(body?.issuingCountry),
+        identityStatus: toTextOrNull(body?.identityStatus) ?? "PENDING",
 
-        stockNumber: body?.stockNumber ?? null,
-        vin: body?.vin ?? null,
-        vehicleYear: body?.vehicleYear ?? null,
-        vehicleMake: body?.vehicleMake ?? null,
-        vehicleModel: body?.vehicleModel ?? null,
-        vehiclePrice: body?.vehiclePrice ?? null,
+        stockNumber: toTextOrNull(body?.stockNumber),
+        vin: toTextOrNull(body?.vin),
+        vehicleYear: toIntOrNull(body?.vehicleYear),
+        vehicleMake: toTextOrNull(body?.vehicleMake),
+        vehicleModel: toTextOrNull(body?.vehicleModel),
+        vehiclePrice: toFloatOrNull(body?.vehiclePrice),
 
-        downPayment: body?.downPayment ?? null,
-        tradeIn: body?.tradeIn ?? null,
-        amountFinanced: body?.amountFinanced ?? null,
+        downPayment: toFloatOrNull(body?.downPayment),
+        tradeIn: toFloatOrNull(body?.tradeIn),
+        amountFinanced: toFloatOrNull(body?.amountFinanced),
 
-        creditScore: body?.creditScore ?? null,
-        monthlyIncome: body?.monthlyIncome ?? null,
+        creditScore: toIntOrNull(body?.creditScore),
+        monthlyIncome: toFloatOrNull(body?.monthlyIncome),
 
-        status: body?.status ?? "DRAFT",
+        status: toTextOrNull(body?.status) ?? "DRAFT",
       },
     });
 
@@ -88,5 +117,7 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
