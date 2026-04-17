@@ -21,6 +21,20 @@ function toTextOrNull(value: unknown) {
   return text ? text : null;
 }
 
+function toIntOrNull(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed =
+    typeof value === "number" ? Math.trunc(value) : parseInt(String(value), 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function toFloatOrNull(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed =
+    typeof value === "number" ? value : parseFloat(String(value));
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 export async function POST(request: Request) {
   try {
     const currentUserRole = getCurrentUserRole(request);
@@ -44,9 +58,42 @@ export async function POST(request: Request) {
         lastName: toTextOrNull(body?.lastName),
         phone: toTextOrNull(body?.phone),
         email: toTextOrNull(body?.email),
-        status: "DRAFT",
+
+        identityType: toTextOrNull(body?.identityType),
+        identityValue: toTextOrNull(body?.identityValue),
+        issuingCountry: toTextOrNull(body?.issuingCountry),
+        identityStatus: toTextOrNull(body?.identityStatus) ?? "PENDING",
+
+        stockNumber: toTextOrNull(body?.stockNumber),
+        vin: toTextOrNull(body?.vin),
+        vehicleYear: toIntOrNull(body?.vehicleYear),
+        vehicleMake: toTextOrNull(body?.vehicleMake),
+        vehicleModel: toTextOrNull(body?.vehicleModel),
+        vehiclePrice: toFloatOrNull(body?.vehiclePrice),
+
+        downPayment: toFloatOrNull(body?.downPayment),
+        tradeIn: toFloatOrNull(body?.tradeIn),
+        amountFinanced: toFloatOrNull(body?.amountFinanced),
+
+        creditScore: toIntOrNull(body?.creditScore),
+        monthlyIncome: toFloatOrNull(body?.monthlyIncome),
+
+        status: toTextOrNull(body?.status) ?? "DRAFT",
       },
     });
+
+    try {
+      await prisma.statusHistory.create({
+        data: {
+          applicationId: application.id,
+          fromStatus: null,
+          toStatus: application.status ?? "DRAFT",
+          note: "Application draft created",
+        },
+      });
+    } catch (historyError) {
+      console.error("SAVE APPLICATION STATUS HISTORY ERROR:", historyError);
+    }
 
     return NextResponse.json({
       success: true,
