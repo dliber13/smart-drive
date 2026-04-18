@@ -21,18 +21,14 @@ function toTextOrNull(value: unknown) {
   return text ? text : null;
 }
 
-function toIntOrNull(value: unknown) {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed =
-    typeof value === "number" ? Math.trunc(value) : parseInt(String(value), 10);
-  return Number.isNaN(parsed) ? null : parsed;
-}
+function normalizeIdentityStatus(value: unknown) {
+  const text = String(value ?? "").trim().toUpperCase();
 
-function toFloatOrNull(value: unknown) {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed =
-    typeof value === "number" ? value : parseFloat(String(value));
-  return Number.isNaN(parsed) ? null : parsed;
+  if (text === "VERIFIED" || text === "PENDING" || text === "REJECTED") {
+    return text;
+  }
+
+  return "PENDING";
 }
 
 export async function POST(request: Request) {
@@ -62,23 +58,9 @@ export async function POST(request: Request) {
         identityType: toTextOrNull(body?.identityType),
         identityValue: toTextOrNull(body?.identityValue),
         issuingCountry: toTextOrNull(body?.issuingCountry),
-        identityStatus: toTextOrNull(body?.identityStatus) ?? "PENDING",
+        identityStatus: normalizeIdentityStatus(body?.identityStatus),
 
-        stockNumber: toTextOrNull(body?.stockNumber),
-        vin: toTextOrNull(body?.vin),
-        vehicleYear: toIntOrNull(body?.vehicleYear),
-        vehicleMake: toTextOrNull(body?.vehicleMake),
-        vehicleModel: toTextOrNull(body?.vehicleModel),
-        vehiclePrice: toFloatOrNull(body?.vehiclePrice),
-
-        downPayment: toFloatOrNull(body?.downPayment),
-        tradeIn: toFloatOrNull(body?.tradeIn),
-        amountFinanced: toFloatOrNull(body?.amountFinanced),
-
-        creditScore: toIntOrNull(body?.creditScore),
-        monthlyIncome: toFloatOrNull(body?.monthlyIncome),
-
-        status: toTextOrNull(body?.status) ?? "DRAFT",
+        status: "DRAFT",
       },
     });
 
@@ -87,12 +69,12 @@ export async function POST(request: Request) {
         data: {
           applicationId: application.id,
           fromStatus: null,
-          toStatus: application.status ?? "DRAFT",
+          toStatus: "DRAFT",
           note: "Application draft created",
         },
       });
-    } catch (historyError) {
-      console.error("SAVE APPLICATION STATUS HISTORY ERROR:", historyError);
+    } catch (historyError: any) {
+      console.error("SAVE STATUS HISTORY ERROR:", historyError);
     }
 
     return NextResponse.json({
