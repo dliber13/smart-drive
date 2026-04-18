@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { canSubmitDeal, getCurrentUserRole } from "@/lib/access";
-import {
-  getNextSubmittedStatus,
-  validateApplicationForSubmission,
-} from "@/lib/applicationRules";
 
 const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+async function handleSubmit(request: Request) {
   try {
     const currentUserRole = getCurrentUserRole(request);
 
@@ -46,28 +42,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const validation = validateApplicationForSubmission(latestDraftApplication);
-
-    if (!validation.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "APPLICATION_NOT_READY",
-          message: "Application is not ready for submission.",
-          validationReasons: validation.reasons,
-          applicationId: latestDraftApplication.id,
-          currentUserRole,
-        },
-        { status: 400 }
-      );
-    }
-
-    const nextStatus = getNextSubmittedStatus();
-
     const updatedApplication = await prisma.application.update({
       where: { id: latestDraftApplication.id },
       data: {
-        status: nextStatus,
+        status: "SUBMITTED",
       },
     });
 
@@ -76,7 +54,7 @@ export async function POST(request: Request) {
         data: {
           applicationId: updatedApplication.id,
           fromStatus: latestDraftApplication.status ?? "DRAFT",
-          toStatus: nextStatus,
+          toStatus: "SUBMITTED",
           note: "Application submitted from dealer intake",
         },
       });
@@ -105,4 +83,12 @@ export async function POST(request: Request) {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+export async function GET(request: Request) {
+  return handleSubmit(request);
+}
+
+export async function POST(request: Request) {
+  return handleSubmit(request);
 }
