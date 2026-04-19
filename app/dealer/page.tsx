@@ -77,6 +77,32 @@ function toNumberOrNull(value: string) {
   return Number.isNaN(parsed) ? null : parsed
 }
 
+function extractErrorText(data: any, fallback: string) {
+  if (!data) return fallback
+
+  if (typeof data?.message === "string" && data.message.trim()) {
+    return data.message
+  }
+
+  if (typeof data?.reason === "string" && data.reason.trim()) {
+    return data.reason
+  }
+
+  if (typeof data?.error === "string" && data.error.trim()) {
+    return data.error
+  }
+
+  if (Array.isArray(data?.validationReasons) && data.validationReasons.length > 0) {
+    return data.validationReasons.join(" | ")
+  }
+
+  try {
+    return JSON.stringify(data)
+  } catch {
+    return fallback
+  }
+}
+
 export default function DealerPage() {
   const [form, setForm] = useState<FormState>(initialForm)
   const [saving, setSaving] = useState(false)
@@ -162,15 +188,14 @@ export default function DealerPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        const errorText = data?.message || "Draft save failed"
-        showTopMessage("error", errorText)
+        showTopMessage("error", extractErrorText(data, "Draft save failed"))
         return
       }
 
       showTopMessage("success", "Draft saved successfully")
-    } catch (error) {
-      console.error(error)
-      showTopMessage("error", "Draft save failed")
+    } catch (error: any) {
+      console.error("SAVE DRAFT FRONTEND ERROR:", error)
+      showTopMessage("error", error?.message || "Draft save failed")
     } finally {
       setSaving(false)
     }
@@ -196,34 +221,41 @@ export default function DealerPage() {
       const saveData = await saveResponse.json()
 
       if (!saveResponse.ok) {
-        const errorText = saveData?.message || "Failed to save before submit"
-        showTopMessage("error", errorText)
+        showTopMessage(
+          "error",
+          extractErrorText(saveData, "Failed to save before submit")
+        )
         return
       }
 
-      const submitResponse = await fetch("/api/submit-application", {
+      const submitResponse = await fetch("/api/test-submit-application", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           "x-user-role": "SALES",
         },
       })
 
       const submitData = await submitResponse.json()
 
+      console.log("TEST SUBMIT RESPONSE:", submitData)
+
       if (!submitResponse.ok) {
-        const errorText =
-          submitData?.message ||
-          submitData?.reason ||
-          "Application blocked. Review submission requirements."
-        showTopMessage("error", errorText)
+        showTopMessage(
+          "error",
+          extractErrorText(
+            submitData,
+            "Application blocked. Review submission requirements."
+          )
+        )
         return
       }
 
       showTopMessage("success", "Application submitted successfully")
       setForm(initialForm)
-    } catch (error) {
-      console.error(error)
-      showTopMessage("error", "Application submission failed")
+    } catch (error: any) {
+      console.error("FRONTEND SUBMIT ERROR:", error)
+      showTopMessage("error", error?.message || "Application submission failed")
     } finally {
       setSubmitting(false)
     }
@@ -770,6 +802,8 @@ const styles: Record<string, CSSProperties> = {
     border: "1px solid rgba(17,17,17,0.1)",
     padding: "16px 18px",
     fontSize: "14px",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
   },
   messageSuccess: {
     backgroundColor: "#eefaf1",
