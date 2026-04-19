@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import { canSubmitDeal, getCurrentUserRole } from "@/lib/access"
+import { runDecisionEngine } from "@/lib/decisionEngine"
 
 const prisma = new PrismaClient()
 
@@ -66,10 +67,19 @@ async function handleSubmit(request: Request) {
       )
     }
 
+    const decision = runDecisionEngine({
+      creditScore: existingApplication.creditScore,
+      monthlyIncome: existingApplication.monthlyIncome,
+      amountFinanced: existingApplication.amountFinanced,
+    })
+
     const updatedApplication = await prisma.application.update({
       where: { id: applicationId },
       data: {
         status: "SUBMITTED",
+        tier: decision.tier,
+        dealStrength: decision.score,
+        decisionReason: decision.decision,
       },
     })
 
@@ -79,7 +89,7 @@ async function handleSubmit(request: Request) {
           applicationId: updatedApplication.id,
           fromStatus: existingApplication.status ?? "DRAFT",
           toStatus: "SUBMITTED",
-          note: "Application submitted from dealer intake",
+          note: `Application submitted from dealer intake | Tier ${decision.tier} | Score ${decision.score} | ${decision.decision}`,
         },
       })
     } catch (historyError: any) {
@@ -91,6 +101,9 @@ async function handleSubmit(request: Request) {
       message: "Application submitted successfully.",
       applicationId: updatedApplication.id,
       newStatus: updatedApplication.status,
+      tier: updatedApplication.tier,
+      dealStrength: updatedApplication.dealStrength,
+      decisionReason: updatedApplication.decisionReason,
       currentUserRole,
     })
   } catch (error: any) {
