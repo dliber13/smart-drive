@@ -70,7 +70,7 @@ async function handleSubmit(request: Request) {
       currentUserRole,
     });
   } catch (error: any) {
-    console.error("SUBMIT APPLICATION ERROR:", error);
+    console.error("TEST SUBMIT APPLICATION ERROR:", error);
 
     return NextResponse.json(
       {
