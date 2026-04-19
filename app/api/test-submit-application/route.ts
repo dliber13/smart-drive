@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { canSubmitDeal, getCurrentUserRole } from "@/lib/access";
+import { NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
+import { canSubmitDeal, getCurrentUserRole } from "@/lib/access"
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 async function handleSubmit(request: Request) {
   try {
-    const currentUserRole = getCurrentUserRole(request);
+    const currentUserRole = getCurrentUserRole(request)
 
     if (!canSubmitDeal(currentUserRole)) {
       return NextResponse.json(
@@ -19,47 +19,71 @@ async function handleSubmit(request: Request) {
           currentUserRole,
         },
         { status: 403 }
-      );
+      )
     }
 
-    const latestDraftApplication = await prisma.application.findFirst({
-      where: {
-        status: "DRAFT",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const body = await request.json()
+    const applicationId = String(body?.applicationId || "").trim()
 
-    if (!latestDraftApplication) {
+    if (!applicationId) {
       return NextResponse.json(
         {
           success: false,
-          error: "NO_DRAFT_FOUND",
-          message: "No draft application was found to submit.",
+          error: "MISSING_APPLICATION_ID",
+          message: "Application ID is required before submission.",
+        },
+        { status: 400 }
+      )
+    }
+
+    const existingApplication = await prisma.application.findUnique({
+      where: { id: applicationId },
+    })
+
+    if (!existingApplication) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "APPLICATION_NOT_FOUND",
+          message: "Application was not found.",
+          applicationId,
         },
         { status: 404 }
-      );
+      )
+    }
+
+    const currentStatus = String(existingApplication.status || "").toUpperCase()
+
+    if (currentStatus !== "DRAFT") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "INVALID_STATUS",
+          message: `Only DRAFT applications can be submitted. Current status: ${currentStatus}.`,
+          applicationId,
+        },
+        { status: 400 }
+      )
     }
 
     const updatedApplication = await prisma.application.update({
-      where: { id: latestDraftApplication.id },
+      where: { id: applicationId },
       data: {
         status: "SUBMITTED",
       },
-    });
+    })
 
     try {
       await prisma.statusHistory.create({
         data: {
           applicationId: updatedApplication.id,
-          fromStatus: latestDraftApplication.status ?? "DRAFT",
+          fromStatus: existingApplication.status ?? "DRAFT",
           toStatus: "SUBMITTED",
           note: "Application submitted from dealer intake",
         },
-      });
+      })
     } catch (historyError: any) {
-      console.error("SUBMIT STATUS HISTORY ERROR:", historyError);
+      console.error("SUBMIT STATUS HISTORY ERROR:", historyError)
     }
 
     return NextResponse.json({
@@ -68,9 +92,9 @@ async function handleSubmit(request: Request) {
       applicationId: updatedApplication.id,
       newStatus: updatedApplication.status,
       currentUserRole,
-    });
+    })
   } catch (error: any) {
-    console.error("TEST SUBMIT APPLICATION ERROR:", error);
+    console.error("TEST SUBMIT APPLICATION ERROR:", error)
 
     return NextResponse.json(
       {
@@ -79,16 +103,16 @@ async function handleSubmit(request: Request) {
         message: error?.message || "Unknown submission error.",
       },
       { status: 500 }
-    );
+    )
   } finally {
-    await prisma.$disconnect();
+    await prisma.$disconnect()
   }
 }
 
 export async function GET(request: Request) {
-  return handleSubmit(request);
+  return handleSubmit(request)
 }
 
 export async function POST(request: Request) {
-  return handleSubmit(request);
+  return handleSubmit(request)
 }
