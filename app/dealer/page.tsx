@@ -105,6 +105,7 @@ function extractErrorText(data: any, fallback: string) {
 
 export default function DealerPage() {
   const [form, setForm] = useState<FormState>(initialForm)
+  const [applicationId, setApplicationId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState("")
@@ -192,6 +193,7 @@ export default function DealerPage() {
         return
       }
 
+      setApplicationId(data?.applicationId ?? null)
       showTopMessage("success", "Draft saved successfully")
     } catch (error: any) {
       console.error("SAVE DRAFT FRONTEND ERROR:", error)
@@ -206,25 +208,8 @@ export default function DealerPage() {
     setMessage("")
 
     try {
-      const saveResponse = await fetch("/api/save-application", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": "SALES",
-        },
-        body: JSON.stringify({
-          ...buildPayload(form),
-          status: "DRAFT",
-        }),
-      })
-
-      const saveData = await saveResponse.json()
-
-      if (!saveResponse.ok) {
-        showTopMessage(
-          "error",
-          extractErrorText(saveData, "Failed to save before submit")
-        )
+      if (!applicationId) {
+        showTopMessage("error", "Please save the draft before submitting.")
         return
       }
 
@@ -234,6 +219,9 @@ export default function DealerPage() {
           "Content-Type": "application/json",
           "x-user-role": "SALES",
         },
+        body: JSON.stringify({
+          applicationId,
+        }),
       })
 
       const submitData = await submitResponse.json()
@@ -253,6 +241,7 @@ export default function DealerPage() {
 
       showTopMessage("success", "Application submitted successfully")
       setForm(initialForm)
+      setApplicationId(null)
     } catch (error: any) {
       console.error("FRONTEND SUBMIT ERROR:", error)
       showTopMessage("error", error?.message || "Application submission failed")
