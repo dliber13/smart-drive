@@ -419,17 +419,15 @@ export default function ControllerPage() {
                       <div style={styles.queueMeta}>
                         <span>
                           Score:{" "}
-                          {app.creditScore !== null && app.creditScore !== undefined
-                            ? app.creditScore
+                          {app.dealStrength !== null && app.dealStrength !== undefined
+                            ? app.dealStrength
                             : "N/A"}
                         </span>
-                        <span>
-                          Income:{" "}
-                          {app.monthlyIncome !== null &&
-                          app.monthlyIncome !== undefined
-                            ? formatCurrency(app.monthlyIncome)
-                            : "N/A"}
-                        </span>
+                        <span>Tier: {app.tier ?? "N/A"}</span>
+                      </div>
+
+                      <div style={styles.queueMeta}>
+                        <span>Decision: {app.decisionReason ?? "N/A"}</span>
                       </div>
 
                       <div style={styles.queueMeta}>
@@ -512,6 +510,22 @@ export default function ControllerPage() {
                     <InfoRow
                       label="Current Status"
                       value={selectedApplication.status || "N/A"}
+                    />
+                    <InfoRow
+                      label="Tier"
+                      value={selectedApplication.tier || "N/A"}
+                    />
+                    <InfoRow
+                      label="Deal Strength"
+                      value={
+                        selectedApplication.dealStrength != null
+                          ? String(selectedApplication.dealStrength)
+                          : "N/A"
+                      }
+                    />
+                    <InfoRow
+                      label="Suggested Decision"
+                      value={selectedApplication.decisionReason || "N/A"}
                     />
                     <InfoRow
                       label="Stock Number"
