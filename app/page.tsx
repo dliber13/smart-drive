@@ -67,16 +67,16 @@ const securityPoints = [
 
 export default function Home() {
   return (
-    <main className="bg-[#020617] text-white">
+    <main className="bg-[#030816] text-white">
       {/* LIGHT HERO */}
-      <section className="relative overflow-hidden bg-[#f6f3ed] text-[#111111]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_28%,rgba(194,161,93,0.18),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(194,161,93,0.12),transparent_18%),linear-gradient(180deg,#f6f3ed_0%,#f3efe8_55%,#ece7de_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(17,17,17,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.02)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40" />
+      <section className="relative overflow-hidden bg-[#f7f3ec] text-[#111111]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(194,161,93,0.20),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(194,161,93,0.10),transparent_18%),linear-gradient(180deg,#f7f3ec_0%,#f3eee6_58%,#ece5da_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(17,17,17,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.018)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40" />
 
         <header className="relative z-20">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
             <Link href="/" className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white/50 shadow-sm backdrop-blur">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white/55 shadow-sm backdrop-blur">
                 <span className="text-2xl font-semibold tracking-[0.18em]">
                   SDE
                 </span>
@@ -109,13 +109,13 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Link
                 href="/request-access"
-                className="hidden rounded-full border border-black/10 bg-white/50 px-5 py-3 text-sm font-medium text-black transition hover:bg-white/70 sm:inline-flex"
+                className="hidden rounded-full border border-black/10 bg-white/55 px-5 py-3 text-sm font-medium text-black transition hover:bg-white/75 sm:inline-flex"
               >
                 Request Access
               </Link>
               <Link
                 href="/login"
-                className="inline-flex rounded-full border border-black/10 bg-white/70 px-6 py-3 text-sm font-medium text-black transition hover:bg-white"
+                className="inline-flex rounded-full border border-black/10 bg-white/75 px-6 py-3 text-sm font-medium text-black transition hover:bg-white"
               >
                 Sign In
               </Link>
@@ -123,14 +123,14 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-8 lg:px-8 lg:pb-24 lg:pt-10">
-          <div className="grid items-start gap-14 lg:grid-cols-[1.02fr_0.98fr]">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-8 lg:pb-28 lg:pt-10">
+          <div className="grid items-start gap-16 lg:grid-cols-[1.02fr_0.98fr]">
             <div className="pt-6">
               <div className="inline-flex rounded-full border border-black/10 bg-white/60 px-6 py-3 text-sm uppercase tracking-[0.32em] text-black/55 shadow-sm">
                 Built for Modern Auto Finance
               </div>
 
-              <h1 className="mt-10 max-w-4xl text-[5.2rem] font-semibold leading-[0.92] tracking-[-0.06em] text-black xl:text-[7rem]">
+              <h1 className="mt-10 max-w-4xl text-[5rem] font-semibold leading-[0.92] tracking-[-0.065em] text-black xl:text-[6.9rem]">
                 Control the decision. Control the outcome.
               </h1>
 
@@ -150,7 +150,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/request-access"
-                  className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white/60 px-8 py-4 text-base font-medium text-black transition hover:bg-white/80"
+                  className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white/60 px-8 py-4 text-base font-medium text-black transition hover:bg-white/85"
                 >
                   Request Access
                 </Link>
@@ -159,8 +159,10 @@ export default function Home() {
 
             <div className="relative">
               <div className="absolute -left-6 top-10 h-40 w-40 rounded-full bg-[#c2a15d]/20 blur-3xl" />
-              <div className="relative overflow-hidden rounded-[36px] border border-black/10 bg-white/70 p-5 shadow-[0_35px_100px_rgba(0,0,0,0.10)] backdrop-blur-xl">
-                <div className="rounded-[30px] border border-black/10 bg-[#f8f5ef] p-6">
+              <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-white/25 blur-3xl" />
+
+              <div className="relative overflow-hidden rounded-[38px] border border-black/10 bg-white/75 p-5 shadow-[0_35px_100px_rgba(0,0,0,0.10)] backdrop-blur-xl">
+                <div className="rounded-[32px] border border-black/10 bg-[#f8f5ef] p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="text-sm uppercase tracking-[0.36em] text-black/70">
@@ -183,7 +185,7 @@ export default function Home() {
                     Rate Locked
                   </div>
 
-                  <div className="mt-10 rounded-[32px] border border-black/10 bg-[#f1efeb] p-8">
+                  <div className="mt-10 rounded-[32px] border border-black/10 bg-[#f1efeb] p-8 shadow-inner">
                     <div className="text-sm uppercase tracking-[0.34em] text-black/55">
                       Key Decision Metrics
                     </div>
@@ -207,7 +209,7 @@ export default function Home() {
                       (item) => (
                         <div
                           key={item}
-                          className="rounded-2xl border border-black/10 bg-white/55 px-4 py-4 text-center text-sm font-medium text-black/75"
+                          className="rounded-2xl border border-black/10 bg-white/60 px-4 py-4 text-center text-sm font-medium text-black/75"
                         >
                           {item}
                         </div>
@@ -220,29 +222,37 @@ export default function Home() {
           </div>
         </div>
 
-        {/* TRANSITION */}
-        <div className="relative h-28 overflow-hidden bg-gradient-to-b from-[#ece7de] via-[#0b1321] to-[#020617]">
-          <div className="absolute inset-x-0 top-0 h-20 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.20),transparent_60%)]" />
+        {/* REFINED TRANSITION */}
+        <div className="relative h-28 bg-[#ece5da]">
+          <div className="absolute inset-x-0 top-0 h-px bg-black/10" />
+          <div className="absolute inset-x-0 bottom-0 h-[78%] bg-gradient-to-b from-transparent via-[#09111d] to-[#030816]" />
+          <div className="absolute inset-x-0 bottom-8 h-px bg-gradient-to-r from-transparent via-emerald-500/35 to-transparent" />
+          <div className="absolute left-1/2 bottom-5 h-16 w-[30rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
         </div>
       </section>
 
       {/* DARK OPERATIONS */}
-      <section className="relative overflow-hidden bg-[#020617]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_26%),radial-gradient(circle_at_82%_18%,rgba(59,130,246,0.12),transparent_24%),linear-gradient(180deg,#020617_0%,#07111f_52%,#020617_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.026)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.026)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(circle_at_center,black,transparent_85%)]" />
+      <section className="relative overflow-hidden bg-[#030816]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_24%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.14),transparent_24%),linear-gradient(180deg,#030816_0%,#07101d_52%,#030816_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.022)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(circle_at_center,black,transparent_86%)]" />
+        <div className="absolute left-[-8%] top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute right-[-10%] top-16 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {commandMetrics.map((metric) => (
               <div
                 key={metric.label}
-                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.16)] backdrop-blur-xl"
+                className="group relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
               >
-                <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                  {metric.label}
-                </div>
-                <div className="mt-3 text-lg font-semibold text-white">
-                  {metric.value}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_35%)] opacity-70" />
+                <div className="relative">
+                  <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                    {metric.label}
+                  </div>
+                  <div className="mt-3 text-lg font-semibold text-white">
+                    {metric.value}
+                  </div>
                 </div>
               </div>
             ))}
@@ -258,7 +268,7 @@ export default function Home() {
               <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
                 Platform
               </div>
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-white md:text-5xl">
+              <h2 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
                 Premium first impression. Real operational system underneath.
               </h2>
             </div>
@@ -273,15 +283,18 @@ export default function Home() {
             {platformPillars.map((card) => (
               <div
                 key={card.title}
-                className="rounded-[30px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:border-emerald-400/20 hover:bg-white/[0.06]"
+                className="group relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.028))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
               >
-                <div className="mb-5 h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
-                <h3 className="text-xl font-semibold text-white">
-                  {card.title}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-slate-300">
-                  {card.description}
-                </p>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.09),transparent_32%)] opacity-0 transition duration-300 group-hover:opacity-100" />
+                <div className="relative">
+                  <div className="mb-5 h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
+                  <h3 className="text-xl font-semibold text-white">
+                    {card.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-300">
+                    {card.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -305,44 +318,47 @@ export default function Home() {
                 direct financial outcomes.
               </p>
 
-              <div className="mt-8 rounded-[30px] border border-white/10 bg-white/[0.045] p-6 backdrop-blur-xl">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                  Access Paths
-                </div>
-                <div className="mt-4 space-y-3 text-sm text-slate-200">
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <span>Returning User</span>
-                    <span className="font-semibold text-white">
-                      Login to Platform
-                    </span>
+              <div className="mt-8 relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.03))] p-6 backdrop-blur-xl">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_36%)]" />
+                <div className="relative">
+                  <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                    Access Paths
                   </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <span>New Dealership</span>
-                    <span className="font-semibold text-white">
-                      Request Access
-                    </span>
+                  <div className="mt-4 space-y-3 text-sm text-slate-200">
+                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <span>Returning User</span>
+                      <span className="font-semibold text-white">
+                        Login to Platform
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <span>New Dealership</span>
+                      <span className="font-semibold text-white">
+                        Request Access
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <span>System Entry</span>
+                      <span className="font-semibold text-white">
+                        Dealer / Controller
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <span>System Entry</span>
-                    <span className="font-semibold text-white">
-                      Dealer / Controller
-                    </span>
-                  </div>
-                </div>
 
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950"
-                  >
-                    Enter Platform
-                  </Link>
-                  <Link
-                    href="/request-access"
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
-                  >
-                    Request Access
-                  </Link>
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950 shadow-[0_18px_50px_rgba(16,185,129,0.18)]"
+                    >
+                      Enter Platform
+                    </Link>
+                    <Link
+                      href="/request-access"
+                      className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
+                    >
+                      Request Access
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -351,9 +367,10 @@ export default function Home() {
               {workflowSteps.map((item) => (
                 <div
                   key={item.step}
-                  className="rounded-[30px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+                  className="group relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.03))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
                 >
-                  <div className="flex items-start gap-5">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_34%)] opacity-0 transition duration-300 group-hover:opacity-100" />
+                  <div className="relative flex items-start gap-5">
                     <div className="min-w-[58px] rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-center text-sm font-bold text-emerald-300">
                       {item.step}
                     </div>
@@ -378,32 +395,35 @@ export default function Home() {
         >
           <div className="overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] shadow-[0_30px_100px_rgba(0,0,0,0.25)]">
             <div className="grid lg:grid-cols-[1fr_1fr]">
-              <div className="border-b border-white/10 p-8 lg:border-b-0 lg:border-r lg:p-10">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
-                  Security + Control
-                </div>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                  Built to feel elite. Designed to operate with authority.
-                </h2>
-                <p className="mt-5 max-w-xl text-base leading-8 text-slate-300">
-                  Smart Drive Elite should present like a premium platform while
-                  reinforcing trust through structured access, cleaner
-                  visibility, and disciplined financial workflow.
-                </p>
+              <div className="relative border-b border-white/10 p-8 lg:border-b-0 lg:border-r lg:p-10">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_34%)]" />
+                <div className="relative">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
+                    Security + Control
+                  </div>
+                  <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                    Built to feel elite. Designed to operate with authority.
+                  </h2>
+                  <p className="mt-5 max-w-xl text-base leading-8 text-slate-300">
+                    Smart Drive Elite should present like a premium platform while
+                    reinforcing trust through structured access, cleaner
+                    visibility, and disciplined financial workflow.
+                  </p>
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950"
-                  >
-                    Login to Platform
-                  </Link>
-                  <Link
-                    href="/request-access"
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
-                  >
-                    Request Access
-                  </Link>
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950"
+                    >
+                      Login to Platform
+                    </Link>
+                    <Link
+                      href="/request-access"
+                      className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
+                    >
+                      Request Access
+                    </Link>
+                  </div>
                 </div>
               </div>
 
