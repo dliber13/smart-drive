@@ -1,82 +1,42 @@
 import Link from "next/link";
 
-const platformPillars = [
+const investorPoints = [
   {
-    title: "Dealer Intake",
+    title: "Real Workflow",
     description:
-      "Capture applicant, vehicle, and structure details in a fast intake flow built for real dealership desk work.",
+      "Built around actual dealership finance operations: intake, verification, controller review, and structured deal output.",
   },
   {
-    title: "Controller Review",
+    title: "Clear Market Use",
     description:
-      "Centralize lender direction, approval structure, and deal strength from one controlled command layer.",
+      "Designed for auto finance teams that need faster decisions, cleaner process control, and stronger lender routing discipline.",
   },
   {
-    title: "Identity Control",
+    title: "Platform Depth",
     description:
-      "Support cleaner identity handling, role visibility, and disciplined underwriting workflow across the platform.",
-  },
-  {
-    title: "Decision Output",
-    description:
-      "Return the lender path, tier, max payment, and max vehicle in a usable structure ready to move the deal.",
+      "Smart Drive Elite is positioned as operational infrastructure, not just a landing page or lead-gen concept.",
   },
 ];
 
-const decisionStats = [
-  { label: "Lender", value: "Westlake" },
-  { label: "Status", value: "Locked" },
-  { label: "Max Payment", value: "$685" },
-  { label: "Max Vehicle", value: "$32,880" },
-];
-
-const commandMetrics = [
-  { label: "Avg Decision Time", value: "42 sec" },
-  { label: "Workflow Model", value: "Dealer + Controller" },
-  { label: "Decision Style", value: "Controlled" },
-  { label: "System Focus", value: "Operational Underwriting" },
-];
-
-const workflowSteps = [
-  {
-    step: "01",
-    title: "Submit the Deal",
-    copy:
-      "Start with applicant, identity, vehicle, and structure details in a guided intake process designed for clean submissions.",
-  },
-  {
-    step: "02",
-    title: "Apply Review Discipline",
-    copy:
-      "Move the file through controller-side visibility for lender fit, approval structure, and risk direction.",
-  },
-  {
-    step: "03",
-    title: "Control the Outcome",
-    copy:
-      "Return a structured result with lender path, tier, payment guidance, and vehicle fit to move with confidence.",
-  },
-];
-
-const securityPoints = [
-  "Role-based access control",
-  "Controller-led decision workflow",
-  "Identity verification handling",
-  "Audit-ready operating structure",
+const operatingHighlights = [
+  "Dealer Intake",
+  "Identity Verification",
+  "Controller Review",
+  "Lender Direction",
 ];
 
 export default function Home() {
   return (
     <main className="bg-[#030816] text-white">
-      {/* LIGHT HERO */}
+      {/* HERO */}
       <section className="relative overflow-hidden bg-[#f7f3ec] text-[#111111]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(194,161,93,0.20),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(194,161,93,0.10),transparent_18%),linear-gradient(180deg,#f7f3ec_0%,#f3eee6_58%,#ece5da_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_28%,rgba(194,161,93,0.18),transparent_26%),radial-gradient(circle_at_82%_18%,rgba(194,161,93,0.08),transparent_20%),linear-gradient(180deg,#f7f3ec_0%,#f3eee6_58%,#ece5da_100%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(17,17,17,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.018)_1px,transparent_1px)] bg-[size:56px_56px] opacity-40" />
 
         <header className="relative z-20">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
             <Link href="/" className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white/55 shadow-sm backdrop-blur">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-black/10 bg-white/60 shadow-sm backdrop-blur">
                 <span className="text-2xl font-semibold tracking-[0.18em]">
                   SDE
                 </span>
@@ -92,14 +52,14 @@ export default function Home() {
             </Link>
 
             <nav className="hidden items-center gap-10 text-sm font-medium text-black/80 lg:flex">
+              <a href="#overview" className="transition hover:text-black">
+                Overview
+              </a>
               <a href="#platform" className="transition hover:text-black">
                 Platform
               </a>
-              <a href="#workflow" className="transition hover:text-black">
-                Workflow
-              </a>
-              <a href="#security" className="transition hover:text-black">
-                Security
+              <a href="#investor" className="transition hover:text-black">
+                Opportunity
               </a>
               <Link href="/login" className="transition hover:text-black">
                 Login
@@ -109,13 +69,13 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Link
                 href="/request-access"
-                className="hidden rounded-full border border-black/10 bg-white/55 px-5 py-3 text-sm font-medium text-black transition hover:bg-white/75 sm:inline-flex"
+                className="hidden rounded-full border border-black/10 bg-white/60 px-5 py-3 text-sm font-medium text-black transition hover:bg-white/80 sm:inline-flex"
               >
                 Request Access
               </Link>
               <Link
                 href="/login"
-                className="inline-flex rounded-full border border-black/10 bg-white/75 px-6 py-3 text-sm font-medium text-black transition hover:bg-white"
+                className="inline-flex rounded-full border border-black/10 bg-white/80 px-6 py-3 text-sm font-medium text-black transition hover:bg-white"
               >
                 Sign In
               </Link>
@@ -123,22 +83,22 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-8 lg:pb-28 lg:pt-10">
-          <div className="grid items-start gap-16 lg:grid-cols-[1.02fr_0.98fr]">
-            <div className="pt-6">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-8 lg:px-8 lg:pb-24 lg:pt-10">
+          <div className="grid items-center gap-16 lg:grid-cols-[1.02fr_0.98fr]">
+            <div className="pt-4">
               <div className="inline-flex rounded-full border border-black/10 bg-white/60 px-6 py-3 text-sm uppercase tracking-[0.32em] text-black/55 shadow-sm">
                 Built for Modern Auto Finance
               </div>
 
-              <h1 className="mt-10 max-w-4xl text-[5rem] font-semibold leading-[0.92] tracking-[-0.065em] text-black xl:text-[6.9rem]">
+              <h1 className="mt-10 max-w-4xl text-[4.9rem] font-semibold leading-[0.92] tracking-[-0.065em] text-black xl:text-[6.7rem]">
                 Control the decision. Control the outcome.
               </h1>
 
               <p className="mt-8 max-w-2xl text-xl leading-9 text-black/68">
-                Smart Drive Elite is a premium operational front door for
+                Smart Drive Elite is a premium operational platform for
                 dealership finance teams to submit deals, verify identity,
-                structure approvals, and direct lender outcomes with more
-                control.
+                structure approvals, and direct lender outcomes with greater
+                speed and control.
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -155,13 +115,23 @@ export default function Home() {
                   Request Access
                 </Link>
               </div>
+
+              <div className="mt-10 flex flex-wrap gap-3">
+                {operatingHighlights.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-full border border-black/10 bg-white/55 px-4 py-2 text-sm font-medium text-black/75"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="relative">
               <div className="absolute -left-6 top-10 h-40 w-40 rounded-full bg-[#c2a15d]/20 blur-3xl" />
-              <div className="absolute right-0 top-0 h-52 w-52 rounded-full bg-white/25 blur-3xl" />
 
-              <div className="relative overflow-hidden rounded-[38px] border border-black/10 bg-white/75 p-5 shadow-[0_35px_100px_rgba(0,0,0,0.10)] backdrop-blur-xl">
+              <div className="relative overflow-hidden rounded-[38px] border border-black/10 bg-white/78 p-5 shadow-[0_35px_100px_rgba(0,0,0,0.10)] backdrop-blur-xl">
                 <div className="rounded-[32px] border border-black/10 bg-[#f8f5ef] p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -185,275 +155,203 @@ export default function Home() {
                     Rate Locked
                   </div>
 
-                  <div className="mt-10 rounded-[32px] border border-black/10 bg-[#f1efeb] p-8 shadow-inner">
-                    <div className="text-sm uppercase tracking-[0.34em] text-black/55">
-                      Key Decision Metrics
+                  <div className="mt-10 grid gap-6 rounded-[30px] border border-black/10 bg-[#f1efeb] p-8 sm:grid-cols-2">
+                    <div>
+                      <div className="text-sm uppercase tracking-[0.24em] text-black/55">
+                        Lender
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold text-black">
+                        Westlake
+                      </div>
                     </div>
-
-                    <div className="mt-8 grid gap-8 sm:grid-cols-2">
-                      {decisionStats.map((item) => (
-                        <div key={item.label}>
-                          <div className="text-sm uppercase tracking-[0.24em] text-black/55">
-                            {item.label}
-                          </div>
-                          <div className="mt-3 text-3xl font-semibold tracking-tight text-black">
-                            {item.value}
-                          </div>
-                        </div>
-                      ))}
+                    <div>
+                      <div className="text-sm uppercase tracking-[0.24em] text-black/55">
+                        Status
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold text-black">
+                        Locked
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                    {["Dealer Intake", "Controller Review", "Lender Direction"].map(
-                      (item) => (
-                        <div
-                          key={item}
-                          className="rounded-2xl border border-black/10 bg-white/60 px-4 py-4 text-center text-sm font-medium text-black/75"
-                        >
-                          {item}
-                        </div>
-                      )
-                    )}
+                    <div>
+                      <div className="text-sm uppercase tracking-[0.24em] text-black/55">
+                        Max Payment
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold text-black">
+                        $685
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm uppercase tracking-[0.24em] text-black/55">
+                        Max Vehicle
+                      </div>
+                      <div className="mt-2 text-3xl font-semibold text-black">
+                        $32,880
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* REFINED TRANSITION */}
-        <div className="relative h-28 bg-[#ece5da]">
-          <div className="absolute inset-x-0 top-0 h-px bg-black/10" />
-          <div className="absolute inset-x-0 bottom-0 h-[78%] bg-gradient-to-b from-transparent via-[#09111d] to-[#030816]" />
-          <div className="absolute inset-x-0 bottom-8 h-px bg-gradient-to-r from-transparent via-emerald-500/35 to-transparent" />
-          <div className="absolute left-1/2 bottom-5 h-16 w-[30rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
-        </div>
-      </section>
-
-      {/* DARK OPERATIONS */}
-      <section className="relative overflow-hidden bg-[#030816]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_24%),radial-gradient(circle_at_82%_18%,rgba(37,99,235,0.14),transparent_24%),linear-gradient(180deg,#030816_0%,#07101d_52%,#030816_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.022)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.022)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(circle_at_center,black,transparent_86%)]" />
-        <div className="absolute left-[-8%] top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute right-[-10%] top-16 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {commandMetrics.map((metric) => (
+          <div id="overview" className="mt-20 grid gap-6 md:grid-cols-3">
+            {investorPoints.map((point) => (
               <div
-                key={metric.label}
-                className="group relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
+                key={point.title}
+                className="rounded-[28px] border border-black/10 bg-white/50 p-6 shadow-sm backdrop-blur"
               >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),transparent_35%)] opacity-70" />
-                <div className="relative">
-                  <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                    {metric.label}
-                  </div>
-                  <div className="mt-3 text-lg font-semibold text-white">
-                    {metric.value}
-                  </div>
-                </div>
+                <div className="mb-4 h-1.5 w-12 rounded-full bg-[#c2a15d]" />
+                <h3 className="text-xl font-semibold text-black">
+                  {point.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-black/65">
+                  {point.description}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        <div
-          id="platform"
-          className="relative mx-auto max-w-7xl px-6 py-4 lg:px-8 lg:py-8"
-        >
-          <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="relative h-24 bg-[#ece5da]">
+          <div className="absolute inset-x-0 top-0 h-px bg-black/10" />
+          <div className="absolute inset-x-0 bottom-0 h-[72%] bg-gradient-to-b from-transparent via-[#08111d] to-[#030816]" />
+          <div className="absolute inset-x-0 bottom-7 h-px bg-gradient-to-r from-transparent via-emerald-500/35 to-transparent" />
+        </div>
+      </section>
+
+      {/* DARK SECTION */}
+      <section
+        id="platform"
+        className="relative overflow-hidden bg-[#030816] py-20"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.10),transparent_24%),radial-gradient(circle_at_82%_20%,rgba(37,99,235,0.12),transparent_24%),linear-gradient(180deg,#030816_0%,#07101d_52%,#030816_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] bg-[size:54px_54px]" />
+
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid items-start gap-12 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
                 Platform
               </div>
-              <h2 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                Premium first impression. Real operational system underneath.
-              </h2>
-            </div>
-            <p className="max-w-2xl text-sm leading-7 text-slate-300">
-              The top of the homepage establishes the brand. Everything below it
-              proves Smart Drive Elite is built to operate, structure deals, and
-              control outcomes.
-            </p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {platformPillars.map((card) => (
-              <div
-                key={card.title}
-                className="group relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.028))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
-              >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.09),transparent_32%)] opacity-0 transition duration-300 group-hover:opacity-100" />
-                <div className="relative">
-                  <div className="mb-5 h-1.5 w-14 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
-                  <h3 className="text-xl font-semibold text-white">
-                    {card.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-300">
-                    {card.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          id="workflow"
-          className="relative mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24"
-        >
-          <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
-                Workflow
-              </div>
               <h2 className="mt-4 max-w-xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                From intake to lender outcome, built to move with discipline.
+                Operational infrastructure for structured finance decisions.
               </h2>
               <p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">
-                Smart Drive Elite is not just a landing page. It is a controlled
-                entry point into a real platform designed to structure deals and
-                direct financial outcomes.
+                Smart Drive Elite is built to turn fragmented dealership finance
+                workflow into a controlled system for intake, review, and lender
+                direction.
               </p>
 
-              <div className="mt-8 relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.03))] p-6 backdrop-blur-xl">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_36%)]" />
-                <div className="relative">
-                  <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                    Access Paths
-                  </div>
-                  <div className="mt-4 space-y-3 text-sm text-slate-200">
-                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <span>Returning User</span>
-                      <span className="font-semibold text-white">
-                        Login to Platform
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <span>New Dealership</span>
-                      <span className="font-semibold text-white">
-                        Request Access
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <span>System Entry</span>
-                      <span className="font-semibold text-white">
-                        Dealer / Controller
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                    <Link
-                      href="/login"
-                      className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950 shadow-[0_18px_50px_rgba(16,185,129,0.18)]"
-                    >
-                      Enter Platform
-                    </Link>
-                    <Link
-                      href="/request-access"
-                      className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
-                    >
-                      Request Access
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              {workflowSteps.map((item) => (
-                <div
-                  key={item.step}
-                  className="group relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.03))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-400/25"
-                >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_34%)] opacity-0 transition duration-300 group-hover:opacity-100" />
-                  <div className="relative flex items-start gap-5">
-                    <div className="min-w-[58px] rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-center text-sm font-bold text-emerald-300">
-                      {item.step}
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-semibold text-white">
-                        {item.title}
-                      </h3>
-                      <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                        {item.copy}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div
-          id="security"
-          className="relative mx-auto max-w-7xl px-6 pb-20 lg:px-8 lg:pb-24"
-        >
-          <div className="overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] shadow-[0_30px_100px_rgba(0,0,0,0.25)]">
-            <div className="grid lg:grid-cols-[1fr_1fr]">
-              <div className="relative border-b border-white/10 p-8 lg:border-b-0 lg:border-r lg:p-10">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.08),transparent_34%)]" />
-                <div className="relative">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
-                    Security + Control
-                  </div>
-                  <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                    Built to feel elite. Designed to operate with authority.
-                  </h2>
-                  <p className="mt-5 max-w-xl text-base leading-8 text-slate-300">
-                    Smart Drive Elite should present like a premium platform while
-                    reinforcing trust through structured access, cleaner
-                    visibility, and disciplined financial workflow.
-                  </p>
-
-                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                    <Link
-                      href="/login"
-                      className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950"
-                    >
-                      Login to Platform
-                    </Link>
-                    <Link
-                      href="/request-access"
-                      className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
-                    >
-                      Request Access
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-px bg-white/10 sm:grid-cols-2">
-                {securityPoints.map((item) => (
-                  <div key={item} className="bg-[#07111f] p-8">
-                    <div className="h-2 w-12 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
-                    <p className="mt-5 text-lg font-medium text-white">
-                      {item}
-                    </p>
+              <div className="mt-8 space-y-4">
+                {[
+                  "Guided deal intake with applicant, vehicle, and structure data",
+                  "Controller-led review for cleaner underwriting discipline",
+                  "Structured decision output for lender path, payment, and vehicle fit",
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-slate-200"
+                  >
+                    {item}
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        <section className="relative border-t border-white/10">
-          <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-6 py-10 lg:flex-row lg:items-center lg:px-8">
+            <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+              <div className="rounded-[28px] border border-white/10 bg-[#08111d] p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.28em] text-emerald-300">
+                      System Snapshot
+                    </div>
+                    <h3 className="mt-3 text-3xl font-semibold text-white">
+                      Built for speed, control, and repeatability.
+                    </h3>
+                  </div>
+                  <span className="rounded-full bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-300">
+                    Avg 42 sec
+                  </span>
+                </div>
+
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  {[
+                    ["Workflow", "Dealer + Controller"],
+                    ["Decision Style", "Controlled"],
+                    ["Output", "Structured"],
+                    ["Use Case", "Operational Underwriting"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                    >
+                      <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                        {label}
+                      </div>
+                      <div className="mt-3 text-xl font-semibold text-white">
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 px-6 py-3.5 text-sm font-semibold text-slate-950"
+                  >
+                    Enter Platform
+                  </Link>
+                  <Link
+                    href="/request-access"
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-medium text-white"
+                  >
+                    Request Access
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="investor"
+            className="mt-20 rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-8 shadow-[0_30px_90px_rgba(0,0,0,0.25)]"
+          >
+            <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
+                  Opportunity
+                </div>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                  A platform positioned for operational scale in dealership
+                  finance.
+                </h2>
+              </div>
+
+              <div className="space-y-4 text-slate-300">
+                <p className="leading-8">
+                  Smart Drive Elite is designed to solve a real workflow
+                  problem: slow, inconsistent, and fragmented finance decision
+                  handling at the dealership level.
+                </p>
+                <p className="leading-8">
+                  By centralizing intake, verification, controller review, and
+                  lender direction into one controlled system, the platform is
+                  positioned as a scalable operating layer rather than a simple
+                  software feature.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 flex flex-col items-start justify-between gap-6 border-t border-white/10 pt-10 lg:flex-row lg:items-center">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-emerald-300">
                 Smart Drive Elite
               </div>
               <h3 className="mt-3 text-2xl font-semibold text-white md:text-3xl">
-                Elite presentation. Operational depth. Controlled outcome.
+                Premium presentation. Clear platform value. Real operational use.
               </h3>
-              <p className="mt-3 max-w-2xl text-slate-300">
-                Enter the platform to build deals, direct approvals, and move
-                with operational confidence.
-              </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -471,7 +369,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-        </section>
+        </div>
       </section>
     </main>
   );
