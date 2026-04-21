@@ -1,145 +1,52 @@
-import prisma from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client"
 
-export const dynamic = "force-dynamic";
+const prisma = new PrismaClient()
 
 export default async function AdminPage() {
-  const applicationCount = await prisma.application.count();
-  const statusHistoryCount = await prisma.statusHistory.count();
+  const applicationCount = await prisma.application.count()
+  const inventoryCount = await prisma.inventoryUnit.count()
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f7f4ee",
-        padding: "32px 24px",
-        color: "#111111",
-        fontFamily:
-          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1100px",
-          margin: "0 auto",
-        }}
-      >
-        <div
-          style={{
-            marginBottom: "32px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "12px",
-              textTransform: "uppercase",
-              letterSpacing: "0.28em",
-              color: "rgba(17,17,17,0.45)",
-              marginBottom: "12px",
-            }}
-          >
+    <main className="min-h-screen bg-[#f7f4ee] px-6 py-12 text-[#111111]">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-10">
+          <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">
             Smart Drive Elite
           </div>
-
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "48px",
-              lineHeight: 1,
-              fontWeight: 700,
-              letterSpacing: "-0.04em",
-            }}
-          >
+          <h1 className="mt-3 text-5xl font-semibold tracking-[-0.05em]">
             Admin Dashboard
           </h1>
-
-          <p
-            style={{
-              marginTop: "12px",
-              marginBottom: 0,
-              maxWidth: "760px",
-              fontSize: "16px",
-              lineHeight: 1.7,
-              color: "rgba(17,17,17,0.65)",
-            }}
-          >
-            Administrative overview for Smart Drive Elite system activity.
+          <p className="mt-4 text-base text-black/60">
+            Platform overview and system totals.
           </p>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: "20px",
-          }}
-        >
-          <section
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid rgba(17,17,17,0.08)",
-              borderRadius: "28px",
-              padding: "24px",
-              boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "12px",
-                textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                color: "rgba(17,17,17,0.45)",
-                fontWeight: 700,
-                marginBottom: "10px",
-              }}
-            >
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-[24px] border border-black/8 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+            <div className="text-[12px] uppercase tracking-[0.22em] text-black/38">
               Applications
             </div>
-
-            <div
-              style={{
-                fontSize: "42px",
-                fontWeight: 800,
-                color: "#111111",
-              }}
-            >
+            <div className="mt-4 text-4xl font-semibold tracking-[-0.04em]">
               {applicationCount}
             </div>
-          </section>
+            <p className="mt-3 text-sm text-black/55">
+              Total application records currently in the system.
+            </p>
+          </div>
 
-          <section
-            style={{
-              backgroundColor: "#ffffff",
-              border: "1px solid rgba(17,17,17,0.08)",
-              borderRadius: "28px",
-              padding: "24px",
-              boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "12px",
-                textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                color: "rgba(17,17,17,0.45)",
-                fontWeight: 700,
-                marginBottom: "10px",
-              }}
-            >
-              Status History Records
+          <div className="rounded-[24px] border border-black/8 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+            <div className="text-[12px] uppercase tracking-[0.22em] text-black/38">
+              Inventory Units
             </div>
-
-            <div
-              style={{
-                fontSize: "42px",
-                fontWeight: 800,
-                color: "#111111",
-              }}
-            >
-              {statusHistoryCount}
+            <div className="mt-4 text-4xl font-semibold tracking-[-0.04em]">
+              {inventoryCount}
             </div>
-          </section>
+            <p className="mt-3 text-sm text-black/55">
+              Total inventory units currently stored in the platform.
+            </p>
+          </div>
         </div>
       </div>
     </main>
-  );
+  )
 }
