@@ -402,7 +402,7 @@ export default function ControllerPage() {
                               ? styles.approvedBadge
                               : app.status === "FUNDED"
                               ? styles.fundedBadge
-                              : app.status === "REJECTED"
+                              : app.status === "DECLINED"
                               ? styles.rejectedBadge
                               : styles.draftBadge),
                           }}
@@ -428,6 +428,25 @@ export default function ControllerPage() {
 
                       <div style={styles.queueMeta}>
                         <span>Decision: {app.decisionReason ?? "N/A"}</span>
+                      </div>
+
+                      <div style={styles.queueMeta}>
+                        <span>Lenders: {app.lender ?? "N/A"}</span>
+                      </div>
+
+                      <div style={styles.queueMeta}>
+                        <span>
+                          Max Vehicle:{" "}
+                          {app.maxVehicle != null
+                            ? formatCurrency(app.maxVehicle)
+                            : "N/A"}
+                        </span>
+                        <span>
+                          Max Payment:{" "}
+                          {app.maxPayment != null
+                            ? formatCurrency(app.maxPayment)
+                            : "N/A"}
+                        </span>
                       </div>
 
                       <div style={styles.queueMeta}>
@@ -526,6 +545,26 @@ export default function ControllerPage() {
                     <InfoRow
                       label="Suggested Decision"
                       value={selectedApplication.decisionReason || "N/A"}
+                    />
+                    <InfoRow
+                      label="Lenders"
+                      value={selectedApplication.lender || "N/A"}
+                    />
+                    <InfoRow
+                      label="Max Vehicle"
+                      value={
+                        selectedApplication.maxVehicle != null
+                          ? formatCurrency(selectedApplication.maxVehicle)
+                          : "N/A"
+                      }
+                    />
+                    <InfoRow
+                      label="Max Payment"
+                      value={
+                        selectedApplication.maxPayment != null
+                          ? formatCurrency(selectedApplication.maxPayment)
+                          : "N/A"
+                      }
                     />
                     <InfoRow
                       label="Stock Number"
