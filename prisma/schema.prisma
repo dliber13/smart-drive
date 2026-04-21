@@ -68,7 +68,7 @@ model InventoryUnit {
   price           Float?
   mileage         Int?
 
-  bodyStyle       String?
+  bodyStyle       String? 
   exteriorColor   String?
   interiorColor   String?
 
