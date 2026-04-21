@@ -12,7 +12,11 @@ export async function POST(req: NextRequest) {
       lastName,
       phone,
       email,
-      acceptedTerms
+      creditScore,
+      monthlyIncome,
+      vehiclePrice,
+      dealType,
+      acceptedTerms,
     } = body
 
     // 🚨 HARD BLOCK: Terms must be accepted
@@ -20,7 +24,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          reason: "You must accept Terms of Service and Privacy Policy before submitting."
+          reason: "You must accept Terms of Service and Privacy Policy before submitting.",
         },
         { status: 400 }
       )
@@ -32,23 +36,26 @@ export async function POST(req: NextRequest) {
         lastName,
         phone,
         email,
+        creditScore: creditScore ? Number(creditScore) : null,
+        monthlyIncome: monthlyIncome ? Number(monthlyIncome) : null,
+        vehiclePrice: vehiclePrice ? Number(vehiclePrice) : null,
+        dealType: dealType || "RETAIL",
         status: "SUBMITTED",
-        acceptedTerms: true
-      }
+        acceptedTerms: true,
+      },
     })
 
     return NextResponse.json({
       success: true,
-      application
+      application,
     })
-
   } catch (error) {
     console.error("Submission error:", error)
 
     return NextResponse.json(
       {
         success: false,
-        reason: "Failed to submit application"
+        reason: "Failed to submit application",
       },
       { status: 500 }
     )
