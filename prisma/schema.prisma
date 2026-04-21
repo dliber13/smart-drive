@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js" 
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -13,10 +13,17 @@ enum AppRole {
   SALES
 }
 
+enum DealType {
+  RETAIL
+  IBL
+  LEASE
+  SUBSCRIPTION
+}
+
 model Application {
-  id                 String   @id @default(cuid())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   firstName          String?
   lastName           String?
@@ -34,6 +41,7 @@ model Application {
   vehicleMake        String?
   vehicleModel       String?
   vehiclePrice       Float?
+  dealType           DealType  @default(RETAIL)
 
   downPayment        Float?
   tradeIn            Float?
@@ -42,7 +50,7 @@ model Application {
   creditScore        Int?
   monthlyIncome      Float?
 
-  status             String?  @default("DRAFT")
+  status             String?   @default("DRAFT")
   lender             String?
   tier               String?
   maxPayment         Float?
@@ -52,32 +60,32 @@ model Application {
 
   fundingDate        DateTime?
   fundingAmount      Float?
-acceptedTerms      Boolean  @default(false)
+  acceptedTerms      Boolean   @default(false)
 }
 
 model InventoryUnit {
-  id              String   @id @default(cuid())
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  stockNumber     String   @unique
-  vin             String?  @unique
-  year            Int?
-  make            String?
-  model           String?
-  trim            String?
-  price           Float?
-  mileage         Int?
+  stockNumber        String    @unique
+  vin                String?   @unique
+  year               Int?
+  make               String?
+  model              String?
+  trim               String?
+  price              Float?
+  mileage            Int?
 
-  bodyStyle       String? 
-  exteriorColor   String?
-  interiorColor   String?
+  bodyStyle          String?
+  exteriorColor      String?
+  interiorColor      String?
 
-  isAvailable     Boolean  @default(true)
+  isAvailable        Boolean   @default(true)
 
-  minCreditScore  Int?
-  maxAdvance      Float?   @default(1.15)
-  featuredRank    Int?     @default(0)
+  minCreditScore     Int?
+  maxAdvance         Float?    @default(1.15)
+  featuredRank       Int?      @default(0)
 
   @@index([isAvailable])
   @@index([make, model])
