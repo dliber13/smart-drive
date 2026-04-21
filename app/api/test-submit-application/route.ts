@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import { canSubmitDeal, getCurrentUserRole } from "@/lib/access"
 import { runDecisionEngine } from "@/lib/decisionEngine"
+import { getLenderOptions } from "@/lib/lenderEngine"
 
 const prisma = new PrismaClient()
 
@@ -73,6 +74,11 @@ async function handleSubmit(request: Request) {
       amountFinanced: existingApplication.amountFinanced,
     })
 
+    const lenderOptions = getLenderOptions({
+      tier: decision.tier,
+      monthlyIncome: existingApplication.monthlyIncome,
+    })
+
     const updatedApplication = await prisma.application.update({
       where: { id: applicationId },
       data: {
@@ -80,6 +86,9 @@ async function handleSubmit(request: Request) {
         tier: decision.tier,
         dealStrength: decision.score,
         decisionReason: decision.decision,
+        lender: lenderOptions.lenders.join(", "),
+        maxVehicle: lenderOptions.maxVehicle,
+        maxPayment: lenderOptions.maxPayment,
       },
     })
 
@@ -89,7 +98,7 @@ async function handleSubmit(request: Request) {
           applicationId: updatedApplication.id,
           fromStatus: existingApplication.status ?? "DRAFT",
           toStatus: "SUBMITTED",
-          note: `Application submitted from dealer intake | Tier ${decision.tier} | Score ${decision.score} | ${decision.decision}`,
+          note: `Application submitted from dealer intake | Tier ${decision.tier} | Score ${decision.score} | ${decision.decision} | Lenders: ${lenderOptions.lenders.join(", ")}`,
         },
       })
     } catch (historyError: any) {
@@ -104,6 +113,9 @@ async function handleSubmit(request: Request) {
       tier: updatedApplication.tier,
       dealStrength: updatedApplication.dealStrength,
       decisionReason: updatedApplication.decisionReason,
+      lender: updatedApplication.lender,
+      maxVehicle: updatedApplication.maxVehicle,
+      maxPayment: updatedApplication.maxPayment,
       currentUserRole,
     })
   } catch (error: any) {
