@@ -52,6 +52,7 @@ model Application {
 
   fundingDate        DateTime?
   fundingAmount      Float?
+acceptedTerms      Boolean  @default(false)
 }
 
 model InventoryUnit {
