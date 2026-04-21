@@ -268,6 +268,10 @@ function buildDecisionReason(params: {
       return `Declined because selected vehicle price (${roundCurrency(vehiclePrice)}) exceeds calculated max vehicle amount (${roundCurrency(maxVehicle)}).`
     }
 
+    if (matchCount === 0) {
+      return `Approved profile found, but no inventory match is currently available.`
+    }
+
     return `Declined due to overall weak deal profile. Deal strength ${dealStrength}/100.`
   }
 
@@ -282,7 +286,6 @@ function runDecisionEngine(input: DecisionEngineInput) {
   const tradeIn = safeNumber(input.tradeIn)
 
   const tierConfig = getTierConfig(creditScore)
-
   const baseMaxPayment = monthlyIncome * tierConfig.paymentToIncomeRatio
 
   let adjustedMaxPayment = baseMaxPayment
@@ -495,13 +498,13 @@ export async function POST(
     const rawInventoryMatches = await prisma.inventoryUnit.findMany({
       where: {
         isAvailable: true,
-        price: {
-          lte: baseDecision.maxVehicle > 0 ? baseDecision.maxVehicle * 1.05 : undefined,
-        },
-        OR: [
-          {
-            minCreditScore: null,
+        ...(baseDecision.maxVehicle > 0 && {
+          price: {
+            lte: baseDecision.maxVehicle * 1.05,
           },
+        }),
+        OR: [
+          { minCreditScore: null },
           {
             minCreditScore: {
               lte: application.creditScore ?? 0,
@@ -509,10 +512,7 @@ export async function POST(
           },
         ],
       },
-      orderBy: [
-        { featuredRank: "desc" },
-        { price: "asc" },
-      ],
+      orderBy: [{ featuredRank: "desc" }, { price: "asc" }],
       take: 25,
     })
 
@@ -557,14 +557,13 @@ export async function POST(
 
     const topVehicle = recommendedVehicles[0] ?? null
 
-    let finalStatus: DecisionStatus = baseDecision.status
-
-    if (baseDecision.status === "APPROVED" && recommendedVehicles.length === 0) {
-      finalStatus = "DECLINED"
-    }
+    const finalStatus: DecisionStatus = baseDecision.status
 
     const decisionReason = buildDecisionReason({
-      status: finalStatus,
+      status:
+        baseDecision.status === "APPROVED" && recommendedVehicles.length === 0
+          ? "DECLINED"
+          : finalStatus,
       tier: baseDecision.tier,
       creditScore: application.creditScore ?? 0,
       monthlyIncome: application.monthlyIncome ?? 0,
