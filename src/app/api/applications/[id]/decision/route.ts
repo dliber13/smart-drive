@@ -40,6 +40,18 @@ type DecisionEngineOutput = {
   maxVehicle: number
   dealStrength: number
   decisionReason: string
+  recommendedVehicles: Array<{
+    stockNumber: string
+    vin: string | null
+    year: number | null
+    make: string | null
+    model: string | null
+    trim: string | null
+    price: number | null
+    mileage: number | null
+    matchScore: number
+    matchReason: string
+  }>
 }
 
 type TierConfig = {
@@ -229,6 +241,7 @@ function buildDecisionReason(params: {
   maxVehicle: number
   maxPayment: number
   dealStrength: number
+  matchCount: number
 }): string {
   const {
     status,
@@ -239,6 +252,7 @@ function buildDecisionReason(params: {
     maxVehicle,
     maxPayment,
     dealStrength,
+    matchCount,
   } = params
 
   if (status === "DECLINED") {
@@ -250,17 +264,17 @@ function buildDecisionReason(params: {
       return `Declined due to low monthly income (${roundCurrency(monthlyIncome)}) below minimum affordability threshold.`
     }
 
-    if (vehiclePrice > maxVehicle) {
+    if (vehiclePrice > maxVehicle && maxVehicle > 0) {
       return `Declined because selected vehicle price (${roundCurrency(vehiclePrice)}) exceeds calculated max vehicle amount (${roundCurrency(maxVehicle)}).`
     }
 
     return `Declined due to overall weak deal profile. Deal strength ${dealStrength}/100.`
   }
 
-  return `Approved in Tier ${tier}. Deal strength ${dealStrength}/100. Max payment ${roundCurrency(maxPayment)} and max vehicle ${roundCurrency(maxVehicle)} support current structure.`
+  return `Approved in Tier ${tier}. Deal strength ${dealStrength}/100. Max payment ${roundCurrency(maxPayment)} and max vehicle ${roundCurrency(maxVehicle)} support current structure. ${matchCount} inventory match(es) found.`
 }
 
-function runDecisionEngine(input: DecisionEngineInput): DecisionEngineOutput {
+function runDecisionEngine(input: DecisionEngineInput) {
   const creditScore = safeNumber(input.creditScore)
   const monthlyIncome = safeNumber(input.monthlyIncome)
   const vehiclePrice = safeNumber(input.vehiclePrice)
@@ -321,42 +335,13 @@ function runDecisionEngine(input: DecisionEngineInput): DecisionEngineOutput {
   const missingCoreData =
     !hasValue(input.firstName) ||
     !hasValue(input.lastName) ||
-    !hasValue(input.vehicleMake) ||
-    !hasValue(input.vehicleModel) ||
-    vehiclePrice <= 0 ||
     creditScore <= 0 ||
     monthlyIncome <= 0
 
-  if (missingCoreData) {
-    status = "DECLINED"
-  }
-
-  if (creditScore < 500) {
-    status = "DECLINED"
-  }
-
-  if (monthlyIncome < 1800) {
-    status = "DECLINED"
-  }
-
-  if (vehiclePrice > maxVehicle && maxVehicle > 0) {
-    status = "DECLINED"
-  }
-
-  if (dealStrength < 35) {
-    status = "DECLINED"
-  }
-
-  const decisionReason = buildDecisionReason({
-    status,
-    tier: tierConfig.tier,
-    creditScore,
-    monthlyIncome,
-    vehiclePrice,
-    maxVehicle,
-    maxPayment,
-    dealStrength,
-  })
+  if (missingCoreData) status = "DECLINED"
+  if (creditScore < 500) status = "DECLINED"
+  if (monthlyIncome < 1800) status = "DECLINED"
+  if (dealStrength < 35) status = "DECLINED"
 
   return {
     status,
@@ -365,7 +350,98 @@ function runDecisionEngine(input: DecisionEngineInput): DecisionEngineOutput {
     maxPayment,
     maxVehicle,
     dealStrength,
-    decisionReason,
+  }
+}
+
+function scoreInventoryMatch(params: {
+  candidate: {
+    stockNumber: string
+    vin: string | null
+    year: number | null
+    make: string | null
+    model: string | null
+    trim: string | null
+    price: number | null
+    mileage: number | null
+    minCreditScore: number | null
+    featuredRank: number | null
+  }
+  application: {
+    vehicleMake?: string | null
+    vehicleModel?: string | null
+    creditScore?: number | null
+  }
+  maxVehicle: number
+}) {
+  const { candidate, application, maxVehicle } = params
+
+  let score = 0
+  const reasons: string[] = []
+
+  const candidatePrice = safeNumber(candidate.price)
+  const candidateCreditFloor = safeNumber(candidate.minCreditScore)
+  const applicantCredit = safeNumber(application.creditScore)
+
+  if (candidatePrice > 0 && candidatePrice <= maxVehicle) {
+    score += 35
+    reasons.push("within max vehicle")
+  } else if (candidatePrice > 0 && candidatePrice <= maxVehicle * 1.05) {
+    score += 18
+    reasons.push("slightly above target")
+  } else {
+    score -= 25
+  }
+
+  if (candidateCreditFloor === 0 || applicantCredit >= candidateCreditFloor) {
+    score += 20
+    reasons.push("meets credit floor")
+  } else {
+    score -= 30
+  }
+
+  if (
+    application.vehicleMake &&
+    candidate.make &&
+    application.vehicleMake.toLowerCase() === candidate.make.toLowerCase()
+  ) {
+    score += 15
+    reasons.push("make match")
+  }
+
+  if (
+    application.vehicleModel &&
+    candidate.model &&
+    application.vehicleModel.toLowerCase() === candidate.model.toLowerCase()
+  ) {
+    score += 15
+    reasons.push("model match")
+  }
+
+  if (candidate.mileage !== null && candidate.mileage !== undefined) {
+    if (candidate.mileage <= 60000) {
+      score += 10
+      reasons.push("strong mileage")
+    } else if (candidate.mileage <= 90000) {
+      score += 5
+      reasons.push("acceptable mileage")
+    }
+  }
+
+  if (candidate.year !== null && candidate.year !== undefined) {
+    if (candidate.year >= 2021) {
+      score += 8
+      reasons.push("newer model year")
+    } else if (candidate.year >= 2018) {
+      score += 4
+      reasons.push("solid model year")
+    }
+  }
+
+  score += safeNumber(candidate.featuredRank)
+
+  return {
+    matchScore: clamp(Math.round(score), 0, 100),
+    matchReason: reasons.length ? reasons.join(", ") : "basic eligibility match",
   }
 }
 
@@ -390,7 +466,7 @@ export async function POST(
       )
     }
 
-    const decision = runDecisionEngine({
+    const baseDecision = runDecisionEngine({
       firstName: application.firstName,
       lastName: application.lastName,
       phone: application.phone,
@@ -416,32 +492,132 @@ export async function POST(
       monthlyIncome: application.monthlyIncome,
     })
 
+    const rawInventoryMatches = await prisma.inventoryUnit.findMany({
+      where: {
+        isAvailable: true,
+        price: {
+          lte: baseDecision.maxVehicle > 0 ? baseDecision.maxVehicle * 1.05 : undefined,
+        },
+        OR: [
+          {
+            minCreditScore: null,
+          },
+          {
+            minCreditScore: {
+              lte: application.creditScore ?? 0,
+            },
+          },
+        ],
+      },
+      orderBy: [
+        { featuredRank: "desc" },
+        { price: "asc" },
+      ],
+      take: 25,
+    })
+
+    const recommendedVehicles = rawInventoryMatches
+      .map((unit) => {
+        const scored = scoreInventoryMatch({
+          candidate: {
+            stockNumber: unit.stockNumber,
+            vin: unit.vin,
+            year: unit.year,
+            make: unit.make,
+            model: unit.model,
+            trim: unit.trim,
+            price: unit.price,
+            mileage: unit.mileage,
+            minCreditScore: unit.minCreditScore,
+            featuredRank: unit.featuredRank,
+          },
+          application: {
+            vehicleMake: application.vehicleMake,
+            vehicleModel: application.vehicleModel,
+            creditScore: application.creditScore,
+          },
+          maxVehicle: baseDecision.maxVehicle,
+        })
+
+        return {
+          stockNumber: unit.stockNumber,
+          vin: unit.vin,
+          year: unit.year,
+          make: unit.make,
+          model: unit.model,
+          trim: unit.trim,
+          price: unit.price,
+          mileage: unit.mileage,
+          matchScore: scored.matchScore,
+          matchReason: scored.matchReason,
+        }
+      })
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 5)
+
+    const topVehicle = recommendedVehicles[0] ?? null
+
+    let finalStatus: DecisionStatus = baseDecision.status
+
+    if (baseDecision.status === "APPROVED" && recommendedVehicles.length === 0) {
+      finalStatus = "DECLINED"
+    }
+
+    const decisionReason = buildDecisionReason({
+      status: finalStatus,
+      tier: baseDecision.tier,
+      creditScore: application.creditScore ?? 0,
+      monthlyIncome: application.monthlyIncome ?? 0,
+      vehiclePrice: topVehicle?.price ?? application.vehiclePrice ?? 0,
+      maxVehicle: baseDecision.maxVehicle,
+      maxPayment: baseDecision.maxPayment,
+      dealStrength: baseDecision.dealStrength,
+      matchCount: recommendedVehicles.length,
+    })
+
     const updatedApplication = await prisma.application.update({
       where: { id },
       data: {
-        status: decision.status,
-        lender: decision.lender,
-        tier: decision.tier,
-        maxPayment: decision.maxPayment,
-        maxVehicle: decision.maxVehicle,
-        dealStrength: decision.dealStrength,
-        decisionReason: decision.decisionReason,
+        status: finalStatus,
+        lender: baseDecision.lender,
+        tier: baseDecision.tier,
+        maxPayment: baseDecision.maxPayment,
+        maxVehicle: baseDecision.maxVehicle,
+        dealStrength: baseDecision.dealStrength,
+        decisionReason,
+        stockNumber: topVehicle?.stockNumber ?? application.stockNumber,
+        vin: topVehicle?.vin ?? application.vin,
+        vehicleYear: topVehicle?.year ?? application.vehicleYear,
+        vehicleMake: topVehicle?.make ?? application.vehicleMake,
+        vehicleModel: topVehicle?.model ?? application.vehicleModel,
+        vehiclePrice: topVehicle?.price ?? application.vehiclePrice,
       },
     })
 
+    const response: DecisionEngineOutput = {
+      status: finalStatus,
+      tier: baseDecision.tier,
+      lender: baseDecision.lender,
+      maxPayment: baseDecision.maxPayment,
+      maxVehicle: baseDecision.maxVehicle,
+      dealStrength: baseDecision.dealStrength,
+      decisionReason,
+      recommendedVehicles,
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Decision engine completed successfully",
-      decision,
+      message: "Decision engine and inventory matching completed successfully",
+      decision: response,
       application: updatedApplication,
     })
   } catch (error) {
-    console.error("Decision engine error:", error)
+    console.error("Decision engine / inventory matching error:", error)
 
     return NextResponse.json(
       {
         success: false,
-        reason: "Failed to run decision engine",
+        reason: "Failed to run decision engine and inventory matching",
       },
       { status: 500 }
     )
