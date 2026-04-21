@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { getCurrentUserRole } from "@/lib/access"
 
 const prisma = new PrismaClient()
 
@@ -9,23 +8,6 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUserRole = await getCurrentUserRole()
-
-    if (
-      currentUserRole !== "ADMIN" &&
-      currentUserRole !== "CONTROLLER" &&
-      currentUserRole !== "SALES"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          reason: "Unauthorized to access application",
-          currentUserRole,
-        },
-        { status: 403 }
-      )
-    }
-
     const { id } = await context.params
 
     const application = await prisma.application.findUnique({
@@ -45,7 +27,6 @@ export async function GET(
     return NextResponse.json({
       success: true,
       application,
-      currentUserRole,
     })
   } catch (error) {
     console.error("Application fetch error:", error)
