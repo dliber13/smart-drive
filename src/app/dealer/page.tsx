@@ -12,17 +12,29 @@ export default function DealerPage() {
     monthlyIncome: "",
     vehiclePrice: "",
     dealType: "RETAIL",
+    acceptedTerms: false,
   });
 
-  const handleChange = (e: any) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    const checked =
+      type === "checkbox" && "checked" in e.target ? e.target.checked : false;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async () => {
-    const res = await fetch("/api/applications", {
+    if (!form.acceptedTerms) {
+      alert("You must accept Terms of Service and Privacy Policy before submitting.");
+      return;
+    }
+
+    const res = await fetch("/api/test-submit-application", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -32,73 +44,95 @@ export default function DealerPage() {
 
     const data = await res.json();
     console.log(data);
+
+    if (!res.ok) {
+      alert(data.reason || "Submission failed");
+      return;
+    }
+
     alert("Application Submitted");
+
+    setForm({
+      firstName: "",
+      lastName: "",
+      phone: "",
+      email: "",
+      creditScore: "",
+      monthlyIncome: "",
+      vehiclePrice: "",
+      dealType: "RETAIL",
+      acceptedTerms: false,
+    });
   };
 
   return (
     <main className="min-h-screen bg-[#f7f4ee] p-8">
-      <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow">
-        <h1 className="text-3xl font-semibold mb-6">New Deal Submission</h1>
+      <div className="mx-auto max-w-3xl rounded-2xl bg-white p-8 shadow">
+        <h1 className="mb-6 text-3xl font-semibold">New Deal Submission</h1>
 
         <div className="grid grid-cols-2 gap-4">
-
           <input
             name="firstName"
             placeholder="First Name"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.firstName}
           />
 
           <input
             name="lastName"
             placeholder="Last Name"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.lastName}
           />
 
           <input
             name="phone"
             placeholder="Phone"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.phone}
           />
 
           <input
             name="email"
             placeholder="Email"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.email}
           />
 
           <input
             name="creditScore"
             placeholder="Credit Score"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.creditScore}
           />
 
           <input
             name="monthlyIncome"
             placeholder="Monthly Income"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.monthlyIncome}
           />
 
           <input
             name="vehiclePrice"
             placeholder="Vehicle Price"
-            className="border p-2 rounded"
+            className="rounded border p-2"
             onChange={handleChange}
+            value={form.vehiclePrice}
           />
-
         </div>
 
-        {/* 🔥 DEAL TYPE DROPDOWN (YOUR NEW FEATURE) */}
         <div className="mt-6">
-          <label className="block text-sm mb-2">Deal Type</label>
+          <label className="mb-2 block text-sm">Deal Type</label>
           <select
             name="dealType"
-            className="border p-2 rounded w-full"
+            className="w-full rounded border p-2"
             onChange={handleChange}
             value={form.dealType}
           >
@@ -109,9 +143,31 @@ export default function DealerPage() {
           </select>
         </div>
 
+        <div className="mt-6 rounded-xl border border-black/10 bg-[#faf7f1] p-4">
+          <label className="flex items-start gap-3 text-sm text-black/70">
+            <input
+              type="checkbox"
+              name="acceptedTerms"
+              checked={form.acceptedTerms}
+              onChange={handleChange}
+              className="mt-1"
+            />
+            <span>
+              I agree to the{" "}
+              <a href="/terms" className="underline hover:text-black">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="underline hover:text-black">
+                Privacy Policy
+              </a>.
+            </span>
+          </label>
+        </div>
+
         <button
           onClick={handleSubmit}
-          className="mt-6 bg-black text-white px-6 py-3 rounded-lg w-full"
+          className="mt-6 w-full rounded-lg bg-black px-6 py-3 text-white"
         >
           Submit Deal
         </button>
