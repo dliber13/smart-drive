@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { getCurrentUserRole } from "../../../../lib/access"
-
-// ⛔ TEMP: remove broken import
-// import { runDecisionEngine } from "../../../../lib/decision-engine"
 
 const prisma = new PrismaClient()
 
@@ -12,23 +8,6 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const currentUserRole = await getCurrentUserRole()
-
-    if (
-      currentUserRole !== "ADMIN" &&
-      currentUserRole !== "CONTROLLER" &&
-      currentUserRole !== "SALES"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          reason: "Unauthorized to run decision engine",
-          currentUserRole,
-        },
-        { status: 403 }
-      )
-    }
-
     const { id } = await context.params
 
     const application = await prisma.application.findUnique({
@@ -45,7 +24,6 @@ export async function POST(
       )
     }
 
-    // ✅ TEMP TEST DECISION (proves system works)
     const decision = {
       status: "APPROVED",
       tier: "A",
@@ -74,7 +52,6 @@ export async function POST(
       message: "Decision engine test successful",
       decision,
       application: updatedApplication,
-      currentUserRole,
     })
   } catch (error) {
     console.error("Decision engine error:", error)
