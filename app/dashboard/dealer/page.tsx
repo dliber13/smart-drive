@@ -22,15 +22,23 @@ export default function DealerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/dealer/dashboard")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setApplications(data.applications);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    const fetchData = () => {
+      fetch("/api/dealer/dashboard")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setApplications(data.applications);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    };
+
+    fetchData();
+
+    const interval = setInterval(fetchData, 5000); // auto refresh every 5 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -58,7 +66,13 @@ export default function DealerDashboard() {
 
           <tbody>
             {applications.map((app) => (
-              <tr key={app.id} className="border-t">
+              <tr
+                key={app.id}
+                className="border-t cursor-pointer hover:bg-gray-100"
+                onClick={() =>
+                  (window.location.href = `/dashboard/dealer/${app.id}`)
+                }
+              >
                 <td className="p-3">
                   {app.firstName} {app.lastName}
                 </td>
