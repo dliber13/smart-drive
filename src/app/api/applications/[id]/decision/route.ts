@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { runDecisionEngine } from "@/lib/decision-engine"
-import { getCurrentUserRole } from "@/lib/access"
+import { runDecisionEngine } from "../../../../lib/decision-engine"
+import { getCurrentUserRole } from "../../../../lib/access"
 
 const prisma = new PrismaClient()
 
