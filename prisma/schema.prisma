@@ -1,104 +1,29 @@
-generator client {
-  provider = "prisma-client-js"
-}
+model InventoryUnit {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+  stockNumber     String   @unique
+  vin             String?  @unique
+  year            Int?
+  make            String?
+  model           String?
+  trim            String?
+  price           Float?
+  mileage         Int?
 
-enum AppRole {
-  ADMIN
-  CONTROLLER
-  SALES
-}
+  bodyStyle       String?
+  exteriorColor   String?
+  interiorColor   String?
 
-model Application {
-  id                 String          @id @default(cuid())
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  isAvailable     Boolean  @default(true)
 
-  firstName          String?
-  lastName           String?
-  phone              String?
-  email              String?
+  minCreditScore  Int?
+  maxAdvance      Float?   @default(1.15)
+  featuredRank    Int?     @default(0)
 
-  identityType       String?
-  identityValue      String?
-  issuingCountry     String?
-  identityStatus     String?
-
-  stockNumber        String?
-  vin                String?
-  vehicleYear        Int?
-  vehicleMake        String?
-  vehicleModel       String?
-  vehiclePrice       Float?
-
-  downPayment        Float?
-  tradeIn            Float?
-  amountFinanced     Float?
-
-  creditScore        Int?
-  monthlyIncome      Float?
-
-  status             String?         @default("DRAFT")
-  lender             String?
-  tier               String?
-  maxPayment         Float?
-  maxVehicle         Float?
-  decisionReason     String?
-  dealStrength       Int?
-
-  fundingDate        DateTime?
-  fundingAmount      Float?
-  lenderConfirmation String?
-
-  statusHistory      StatusHistory[]
-}
-
-model Vehicle {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
-
-  stockNumber   String   @unique
-  year          Int?
-  make          String?
-  model         String?
-
-  mileage       Int?
-  dateInStock   DateTime?
-
-  askingPrice   Float?
-  totalCost     Float?
-
-  jdTrade       Float?
-  jdRetail      Float?
-}
-
-model StatusHistory {
-  id            String      @id @default(cuid())
-  createdAt     DateTime    @default(now())
-
-  applicationId String
-  fromStatus    String?
-  toStatus      String
-  note          String?
-
-  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-
-  @@index([applicationId])
-}
-
-model User {
-  id           String   @id
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  email        String   @unique
-  passwordHash String
-  role         AppRole
-
-  firstName    String?
-  lastName     String?
+  @@index([isAvailable])
+  @@index([make, model])
+  @@index([price])
+  @@index([minCreditScore])
 }
