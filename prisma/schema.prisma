@@ -1,3 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRole {
+  ADMIN
+  CONTROLLER
+  SALES
+}
+
+model Application {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  firstName          String?
+  lastName           String?
+  phone              String?
+  email              String?
+
+  identityType       String?
+  identityValue      String?
+  issuingCountry     String?
+  identityStatus     String?
+
+  stockNumber        String?
+  vin                String?
+  vehicleYear        Int?
+  vehicleMake        String?
+  vehicleModel       String?
+  vehiclePrice       Float?
+
+  downPayment        Float?
+  tradeIn            Float?
+  amountFinanced     Float?
+
+  creditScore        Int?
+  monthlyIncome      Float?
+
+  status             String?  @default("DRAFT")
+  lender             String?
+  tier               String?
+  maxPayment         Float?
+  maxVehicle         Float?
+  decisionReason     String?
+  dealStrength       Int?
+
+  fundingDate        DateTime?
+  fundingAmount      Float?
+}
+
 model InventoryUnit {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
