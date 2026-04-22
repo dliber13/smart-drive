@@ -23,15 +23,16 @@ export async function POST(req: Request) {
         : "";
 
     const fundingAmount = asNumber(body?.fundingAmount);
-    const lenderConfirmation =
-      typeof body?.lenderConfirmation === "string" && body.lenderConfirmation.trim()
-        ? body.lenderConfirmation.trim()
-        : null;
 
     const fundingDate =
       typeof body?.fundingDate === "string" && body.fundingDate.trim()
         ? new Date(body.fundingDate)
         : new Date();
+
+    const note =
+      typeof body?.note === "string" && body.note.trim()
+        ? body.note.trim()
+        : "Application marked funded";
 
     if (!applicationId) {
       return NextResponse.json(
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
           status: "FUNDED",
           fundingDate,
           fundingAmount,
-          lenderConfirmation,
+          decisionReason: existing.decisionReason ?? note,
         },
       });
 
@@ -96,7 +97,8 @@ export async function POST(req: Request) {
           applicationId,
           fromStatus: currentStatus,
           toStatus: "FUNDED",
-          note: "Application marked funded",
+          changedByRole: "CONTROLLER",
+          note,
         },
       });
 
