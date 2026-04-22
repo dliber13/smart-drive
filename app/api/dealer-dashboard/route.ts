@@ -1,31 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
+import { getCurrentUserRole } from "@/lib/access"
 
-export const dynamic = "force-dynamic";
+const prisma = new PrismaClient()
 
-function getUserRole(request: NextRequest) {
-  return (request.headers.get("x-user-role") || "SALES").toUpperCase();
+export const dynamic = "force-dynamic"
+
+function canAccessDealerDashboard(role: string | null | undefined) {
+  const normalized = String(role ?? "").toUpperCase()
+  return (
+    normalized === "ADMIN" ||
+    normalized === "CONTROLLER" ||
+    normalized === "SALES"
+  )
 }
 
-function isAllowedRole(role: string) {
-  return role === "ADMIN" || role === "CONTROLLER" || role === "SALES";
-}
-
-function getStatusCounts(applications: Array<{ status: string | null }>) {
-  return {
-    draft: applications.filter((app) => (app.status ?? "DRAFT") === "DRAFT").length,
-    submitted: applications.filter((app) => app.status === "SUBMITTED").length,
-    approved: applications.filter((app) => app.status === "APPROVED").length,
-    declined: applications.filter((app) => app.status === "DECLINED").length,
-    funded: applications.filter((app) => app.status === "FUNDED").length,
-  };
-}
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const currentUserRole = getUserRole(request);
+    const currentUserRole = getCurrentUserRole(request)
 
-    if (!isAllowedRole(currentUserRole)) {
+    if (!canAccessDealerDashboard(currentUserRole)) {
       return NextResponse.json(
         {
           success: false,
@@ -33,7 +27,7 @@ export async function GET(request: NextRequest) {
           currentUserRole,
         },
         { status: 403 }
-      );
+      )
     }
 
     const applications = await prisma.application.findMany({
@@ -41,33 +35,25 @@ export async function GET(request: NextRequest) {
         createdAt: "desc",
       },
       take: 100,
-      include: {
-        statusHistory: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-      },
-    });
-
-    const counts = getStatusCounts(applications);
+    })
 
     return NextResponse.json({
       success: true,
       count: applications.length,
-      counts,
       applications,
       currentUserRole,
-    });
-  } catch (error: any) {
-    console.error("Dealer dashboard route error:", error);
+    })
+  } catch (error) {
+    console.error("DEALER DASHBOARD ERROR:", error)
 
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to load dealer dashboard",
+        reason: "Failed to load dealer dashboard",
       },
       { status: 500 }
-    );
+    )
+  } finally {
+    await prisma.$disconnect()
   }
 }
