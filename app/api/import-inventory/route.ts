@@ -10,7 +10,7 @@ function toTextOrNull(value: unknown) {
 }
 
 function toNumberOrNull(value: unknown) {
-  if (value === null || value === undefined) return null
+  if (value === null || value === undefined) return null 
   const text = String(value).trim()
   if (!text) return null
   const parsed = Number(text)
