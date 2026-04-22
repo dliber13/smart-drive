@@ -38,29 +38,24 @@ function calculateDeal(application: {
   const downPayment = application.downPayment ?? 0
   const vehiclePrice = application.vehiclePrice ?? 0
 
-  // CREDIT SCORE
   if (creditScore >= 720) score += 40
   else if (creditScore >= 660) score += 30
   else if (creditScore >= 600) score += 20
   else if (creditScore > 0) score += 10
 
-  // MONTHLY INCOME
   if (monthlyIncome >= 6000) score += 25
   else if (monthlyIncome >= 4000) score += 15
   else if (monthlyIncome > 0) score += 5
 
-  // DOWN PAYMENT
   if (downPayment >= 5000) score += 20
   else if (downPayment >= 2000) score += 10
   else if (downPayment > 0) score += 5
 
-  // VEHICLE AFFORDABILITY
   if (vehiclePrice > 0 && monthlyIncome > 0) {
     const ratio = vehiclePrice / (monthlyIncome * 12)
 
     if (ratio < 0.4) score += 15
     else if (ratio < 0.6) score += 10
-    else score += 0
   }
 
   let tier = "D"
@@ -172,19 +167,17 @@ export async function POST(request: Request) {
     })
 
     try {
-      await prisma.statusHistory.create({
-        data: {
-          applicationId: updatedApplication.id,
-          fromStatus: existingApplication.status ?? "SUBMITTED",
-          toStatus: nextStatus,
-          note:
-            action === "APPROVE"
-              ? `Controller approved | Tier ${finalTier} | Score ${finalDealStrength}`
-              : `Controller declined | Tier ${finalTier} | Score ${finalDealStrength}`,
-        },
+      console.log("STATUS CHANGE LOG:", {
+        applicationId: updatedApplication.id,
+        fromStatus: existingApplication.status ?? "SUBMITTED",
+        toStatus: nextStatus,
+        note:
+          action === "APPROVE"
+            ? `Controller approved | Tier ${finalTier} | Score ${finalDealStrength}`
+            : `Controller declined | Tier ${finalTier} | Score ${finalDealStrength}`,
       })
     } catch (historyError: any) {
-      console.error("CONTROLLER STATUS HISTORY ERROR:", historyError)
+      console.error("STATUS LOG ERROR:", historyError)
     }
 
     return NextResponse.json({
