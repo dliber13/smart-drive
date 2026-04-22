@@ -21,9 +21,9 @@ enum DealType {
 }
 
 model Application {
-  id                 String    @id @default(cuid())
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                 String          @id @default(cuid())
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   firstName          String?
   lastName           String?
@@ -41,7 +41,7 @@ model Application {
   vehicleMake        String?
   vehicleModel       String?
   vehiclePrice       Float?
-  dealType           DealType  @default(RETAIL)
+  dealType           DealType        @default(RETAIL)
 
   downPayment        Float?
   tradeIn            Float?
@@ -50,7 +50,7 @@ model Application {
   creditScore        Int?
   monthlyIncome      Float?
 
-  status             String?   @default("DRAFT")
+  status             String?         @default("DRAFT")
   lender             String?
   tier               String?
   maxPayment         Float?
@@ -60,7 +60,38 @@ model Application {
 
   fundingDate        DateTime?
   fundingAmount      Float?
-  acceptedTerms      Boolean   @default(false)
+  acceptedTerms      Boolean         @default(false)
+
+  statusHistory      StatusHistory[]
+}
+
+model StatusHistory {
+  id                 String       @id @default(cuid())
+  createdAt          DateTime     @default(now())
+
+  applicationId      String
+  fromStatus         String?
+  toStatus           String?
+  changedByRole      String?
+  note               String?
+
+  application        Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([createdAt])
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  email              String    @unique
+  password           String?
+  role               AppRole   @default(SALES)
+  firstName          String?
+  lastName           String?
+  isActive           Boolean   @default(true)
 }
 
 model InventoryUnit {
