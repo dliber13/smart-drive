@@ -1,56 +1,57 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
+import { getCurrentUserRole } from "@/lib/access"
 
-export const dynamic = "force-dynamic";
+const prisma = new PrismaClient()
 
-function getUserRole(request: NextRequest) {
-  return (request.headers.get("x-user-role") || "").toUpperCase();
+export const dynamic = "force-dynamic"
+
+function canAccessDeals(role: string | null | undefined) {
+  const normalized = String(role ?? "").toUpperCase()
+  return (
+    normalized === "ADMIN" ||
+    normalized === "CONTROLLER" ||
+    normalized === "SALES"
+  )
 }
 
-function isAllowedRole(role: string) {
-  return role === "ADMIN" || role === "CONTROLLER" || role === "SALES";
-}
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const role = getUserRole(request);
+    const currentUserRole = getCurrentUserRole(request)
 
-    if (!isAllowedRole(role)) {
+    if (!canAccessDeals(currentUserRole)) {
       return NextResponse.json(
         {
           success: false,
-          reason: "Unauthorized",
+          reason: "Unauthorized to access deals",
+          currentUserRole,
         },
         { status: 403 }
-      );
+      )
     }
 
     const applications = await prisma.application.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
-      include: {
-        statusHistory: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-      },
-    });
+    })
 
     return NextResponse.json({
       success: true,
       count: applications.length,
       applications,
-    });
-  } catch (error: any) {
-    console.error("Deals GET error:", error);
+      currentUserRole,
+    })
+  } catch (error) {
+    console.error("DEALS ROUTE ERROR:", error)
 
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Failed to load deals",
+        reason: "Failed to load deals",
       },
       { status: 500 }
-    );
+    )
+  } finally {
+    await prisma.$disconnect()
   }
 }
