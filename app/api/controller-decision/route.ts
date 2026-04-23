@@ -1,206 +1,231 @@
-import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-import { getCurrentUserRole } from "@/lib/access"
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getCurrentUserRole } from "@/lib/access";
 
-const prisma = new PrismaClient()
-
-export const dynamic = "force-dynamic"
-
-function canControllerDecide(role: string | null | undefined) {
-  const normalized = String(role ?? "").toUpperCase()
-  return normalized === "ADMIN" || normalized === "CONTROLLER"
+function toNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return fallback;
 }
 
-function toNumberOrNull(value: unknown) {
-  if (value === null || value === undefined) return null
-  const text = String(value).trim()
-  if (!text) return null
-  const parsed = Number(text)
-  return Number.isNaN(parsed) ? null : parsed
+function smartTier(creditScore: number) {
+  if (creditScore >= 720) return "TIER_1";
+  if (creditScore >= 660) return "TIER_2";
+  if (creditScore >= 600) return "TIER_3";
+  if (creditScore >= 540) return "TIER_4";
+  return "TIER_5";
 }
 
-function toTextOrNull(value: unknown) {
-  if (value === null || value === undefined) return null
-  const text = String(value).trim()
-  return text ? text : null
+function smartLender(creditScore: number, monthlyIncome: number) {
+  if (creditScore >= 720 && monthlyIncome >= 5000) return "Ally";
+  if (creditScore >= 660) return "Westlake";
+  if (creditScore >= 600) return "Global Lending";
+  if (creditScore >= 540) return "Credit Acceptance";
+  return "Specialty Review";
 }
 
-function calculateDeal(application: {
-  creditScore?: number | null
-  monthlyIncome?: number | null
-  downPayment?: number | null
-  vehiclePrice?: number | null
-}) {
-  let score = 0
+function smartMaxPayment(monthlyIncome: number, creditScore: number) {
+  const baseRatio =
+    creditScore >= 720 ? 0.2 :
+    creditScore >= 660 ? 0.18 :
+    creditScore >= 600 ? 0.16 :
+    creditScore >= 540 ? 0.14 :
+    0.12;
 
-  const creditScore = application.creditScore ?? 0
-  const monthlyIncome = application.monthlyIncome ?? 0
-  const downPayment = application.downPayment ?? 0
-  const vehiclePrice = application.vehiclePrice ?? 0
+  return Math.max(0, Math.round(monthlyIncome * baseRatio));
+}
 
-  if (creditScore >= 720) score += 40
-  else if (creditScore >= 660) score += 30
-  else if (creditScore >= 600) score += 20
-  else if (creditScore > 0) score += 10
+function smartMaxVehicle(
+  maxPayment: number,
+  downPayment: number,
+  tradeIn: number,
+  creditScore: number
+) {
+  const advanceMultiple =
+    creditScore >= 720 ? 58 :
+    creditScore >= 660 ? 52 :
+    creditScore >= 600 ? 46 :
+    creditScore >= 540 ? 40 :
+    34;
 
-  if (monthlyIncome >= 6000) score += 25
-  else if (monthlyIncome >= 4000) score += 15
-  else if (monthlyIncome > 0) score += 5
+  return Math.max(
+    0,
+    Math.round(maxPayment * advanceMultiple + downPayment + tradeIn)
+  );
+}
 
-  if (downPayment >= 5000) score += 20
-  else if (downPayment >= 2000) score += 10
-  else if (downPayment > 0) score += 5
+function smartDealStrength(
+  creditScore: number,
+  monthlyIncome: number,
+  downPayment: number,
+  tradeIn: number,
+  vehiclePrice: number
+) {
+  let score = 40;
 
-  if (vehiclePrice > 0 && monthlyIncome > 0) {
-    const ratio = vehiclePrice / (monthlyIncome * 12)
+  if (creditScore >= 720) score += 30;
+  else if (creditScore >= 660) score += 24;
+  else if (creditScore >= 600) score += 18;
+  else if (creditScore >= 540) score += 10;
+  else score += 4;
 
-    if (ratio < 0.4) score += 15
-    else if (ratio < 0.6) score += 10
+  if (monthlyIncome >= 6000) score += 15;
+  else if (monthlyIncome >= 4500) score += 10;
+  else if (monthlyIncome >= 3000) score += 6;
+
+  const equity = downPayment + tradeIn;
+  if (vehiclePrice > 0) {
+    const equityRatio = equity / vehiclePrice;
+    if (equityRatio >= 0.2) score += 15;
+    else if (equityRatio >= 0.1) score += 10;
+    else if (equityRatio >= 0.05) score += 5;
   }
 
-  let tier = "D"
-  if (score >= 80) tier = "A"
-  else if (score >= 65) tier = "B"
-  else if (score >= 50) tier = "C"
+  return Math.max(1, Math.min(100, Math.round(score)));
+}
 
-  let decision = "DECLINE"
-  if (score >= 70) decision = "APPROVE"
-  else if (score >= 50) decision = "REVIEW"
+function smartDecision(application: {
+  creditScore?: number | null;
+  monthlyIncome?: number | null;
+  downPayment?: number | null;
+  tradeIn?: number | null;
+  vehiclePrice?: number | null;
+}) {
+  const creditScore = toNumber(application.creditScore);
+  const monthlyIncome = toNumber(application.monthlyIncome);
+  const downPayment = toNumber(application.downPayment);
+  const tradeIn = toNumber(application.tradeIn);
+  const vehiclePrice = toNumber(application.vehiclePrice);
+
+  const tier = smartTier(creditScore);
+  const lender = smartLender(creditScore, monthlyIncome);
+  const maxPayment = smartMaxPayment(monthlyIncome, creditScore);
+  const maxVehicle = smartMaxVehicle(maxPayment, downPayment, tradeIn, creditScore);
+  const dealStrength = smartDealStrength(
+    creditScore,
+    monthlyIncome,
+    downPayment,
+    tradeIn,
+    vehiclePrice
+  );
+
+  let status: "APPROVED" | "DECLINED" = "APPROVED";
+  let decisionReason = `Recommended ${tier} with ${lender}.`;
+
+  if (creditScore < 500) {
+    status = "DECLINED";
+    decisionReason = "Declined due to credit score below minimum review threshold.";
+  } else if (monthlyIncome < 1800) {
+    status = "DECLINED";
+    decisionReason = "Declined due to insufficient monthly income.";
+  } else if (vehiclePrice > 0 && maxVehicle > 0 && vehiclePrice > maxVehicle * 1.15) {
+    status = "DECLINED";
+    decisionReason = "Requested vehicle exceeds recommended structure.";
+  } else {
+    decisionReason = `Approved ${tier} with ${lender}. Recommended max payment ${maxPayment} and max vehicle ${maxVehicle}.`;
+  }
 
   return {
-    score,
+    status,
+    lender,
     tier,
-    decision,
-  }
+    maxPayment,
+    maxVehicle,
+    dealStrength,
+    decisionReason,
+  };
 }
 
 export async function POST(request: Request) {
   try {
-    const currentUserRole = getCurrentUserRole(request)
+    const role = getCurrentUserRole(request);
 
-    if (!canControllerDecide(currentUserRole)) {
+    if (role !== "ADMIN" && role !== "CONTROLLER") {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized to make controller decisions.",
-          currentUserRole,
-        },
+        { success: false, reason: "Only ADMIN or CONTROLLER can save decisions" },
         { status: 403 }
-      )
+      );
     }
 
-    const body = await request.json()
-
-    const applicationId = toTextOrNull(body?.applicationId)
-    const action = String(body?.action ?? "").trim().toUpperCase()
+    const body = await request.json();
+    const applicationId = typeof body?.applicationId === "string" ? body.applicationId : "";
 
     if (!applicationId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Application ID is required.",
-        },
+        { success: false, reason: "Missing applicationId" },
         { status: 400 }
-      )
+      );
     }
 
-    if (action !== "APPROVE" && action !== "REJECT") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Action must be APPROVE or REJECT.",
-        },
-        { status: 400 }
-      )
-    }
-
-    const existingApplication = await prisma.application.findUnique({
+    const application = await prisma.application.findUnique({
       where: { id: applicationId },
-    })
+    });
 
-    if (!existingApplication) {
+    if (!application) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Application not found.",
-          applicationId,
-        },
+        { success: false, reason: "Application not found" },
         { status: 404 }
-      )
+      );
     }
 
-    const calculated = calculateDeal({
-      creditScore: existingApplication.creditScore,
-      monthlyIncome: existingApplication.monthlyIncome,
-      downPayment: existingApplication.downPayment,
-      vehiclePrice: existingApplication.vehiclePrice,
-    })
+    const smart = smartDecision(application);
 
-    const lender = toTextOrNull(body?.lender)
-    const manualTier = toTextOrNull(body?.tier)
-    const manualDecisionReason = toTextOrNull(body?.decisionReason)
-    const maxPayment = toNumberOrNull(body?.maxPayment)
-    const maxVehicle = toNumberOrNull(body?.maxVehicle)
-    const manualDealStrength = toNumberOrNull(body?.dealStrength)
-
-    const nextStatus = action === "APPROVE" ? "APPROVED" : "DECLINED"
-
-    const finalTier = manualTier ?? calculated.tier
-    const finalDealStrength = manualDealStrength ?? calculated.score
-    const finalDecisionReason =
-      manualDecisionReason ??
-      (action === "APPROVE"
-        ? `Approved by controller | Suggested: ${calculated.decision}`
-        : `Rejected by controller | Suggested: ${calculated.decision}`)
+    const finalStatus =
+      body?.status === "APPROVED" || body?.status === "DECLINED"
+        ? body.status
+        : smart.status;
 
     const updatedApplication = await prisma.application.update({
       where: { id: applicationId },
       data: {
-        status: nextStatus,
-        lender,
-        tier: finalTier,
-        maxPayment,
-        maxVehicle,
-        decisionReason: finalDecisionReason,
-        dealStrength: finalDealStrength,
+        status: finalStatus,
+        lender:
+          typeof body?.lender === "string" && body.lender.trim()
+            ? body.lender.trim()
+            : smart.lender,
+        tier:
+          typeof body?.tier === "string" && body.tier.trim()
+            ? body.tier.trim()
+            : smart.tier,
+        maxPayment:
+          body?.maxPayment !== undefined && body?.maxPayment !== null && body?.maxPayment !== ""
+            ? toNumber(body.maxPayment)
+            : smart.maxPayment,
+        maxVehicle:
+          body?.maxVehicle !== undefined && body?.maxVehicle !== null && body?.maxVehicle !== ""
+            ? toNumber(body.maxVehicle)
+            : smart.maxVehicle,
+        dealStrength:
+          body?.dealStrength !== undefined && body?.dealStrength !== null && body?.dealStrength !== ""
+            ? toNumber(body.dealStrength)
+            : smart.dealStrength,
+        decisionReason:
+          typeof body?.decisionReason === "string" && body.decisionReason.trim()
+            ? body.decisionReason.trim()
+            : smart.decisionReason,
       },
-    })
-
-    try {
-      console.log("STATUS CHANGE LOG:", {
-        applicationId: updatedApplication.id,
-        fromStatus: existingApplication.status ?? "SUBMITTED",
-        toStatus: nextStatus,
-        note:
-          action === "APPROVE"
-            ? `Controller approved | Tier ${finalTier} | Score ${finalDealStrength}`
-            : `Controller declined | Tier ${finalTier} | Score ${finalDealStrength}`,
-      })
-    } catch (historyError: any) {
-      console.error("STATUS LOG ERROR:", historyError)
-    }
+    });
 
     return NextResponse.json({
       success: true,
       message:
-        action === "APPROVE"
-          ? "Deal approved successfully."
-          : "Deal rejected successfully.",
+        finalStatus === "APPROVED"
+          ? "Application approved successfully."
+          : "Application declined successfully.",
       application: updatedApplication,
-      calculated,
-      currentUserRole,
-    })
+      smartRecommendation: smart,
+    });
   } catch (error: any) {
-    console.error("CONTROLLER DECISION ERROR:", error)
+    console.error("CONTROLLER DECISION ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Controller decision failed.",
+        reason: error?.message || "Failed to save controller decision",
       },
       { status: 500 }
-    )
-  } finally {
-    await prisma.$disconnect()
+    );
   }
 }
