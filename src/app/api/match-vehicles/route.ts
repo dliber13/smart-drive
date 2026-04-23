@@ -3,10 +3,19 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+function toNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return fallback;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const applicationId = body?.applicationId;
+    const applicationId =
+      typeof body?.applicationId === "string" ? body.applicationId : "";
 
     if (!applicationId) {
       return NextResponse.json(
@@ -15,43 +24,76 @@ export async function POST(req: Request) {
       );
     }
 
-    const app = await prisma.application.findUnique({
+    const application = await prisma.application.findUnique({
       where: { id: applicationId },
     });
 
-    if (!app) {
+    if (!application) {
       return NextResponse.json(
         { success: false, reason: "Application not found" },
         { status: 404 }
       );
     }
 
-    // 🔥 Pull inventory correctly
-    const inventory = await prisma.inventoryUnit.findMany({
+    const maxVehicle =
+      toNumber(application.maxVehicle) ||
+      toNumber(application.vehiclePrice) ||
+      toNumber(application.monthlyIncome) * 12 * 0.5;
+
+    const vehicles = await prisma.vehicle.findMany({
       where: {
-        isAvailable: true,
+        status: "ACTIVE",
       },
       orderBy: {
-        price: "asc",
+        askingPrice: "asc",
       },
+      take: 50,
     });
 
-    // 🔥 Matching logic
-    const matches = inventory
-      .filter((unit) => {
-        if (!unit.price) return false;
-
-        // Budget check
-        if (app.maxVehicle && unit.price > app.maxVehicle) return false;
-
-        // Credit check
-        if (unit.minCreditScore && app.creditScore) {
-          if (app.creditScore < unit.minCreditScore) return false;
-        }
-
+    const matches = vehicles
+      .filter((v) => {
+        const price = toNumber(v.askingPrice);
+        if (!price) return false;
+        if (maxVehicle > 0 && price > maxVehicle) return false;
         return true;
       })
-      .slice(0, 10); // top 10 matches
+      .map((v) => {
+        let score = 50;
+
+        if (
+          application.vehicleMake &&
+          v.make &&
+          application.vehicleMake.toLowerCase() === v.make.toLowerCase()
+        ) {
+          score += 20;
+        }
+
+        if (
+          application.vehicleModel &&
+          v.model &&
+          application.vehicleModel.toLowerCase() === v.model.toLowerCase()
+        ) {
+          score += 20;
+        }
+
+        if (toNumber(v.mileage) <= 60000) score += 10;
+        if (toNumber(v.askingPrice) <= maxVehicle * 0.9) score += 10;
+
+        return {
+          id: v.id,
+          stockNumber: v.stockNumber,
+          year: v.year,
+          make: v.make,
+          model: v.model,
+          mileage: v.mileage,
+          askingPrice: v.askingPrice,
+          vehicleClass: v.vehicleClass,
+          status: v.status,
+          matchScore: Math.min(score, 100),
+        };
+      })
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 10);
 
     return NextResponse.json({
       success: true,
