@@ -1,709 +1,635 @@
-"use client"
+"use client";
 
-import { CSSProperties, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
 
-type ApplicationRecord = {
-  id: string
-  createdAt: string
-  updatedAt: string
+type Application = {
+  id: string;
+  createdAt?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  phone?: string | null;
+  email?: string | null;
 
-  firstName: string | null
-  lastName: string | null
-  phone: string | null
-  email: string | null
+  identityType?: string | null;
+  identityValue?: string | null;
+  issuingCountry?: string | null;
+  identityStatus?: string | null;
 
-  identityType: string | null
-  identityValue: string | null
-  issuingCountry: string | null
-  identityStatus: string | null
+  stockNumber?: string | null;
+  vin?: string | null;
+  vehicleYear?: number | null;
+  vehicleMake?: string | null;
+  vehicleModel?: string | null;
+  vehiclePrice?: number | null;
 
-  stockNumber: string | null
-  vin: string | null
-  vehicleYear: number | null
-  vehicleMake: string | null
-  vehicleModel: string | null
-  vehiclePrice: number | null
+  downPayment?: number | null;
+  tradeIn?: number | null;
+  amountFinanced?: number | null;
 
-  downPayment: number | null
-  tradeIn: number | null
-  amountFinanced: number | null
+  creditScore?: number | null;
+  monthlyIncome?: number | null;
 
-  creditScore: number | null
-  monthlyIncome: number | null
+  status?: string | null;
+  lender?: string | null;
+  tier?: string | null;
+  maxPayment?: number | null;
+  maxVehicle?: number | null;
+  dealStrength?: number | null;
+  decisionReason?: string | null;
+};
 
-  status: string | null
-  lender: string | null
-  tier: string | null
-  maxPayment: number | null
-  maxVehicle: number | null
-  decisionReason: string | null
-  dealStrength: number | null
+type DecisionForm = {
+  status: "APPROVED" | "DECLINED";
+  lender: string;
+  tier: string;
+  maxPayment: string;
+  maxVehicle: string;
+  dealStrength: string;
+  decisionReason: string;
+};
+
+function formatCurrency(value: number | null | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) return "N/A";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
-type DashboardResponse = {
-  success: boolean
-  count: number
-  applications: ApplicationRecord[]
+function safeText(value: string | null | undefined) {
+  return value && String(value).trim() ? value : "N/A";
 }
+
+function toNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return fallback;
+}
+
+function smartTier(creditScore: number) {
+  if (creditScore >= 720) return "TIER_1";
+  if (creditScore >= 660) return "TIER_2";
+  if (creditScore >= 600) return "TIER_3";
+  if (creditScore >= 540) return "TIER_4";
+  return "TIER_5";
+}
+
+function smartLender(creditScore: number, monthlyIncome: number) {
+  if (creditScore >= 720 && monthlyIncome >= 5000) return "Ally";
+  if (creditScore >= 660) return "Westlake";
+  if (creditScore >= 600) return "Global Lending";
+  if (creditScore >= 540) return "Credit Acceptance";
+  return "Specialty Review";
+}
+
+function smartMaxPayment(monthlyIncome: number, creditScore: number) {
+  const baseRatio =
+    creditScore >= 720 ? 0.2 :
+    creditScore >= 660 ? 0.18 :
+    creditScore >= 600 ? 0.16 :
+    creditScore >= 540 ? 0.14 :
+    0.12;
+
+  return Math.max(0, Math.round(monthlyIncome * baseRatio));
+}
+
+function smartMaxVehicle(
+  maxPayment: number,
+  downPayment: number,
+  tradeIn: number,
+  creditScore: number
+) {
+  const advanceMultiple =
+    creditScore >= 720 ? 58 :
+    creditScore >= 660 ? 52 :
+    creditScore >= 600 ? 46 :
+    creditScore >= 540 ? 40 :
+    34;
+
+  return Math.max(
+    0,
+    Math.round(maxPayment * advanceMultiple + downPayment + tradeIn)
+  );
+}
+
+function smartDealStrength(
+  creditScore: number,
+  monthlyIncome: number,
+  downPayment: number,
+  tradeIn: number,
+  vehiclePrice: number
+) {
+  let score = 40;
+
+  if (creditScore >= 720) score += 30;
+  else if (creditScore >= 660) score += 24;
+  else if (creditScore >= 600) score += 18;
+  else if (creditScore >= 540) score += 10;
+  else score += 4;
+
+  if (monthlyIncome >= 6000) score += 15;
+  else if (monthlyIncome >= 4500) score += 10;
+  else if (monthlyIncome >= 3000) score += 6;
+
+  const equity = downPayment + tradeIn;
+  if (vehiclePrice > 0) {
+    const equityRatio = equity / vehiclePrice;
+    if (equityRatio >= 0.2) score += 15;
+    else if (equityRatio >= 0.1) score += 10;
+    else if (equityRatio >= 0.05) score += 5;
+  }
+
+  return Math.max(1, Math.min(100, Math.round(score)));
+}
+
+function buildSmartRecommendation(app: Application): DecisionForm {
+  const creditScore = toNumber(app.creditScore);
+  const monthlyIncome = toNumber(app.monthlyIncome);
+  const downPayment = toNumber(app.downPayment);
+  const tradeIn = toNumber(app.tradeIn);
+  const vehiclePrice = toNumber(app.vehiclePrice);
+
+  const tier = smartTier(creditScore);
+  const lender = smartLender(creditScore, monthlyIncome);
+  const maxPayment = smartMaxPayment(monthlyIncome, creditScore);
+  const maxVehicle = smartMaxVehicle(maxPayment, downPayment, tradeIn, creditScore);
+  const dealStrength = smartDealStrength(
+    creditScore,
+    monthlyIncome,
+    downPayment,
+    tradeIn,
+    vehiclePrice
+  );
+
+  let status: "APPROVED" | "DECLINED" = "APPROVED";
+  let decisionReason = `Approved ${tier} with ${lender}. Recommended max payment ${maxPayment} and max vehicle ${maxVehicle}.`;
+
+  if (creditScore < 500) {
+    status = "DECLINED";
+    decisionReason = "Declined due to credit score below minimum review threshold.";
+  } else if (monthlyIncome < 1800) {
+    status = "DECLINED";
+    decisionReason = "Declined due to insufficient monthly income.";
+  } else if (vehiclePrice > 0 && maxVehicle > 0 && vehiclePrice > maxVehicle * 1.15) {
+    status = "DECLINED";
+    decisionReason = "Declined because requested vehicle exceeds recommended structure.";
+  }
+
+  return {
+    status,
+    lender,
+    tier,
+    maxPayment: String(maxPayment),
+    maxVehicle: String(maxVehicle),
+    dealStrength: String(dealStrength),
+    decisionReason,
+  };
+}
+
+const emptyDecision: DecisionForm = {
+  status: "APPROVED",
+  lender: "",
+  tier: "",
+  maxPayment: "",
+  maxVehicle: "",
+  dealStrength: "",
+  decisionReason: "",
+};
 
 export default function ControllerPage() {
-  const [applications, setApplications] = useState<ApplicationRecord[]>([])
-  const [selectedId, setSelectedId] = useState<string>("")
-  const [loading, setLoading] = useState(true)
-  const [processing, setProcessing] = useState(false)
-  const [message, setMessage] = useState("")
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
-    "info"
-  )
-
-  const [decisionForm, setDecisionForm] = useState({
-    lender: "",
-    tier: "",
-    maxPayment: "",
-    maxVehicle: "",
-    decisionReason: "",
-    dealStrength: "",
-  })
-
-  useEffect(() => {
-    loadApplications()
-  }, [])
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("Controller dashboard loaded");
+  const [saving, setSaving] = useState(false);
+  const [decisionForm, setDecisionForm] = useState<DecisionForm>(emptyDecision);
 
   async function loadApplications() {
-    setLoading(true)
-    setMessage("")
-
     try {
-      const response = await fetch("/api/controller-dashboard", {
-        headers: {
-          "x-user-role": "CONTROLLER",
-        },
-      })
+      setLoading(true);
 
-      const data: DashboardResponse | any = await response.json()
+      const res = await fetch("/api/controller-dashboard", {
+        cache: "no-store",
+      });
 
-      if (!response.ok) {
-        setMessageType("error")
-        setMessage(data?.reason || data?.message || "Failed to load dashboard")
-        return
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setMessage(data?.reason || "Failed to load controller dashboard");
+        setApplications([]);
+        setLoading(false);
+        return;
       }
 
-      const rows: ApplicationRecord[] = Array.isArray(data?.applications)
-        ? data.applications
-        : []
+      const nextApps = Array.isArray(data.applications) ? data.applications : [];
+      setApplications(nextApps);
 
-      setApplications(rows)
-
-      if (rows.length > 0) {
-        setSelectedId((current: string) => {
-          const stillExists = rows.some((row: ApplicationRecord) => row.id === current)
-          return stillExists ? current : rows[0].id
-        })
-      } else {
-        setSelectedId("")
+      if (nextApps.length > 0) {
+        setSelectedId((current) => {
+          if (current && nextApps.some((app: Application) => app.id === current)) {
+            return current;
+          }
+          return nextApps[0].id;
+        });
       }
 
-      setMessageType("success")
-      setMessage("Controller dashboard loaded")
+      setMessage("Controller dashboard loaded");
     } catch (error) {
-      console.error(error)
-      setMessageType("error")
-      setMessage("Failed to load dashboard")
+      console.error("CONTROLLER PAGE LOAD ERROR:", error);
+      setMessage("Failed to load controller dashboard");
+      setApplications([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadApplications();
+  }, []);
 
   const selectedApplication = useMemo(() => {
-    return applications.find((item: ApplicationRecord) => item.id === selectedId) || null
-  }, [applications, selectedId])
+    return applications.find((app) => app.id === selectedId) || null;
+  }, [applications, selectedId]);
+
+  useEffect(() => {
+    if (selectedApplication) {
+      setDecisionForm(buildSmartRecommendation(selectedApplication));
+    } else {
+      setDecisionForm(emptyDecision);
+    }
+  }, [selectedApplication]);
 
   function updateDecisionField(
-    key:
-      | "lender"
-      | "tier"
-      | "maxPayment"
-      | "maxVehicle"
-      | "decisionReason"
-      | "dealStrength",
-    value: string
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
-    setDecisionForm((prev) => ({ ...prev, [key]: value }))
+    const { name, value } = e.target;
+    setDecisionForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   }
 
-  async function runCreditPullCheck() {
-    try {
-      const response = await fetch("/api/test-credit-pull", {
-        headers: {
-          "x-user-role": "CONTROLLER",
-        },
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        alert(data?.reason || data?.message || "Credit pull blocked")
-        return
-      }
-
-      alert("Credit pull allowed for CONTROLLER")
-    } catch (error) {
-      console.error(error)
-      alert("Credit pull test failed")
-    }
+  function regenerateSmartDecision() {
+    if (!selectedApplication) return;
+    setDecisionForm(buildSmartRecommendation(selectedApplication));
+    setMessage("Smart recommendation generated");
   }
 
-  async function approveDeal() {
+  async function saveDecision(statusOverride?: "APPROVED" | "DECLINED") {
     if (!selectedApplication) {
-      alert("No application selected")
-      return
+      setMessage("Select an application first");
+      return;
     }
 
-    setProcessing(true)
-
     try {
-      const response = await fetch("/api/controller-decision", {
+      setSaving(true);
+
+      const payload = {
+        applicationId: selectedApplication.id,
+        ...decisionForm,
+        status: statusOverride || decisionForm.status,
+      };
+
+      const res = await fetch("/api/controller-decision", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-role": "CONTROLLER",
         },
-        body: JSON.stringify({
-          applicationId: selectedApplication.id,
-          action: "APPROVE",
-          lender: decisionForm.lender || null,
-          tier: decisionForm.tier || null,
-          maxPayment: toNumberOrNull(decisionForm.maxPayment),
-          maxVehicle: toNumberOrNull(decisionForm.maxVehicle),
-          decisionReason: decisionForm.decisionReason || "Approved by controller",
-          dealStrength: toNumberOrNull(decisionForm.dealStrength),
-        }),
-      })
+        body: JSON.stringify(payload),
+      });
 
-      const data = await response.json()
+      const data = await res.json();
 
-      if (!response.ok) {
-        alert(data?.reason || data?.message || "Approval failed")
-        return
+      if (!res.ok || !data.success) {
+        setMessage(data?.reason || "Failed to save decision");
+        return;
       }
 
-      alert("Deal approved")
-      await loadApplications()
-    } catch (error) {
-      console.error(error)
-      alert("Approval failed")
-    } finally {
-      setProcessing(false)
-    }
-  }
+      setMessage(data?.message || "Decision saved");
+      await loadApplications();
 
-  async function rejectDeal() {
-    if (!selectedApplication) {
-      alert("No application selected")
-      return
-    }
-
-    setProcessing(true)
-
-    try {
-      const response = await fetch("/api/controller-decision", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": "CONTROLLER",
-        },
-        body: JSON.stringify({
-          applicationId: selectedApplication.id,
-          action: "REJECT",
-          decisionReason:
-            decisionForm.decisionReason || "Rejected by controller review",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        alert(data?.reason || data?.message || "Rejection failed")
-        return
+      const updated = data.application as Application;
+      if (updated?.id) {
+        setSelectedId(updated.id);
       }
-
-      alert("Deal rejected")
-      await loadApplications()
     } catch (error) {
-      console.error(error)
-      alert("Rejection failed")
+      console.error("SAVE DECISION ERROR:", error);
+      setMessage("Failed to save decision");
     } finally {
-      setProcessing(false)
-    }
-  }
-
-  async function markFunded() {
-    if (!selectedApplication) {
-      alert("No application selected")
-      return
-    }
-
-    setProcessing(true)
-
-    try {
-      const response = await fetch("/api/application-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": "CONTROLLER",
-        },
-        body: JSON.stringify({
-          applicationId: selectedApplication.id,
-          newStatus: "FUNDED",
-          decisionReason: decisionForm.decisionReason || "Marked funded by controller",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        alert(data?.reason || data?.message || "Funding update failed")
-        return
-      }
-
-      alert("Deal marked FUNDED")
-      await loadApplications()
-    } catch (error) {
-      console.error(error)
-      alert("Funding update failed")
-    } finally {
-      setProcessing(false)
-    }
-  }
-
-  async function moveBackToSubmitted() {
-    if (!selectedApplication) {
-      alert("No application selected")
-      return
-    }
-
-    setProcessing(true)
-
-    try {
-      const response = await fetch("/api/application-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": "CONTROLLER",
-        },
-        body: JSON.stringify({
-          applicationId: selectedApplication.id,
-          newStatus: "SUBMITTED",
-          decisionReason:
-            decisionForm.decisionReason || "Moved back to submitted for re-review",
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        alert(data?.reason || data?.message || "Status reset failed")
-        return
-      }
-
-      alert("Deal moved back to SUBMITTED")
-      await loadApplications()
-    } catch (error) {
-      console.error(error)
-      alert("Status reset failed")
-    } finally {
-      setProcessing(false)
+      setSaving(false);
     }
   }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.headerRow}>
-          <div>
-            <div style={styles.kicker}>Smart Drive Elite</div>
-            <h1 style={styles.pageTitle}>Controller Dashboard</h1>
-            <p style={styles.pageSubtitle}>
-              Review submitted applications, enforce credit access control, and
-              manage lifecycle from submitted through funding.
-            </p>
-          </div>
-
-          <div style={styles.badgeRow}>
-            <div style={styles.statusPill}>
-              {loading ? "LOADING" : `${applications.length} FILES`}
-            </div>
-            <div style={styles.roleBadge}>CONTROLLER</div>
-          </div>
+    <main className="min-h-screen bg-[#f7f4ee] px-5 py-6 text-[#111111] md:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 rounded-[24px] border border-[#cfe6d5] bg-[#eaf6ee] px-6 py-5 text-[18px] text-[#2d7a45]">
+          {message}
         </div>
 
-        {message ? (
-          <div
-            style={{
-              ...styles.messageBox,
-              ...(messageType === "success"
-                ? styles.messageSuccess
-                : messageType === "error"
-                ? styles.messageError
-                : styles.messageInfo),
-            }}
-          >
-            {message}
-          </div>
-        ) : null}
-
-        <div style={styles.grid}>
-          <section style={styles.leftPanel}>
-            <div style={styles.panelHeader}>
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.45fr]">
+          <section className="rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.04)]">
+            <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 style={styles.panelTitle}>Application Queue</h2>
-                <p style={styles.panelSubtitle}>
+                <h1 className="text-[28px] font-semibold tracking-[-0.04em]">
+                  Application Queue
+                </h1>
+                <p className="mt-1 text-[15px] text-black/55">
                   Review and manage file progression
                 </p>
               </div>
 
               <button
-                type="button"
                 onClick={loadApplications}
-                style={styles.secondaryButton}
+                className="rounded-[18px] border border-black/10 bg-white px-5 py-3 font-semibold"
               >
                 Refresh
               </button>
             </div>
 
             {loading ? (
-              <div style={styles.emptyState}>Loading applications...</div>
+              <div className="rounded-[24px] border border-black/8 bg-[#faf7f1] px-5 py-10 text-center text-black/55">
+                Loading applications...
+              </div>
             ) : applications.length === 0 ? (
-              <div style={styles.emptyState}>No applications found yet.</div>
+              <div className="rounded-[24px] border border-black/8 bg-[#faf7f1] px-5 py-10 text-center text-black/55">
+                No applications found
+              </div>
             ) : (
-              <div style={styles.queueList}>
-                {applications.map((app: ApplicationRecord) => {
-                  const active = app.id === selectedId
+              <div className="space-y-5">
+                {applications.map((app) => {
+                  const isSelected = app.id === selectedId;
+                  const fullName =
+                    `${app.firstName || ""} ${app.lastName || ""}`.trim() ||
+                    "Unknown Borrower";
+
                   return (
                     <button
                       key={app.id}
-                      type="button"
                       onClick={() => setSelectedId(app.id)}
-                      style={{
-                        ...styles.queueCard,
-                        ...(active ? styles.queueCardActive : {}),
-                      }}
+                      className={`w-full rounded-[24px] border p-5 text-left transition ${
+                        isSelected
+                          ? "border-[#ccb88d] bg-[#fcf8ee]"
+                          : "border-black/10 bg-white"
+                      }`}
                     >
-                      <div style={styles.queueTopRow}>
-                        <div style={styles.queueName}>
-                          {app.firstName || "Unknown"} {app.lastName || "Borrower"}
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-[18px] font-semibold">{fullName}</div>
+                          <div className="mt-3 space-y-2 text-[15px] text-black/58">
+                            <div>{safeText(app.identityType)}</div>
+                            <div>Score: {app.creditScore ?? "N/A"}</div>
+                            <div>Decision: {safeText(app.decisionReason)}</div>
+                            <div>Lenders: {safeText(app.lender)}</div>
+                            <div>Max Vehicle: {formatCurrency(app.maxVehicle)}</div>
+                            <div>
+                              Vehicle: {[app.vehicleYear, app.vehicleMake, app.vehicleModel]
+                                .filter(Boolean)
+                                .join(" ") || "N/A"}
+                            </div>
+                          </div>
                         </div>
-                        <div
-                          style={{
-                            ...styles.smallStatusBadge,
-                            ...(app.status === "SUBMITTED"
-                              ? styles.submittedBadge
-                              : app.status === "APPROVED"
-                              ? styles.approvedBadge
-                              : app.status === "FUNDED"
-                              ? styles.fundedBadge
-                              : app.status === "DECLINED"
-                              ? styles.rejectedBadge
-                              : styles.draftBadge),
-                          }}
-                        >
-                          {app.status || "DRAFT"}
+
+                        <div className="min-w-[120px] text-right">
+                          <div className="inline-flex rounded-full bg-[#edf3ff] px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#3f67d7]">
+                            {safeText(app.status)}
+                          </div>
+
+                          <div className="mt-6 space-y-2 text-[15px] text-black/58">
+                            <div>{safeText(app.identityStatus)}</div>
+                            <div>Tier: {safeText(app.tier)}</div>
+                            <div>Max Payment: {formatCurrency(app.maxPayment)}</div>
+                          </div>
                         </div>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>{app.identityType || "No ID Type"}</span>
-                        <span>{app.identityStatus || "No ID Status"}</span>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>
-                          Score:{" "}
-                          {app.dealStrength !== null && app.dealStrength !== undefined
-                            ? app.dealStrength
-                            : "N/A"}
-                        </span>
-                        <span>Tier: {app.tier ?? "N/A"}</span>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>Decision: {app.decisionReason ?? "N/A"}</span>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>Lenders: {app.lender ?? "N/A"}</span>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>
-                          Max Vehicle:{" "}
-                          {app.maxVehicle != null
-                            ? formatCurrency(app.maxVehicle)
-                            : "N/A"}
-                        </span>
-                        <span>
-                          Max Payment:{" "}
-                          {app.maxPayment != null
-                            ? formatCurrency(app.maxPayment)
-                            : "N/A"}
-                        </span>
-                      </div>
-
-                      <div style={styles.queueMeta}>
-                        <span>
-                          Vehicle:{" "}
-                          {[app.vehicleYear, app.vehicleMake, app.vehicleModel]
-                            .filter(Boolean)
-                            .join(" ") || "N/A"}
-                        </span>
                       </div>
                     </button>
-                  )
+                  );
                 })}
               </div>
             )}
           </section>
 
-          <section style={styles.rightPanel}>
-            <div style={styles.panelHeader}>
+          <section className="rounded-[28px] border border-black/10 bg-white p-6 shadow-[0_18px_45px_rgba(0,0,0,0.04)]">
+            <div className="mb-6 flex items-center justify-between gap-4">
               <div>
-                <h2 style={styles.panelTitle}>Controller Review</h2>
-                <p style={styles.panelSubtitle}>
+                <h2 className="text-[34px] font-semibold tracking-[-0.05em]">
+                  Controller Review
+                </h2>
+                <p className="mt-1 text-[15px] text-black/55">
                   Decision controls and funding workflow
                 </p>
               </div>
 
               <button
-                type="button"
-                onClick={runCreditPullCheck}
-                style={styles.primaryButton}
+                onClick={regenerateSmartDecision}
+                className="rounded-[18px] bg-black px-6 py-4 text-[15px] font-semibold text-white"
               >
-                Test Credit Access
+                Generate Smart Decision
               </button>
             </div>
 
             {!selectedApplication ? (
-              <div style={styles.emptyState}>Select a file to review.</div>
+              <div className="rounded-[24px] border border-black/8 bg-[#faf7f1] px-5 py-10 text-center text-black/55">
+                Select an application from the queue
+              </div>
             ) : (
-              <div style={styles.reviewStack}>
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Applicant Snapshot</h3>
-                  <div style={styles.infoGrid}>
-                    <InfoRow
-                      label="Borrower"
-                      value={`${selectedApplication.firstName || ""} ${
-                        selectedApplication.lastName || ""
-                      }`.trim() || "N/A"}
-                    />
-                    <InfoRow
-                      label="Phone"
-                      value={selectedApplication.phone || "N/A"}
-                    />
-                    <InfoRow
-                      label="Email"
-                      value={selectedApplication.email || "N/A"}
-                    />
-                    <InfoRow
-                      label="Identity Type"
-                      value={selectedApplication.identityType || "N/A"}
-                    />
-                    <InfoRow
-                      label="Identity Status"
-                      value={selectedApplication.identityStatus || "N/A"}
-                      emphasize={
-                        selectedApplication.identityStatus === "VERIFIED"
-                          ? "success"
-                          : "danger"
-                      }
-                    />
-                    <InfoRow
-                      label="Issuing Country"
-                      value={selectedApplication.issuingCountry || "N/A"}
-                    />
+              <div className="space-y-7">
+                <div className="rounded-[28px] border border-black/8 bg-[#faf7f1] p-6">
+                  <h3 className="mb-5 text-[22px] font-semibold">Applicant Snapshot</h3>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Borrower</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {`${selectedApplication.firstName || ""} ${selectedApplication.lastName || ""}`.trim() ||
+                          "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Phone</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {safeText(selectedApplication.phone)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Email</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {safeText(selectedApplication.email)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Identity Type</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {safeText(selectedApplication.identityType)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Identity Status</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold text-[#c64223]">
+                        {safeText(selectedApplication.identityStatus)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Issuing Country</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {safeText(selectedApplication.issuingCountry)}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Deal Snapshot</h3>
-                  <div style={styles.infoGrid}>
-                    <InfoRow
-                      label="Current Status"
-                      value={selectedApplication.status || "N/A"}
-                    />
-                    <InfoRow
-                      label="Tier"
-                      value={selectedApplication.tier || "N/A"}
-                    />
-                    <InfoRow
-                      label="Deal Strength"
-                      value={
-                        selectedApplication.dealStrength != null
-                          ? String(selectedApplication.dealStrength)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Suggested Decision"
-                      value={selectedApplication.decisionReason || "N/A"}
-                    />
-                    <InfoRow
-                      label="Lenders"
-                      value={selectedApplication.lender || "N/A"}
-                    />
-                    <InfoRow
-                      label="Max Vehicle"
-                      value={
-                        selectedApplication.maxVehicle != null
-                          ? formatCurrency(selectedApplication.maxVehicle)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Max Payment"
-                      value={
-                        selectedApplication.maxPayment != null
-                          ? formatCurrency(selectedApplication.maxPayment)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Stock Number"
-                      value={selectedApplication.stockNumber || "N/A"}
-                    />
-                    <InfoRow label="VIN" value={selectedApplication.vin || "N/A"} />
-                    <InfoRow
-                      label="Vehicle"
-                      value={
-                        [selectedApplication.vehicleYear, selectedApplication.vehicleMake, selectedApplication.vehicleModel]
+                <div className="rounded-[28px] border border-black/8 bg-[#faf7f1] p-6">
+                  <h3 className="mb-5 text-[22px] font-semibold">Deal Snapshot</h3>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Current Status</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {safeText(selectedApplication.status)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Credit Score</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {selectedApplication.creditScore ?? "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Monthly Income</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {formatCurrency(selectedApplication.monthlyIncome)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Vehicle</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {[selectedApplication.vehicleYear, selectedApplication.vehicleMake, selectedApplication.vehicleModel]
                           .filter(Boolean)
-                          .join(" ") || "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Vehicle Price"
-                      value={
-                        selectedApplication.vehiclePrice != null
-                          ? formatCurrency(selectedApplication.vehiclePrice)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Amount Financed"
-                      value={
-                        selectedApplication.amountFinanced != null
-                          ? formatCurrency(selectedApplication.amountFinanced)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Credit Score"
-                      value={
-                        selectedApplication.creditScore != null
-                          ? String(selectedApplication.creditScore)
-                          : "N/A"
-                      }
-                    />
-                    <InfoRow
-                      label="Monthly Income"
-                      value={
-                        selectedApplication.monthlyIncome != null
-                          ? formatCurrency(selectedApplication.monthlyIncome)
-                          : "N/A"
-                      }
-                    />
+                          .join(" ") || "N/A"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Vehicle Price</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {formatCurrency(selectedApplication.vehiclePrice)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Down Payment</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {formatCurrency(selectedApplication.downPayment)}
+                      </div>
+                    </div>
+
+                    <div className="rounded-[18px] bg-white px-5 py-4">
+                      <div className="text-black/45">Amount Financed</div>
+                      <div className="mt-1 text-right text-[24px] font-semibold">
+                        {formatCurrency(selectedApplication.amountFinanced)}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={styles.detailCard}>
-                  <h3 style={styles.detailTitle}>Controller Decision</h3>
+                <div className="rounded-[28px] border border-black/8 bg-[#faf7f1] p-6">
+                  <h3 className="mb-5 text-[22px] font-semibold">Smart Decision Controls</h3>
 
-                  <div style={styles.formGrid}>
-                    <InputField
-                      label="Lender"
-                      value={decisionForm.lender}
-                      onChange={(v) => updateDecisionField("lender", v)}
-                      placeholder="Westlake, Exeter, etc."
-                    />
-                    <InputField
-                      label="Tier"
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <select
+                      name="status"
+                      value={decisionForm.status}
+                      onChange={updateDecisionField}
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
+                    >
+                      <option value="APPROVED">APPROVED</option>
+                      <option value="DECLINED">DECLINED</option>
+                    </select>
+
+                    <input
+                      name="tier"
                       value={decisionForm.tier}
-                      onChange={(v) => updateDecisionField("tier", v)}
-                      placeholder="Tier 1, Tier 2, etc."
+                      onChange={updateDecisionField}
+                      placeholder="Tier"
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
                     />
-                    <InputField
-                      label="Max Payment"
-                      value={decisionForm.maxPayment}
-                      onChange={(v) => updateDecisionField("maxPayment", v)}
-                      placeholder="685"
+
+                    <input
+                      name="lender"
+                      value={decisionForm.lender}
+                      onChange={updateDecisionField}
+                      placeholder="Lender"
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
                     />
-                    <InputField
-                      label="Max Vehicle"
-                      value={decisionForm.maxVehicle}
-                      onChange={(v) => updateDecisionField("maxVehicle", v)}
-                      placeholder="32880"
-                    />
-                    <InputField
-                      label="Deal Strength"
+
+                    <input
+                      name="dealStrength"
                       value={decisionForm.dealStrength}
-                      onChange={(v) => updateDecisionField("dealStrength", v)}
-                      placeholder="82"
+                      onChange={updateDecisionField}
+                      placeholder="Deal Strength"
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
                     />
-                    <InputField
-                      label="Decision Reason"
-                      value={decisionForm.decisionReason}
-                      onChange={(v) => updateDecisionField("decisionReason", v)}
-                      placeholder="Reason for decision"
+
+                    <input
+                      name="maxPayment"
+                      value={decisionForm.maxPayment}
+                      onChange={updateDecisionField}
+                      placeholder="Max Payment"
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
+                    />
+
+                    <input
+                      name="maxVehicle"
+                      value={decisionForm.maxVehicle}
+                      onChange={updateDecisionField}
+                      placeholder="Max Vehicle"
+                      className="rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
                     />
                   </div>
 
-                  <div style={styles.actionBar}>
+                  <textarea
+                    name="decisionReason"
+                    value={decisionForm.decisionReason}
+                    onChange={updateDecisionField}
+                    placeholder="Decision Reason"
+                    className="mt-4 min-h-[140px] w-full rounded-[18px] border border-black/10 bg-white px-5 py-4 outline-none"
+                  />
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
                     <button
-                      type="button"
-                      onClick={approveDeal}
-                      disabled={processing}
-                      style={{
-                        ...styles.approveButton,
-                        ...(processing ? styles.disabledButton : {}),
-                      }}
+                      onClick={() => saveDecision("APPROVED")}
+                      disabled={saving}
+                      className="rounded-[18px] bg-[#204f2b] px-6 py-4 text-[16px] font-semibold text-white disabled:opacity-60"
                     >
-                      {processing ? "Processing..." : "Approve Deal"}
+                      {saving ? "Saving..." : "Approve Deal"}
                     </button>
 
                     <button
-                      type="button"
-                      onClick={rejectDeal}
-                      disabled={processing}
-                      style={{
-                        ...styles.rejectButton,
-                        ...(processing ? styles.disabledButton : {}),
-                      }}
+                      onClick={() => saveDecision("DECLINED")}
+                      disabled={saving}
+                      className="rounded-[18px] bg-[#7c1f1f] px-6 py-4 text-[16px] font-semibold text-white disabled:opacity-60"
                     >
-                      {processing ? "Processing..." : "Reject Deal"}
+                      {saving ? "Saving..." : "Decline Deal"}
                     </button>
+                  </div>
+                </div>
 
-                    <button
-                      type="button"
-                      onClick={markFunded}
-                      disabled={processing}
-                      style={{
-                        ...styles.fundedButton,
-                        ...(processing ? styles.disabledButton : {}),
-                      }}
-                    >
-                      {processing ? "Processing..." : "Mark Funded"}
-                    </button>
+                <div className="rounded-[28px] border border-black/8 bg-[#faf7f1] p-6">
+                  <h3 className="mb-5 text-[22px] font-semibold">Decision Notes</h3>
 
-                    <button
-                      type="button"
-                      onClick={moveBackToSubmitted}
-                      disabled={processing}
-                      style={{
-                        ...styles.secondaryButton,
-                        ...(processing ? styles.disabledButton : {}),
-                      }}
-                    >
-                      {processing ? "Processing..." : "Move to Submitted"}
-                    </button>
+                  <div className="rounded-[18px] bg-white px-5 py-5 text-[18px] text-black/70">
+                    {safeText(decisionForm.decisionReason)}
                   </div>
                 </div>
               </div>
@@ -712,416 +638,5 @@ export default function ControllerPage() {
         </div>
       </div>
     </main>
-  )
-}
-
-function InputField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder: string
-}) {
-  return (
-    <label style={styles.labelWrap}>
-      <div style={styles.fieldLabel}>{label}</div>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={styles.input}
-      />
-    </label>
-  )
-}
-
-function InfoRow({
-  label,
-  value,
-  emphasize,
-}: {
-  label: string
-  value: string
-  emphasize?: "success" | "danger"
-}) {
-  return (
-    <div style={styles.infoRow}>
-      <div style={styles.infoLabel}>{label}</div>
-      <div
-        style={{
-          ...styles.infoValue,
-          ...(emphasize === "success"
-            ? styles.successText
-            : emphasize === "danger"
-            ? styles.dangerText
-            : {}),
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function toNumberOrNull(value: string) {
-  if (!value.trim()) return null
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? null : parsed
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#f7f4ee",
-    padding: "32px 24px",
-    color: "#111111",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  },
-  container: {
-    maxWidth: "1400px",
-    margin: "0 auto",
-  },
-  headerRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: "16px",
-    marginBottom: "32px",
-  },
-  kicker: {
-    fontSize: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "0.28em",
-    color: "rgba(17,17,17,0.45)",
-  },
-  pageTitle: {
-    marginTop: "12px",
-    marginBottom: "8px",
-    fontSize: "56px",
-    lineHeight: 1,
-    fontWeight: 700,
-    letterSpacing: "-0.04em",
-  },
-  pageSubtitle: {
-    maxWidth: "760px",
-    fontSize: "16px",
-    lineHeight: 1.7,
-    color: "rgba(17,17,17,0.65)",
-    margin: 0,
-  },
-  badgeRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  statusPill: {
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    borderRadius: "999px",
-    padding: "12px 16px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.2em",
-    color: "rgba(17,17,17,0.75)",
-  },
-  roleBadge: {
-    borderRadius: "999px",
-    padding: "12px 16px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.2em",
-    color: "#ffffff",
-    backgroundColor: "#111111",
-  },
-  messageBox: {
-    marginBottom: "24px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    padding: "16px 18px",
-    fontSize: "14px",
-  },
-  messageSuccess: {
-    backgroundColor: "#eefaf1",
-    borderColor: "#b7e3c2",
-    color: "#1f7a37",
-  },
-  messageError: {
-    backgroundColor: "#fff1f1",
-    borderColor: "#efc0c0",
-    color: "#b42318",
-  },
-  messageInfo: {
-    backgroundColor: "#ffffff",
-    borderColor: "rgba(17,17,17,0.1)",
-    color: "rgba(17,17,17,0.75)",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "minmax(340px, 0.9fr) minmax(0, 1.3fr)",
-    gap: "24px",
-    alignItems: "start",
-  },
-  leftPanel: {
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "28px",
-    padding: "24px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-    minHeight: "70vh",
-  },
-  rightPanel: {
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "28px",
-    padding: "24px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-    minHeight: "70vh",
-  },
-  panelHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "16px",
-    marginBottom: "24px",
-  },
-  panelTitle: {
-    margin: 0,
-    fontSize: "28px",
-    lineHeight: 1.1,
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
-  },
-  panelSubtitle: {
-    marginTop: "6px",
-    marginBottom: 0,
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.55)",
-  },
-  secondaryButton: {
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    padding: "12px 18px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "rgba(17,17,17,0.75)",
-    cursor: "pointer",
-  },
-  primaryButton: {
-    borderRadius: "18px",
-    border: "none",
-    backgroundColor: "#111111",
-    padding: "12px 18px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    cursor: "pointer",
-  },
-  fundedButton: {
-    borderRadius: "18px",
-    border: "none",
-    backgroundColor: "#0b7f5b",
-    padding: "14px 24px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    cursor: "pointer",
-  },
-  emptyState: {
-    borderRadius: "18px",
-    padding: "24px",
-    backgroundColor: "#faf7f1",
-    border: "1px solid rgba(17,17,17,0.08)",
-    color: "rgba(17,17,17,0.65)",
-    fontSize: "15px",
-  },
-  queueList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-  },
-  queueCard: {
-    width: "100%",
-    textAlign: "left",
-    borderRadius: "20px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "18px",
-    cursor: "pointer",
-  },
-  queueCardActive: {
-    backgroundColor: "#fffaf1",
-    borderColor: "#d8c7a1",
-    boxShadow: "0 10px 24px rgba(0,0,0,0.05)",
-  },
-  queueTopRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "10px",
-  },
-  queueName: {
-    fontSize: "18px",
-    fontWeight: 700,
-    color: "#111111",
-  },
-  queueMeta: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "12px",
-    fontSize: "13px",
-    color: "rgba(17,17,17,0.62)",
-    marginTop: "6px",
-    flexWrap: "wrap",
-  },
-  smallStatusBadge: {
-    borderRadius: "999px",
-    padding: "6px 10px",
-    fontSize: "10px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.16em",
-  },
-  submittedBadge: {
-    backgroundColor: "#e8efff",
-    color: "#2457d6",
-  },
-  approvedBadge: {
-    backgroundColor: "#dff5e6",
-    color: "#1f7a37",
-  },
-  fundedBadge: {
-    backgroundColor: "#e6faf4",
-    color: "#007a5a",
-  },
-  rejectedBadge: {
-    backgroundColor: "#fde4e4",
-    color: "#b42318",
-  },
-  draftBadge: {
-    backgroundColor: "#f1ece5",
-    color: "#6f6557",
-  },
-  reviewStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-  },
-  detailCard: {
-    borderRadius: "24px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "20px",
-  },
-  detailTitle: {
-    marginTop: 0,
-    marginBottom: "16px",
-    fontSize: "22px",
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
-  },
-  infoGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "12px",
-  },
-  formGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "16px",
-  },
-  labelWrap: {
-    display: "block",
-  },
-  fieldLabel: {
-    marginBottom: "8px",
-    fontSize: "11px",
-    textTransform: "uppercase",
-    letterSpacing: "0.22em",
-    color: "rgba(17,17,17,0.45)",
-    fontWeight: 700,
-  },
-  input: {
-    width: "100%",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    padding: "14px 16px",
-    fontSize: "14px",
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  actionBar: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "12px",
-    marginTop: "18px",
-  },
-  approveButton: {
-    borderRadius: "18px",
-    border: "none",
-    backgroundColor: "#1f7a37",
-    padding: "14px 24px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    cursor: "pointer",
-  },
-  rejectButton: {
-    borderRadius: "18px",
-    border: "none",
-    backgroundColor: "#b42318",
-    padding: "14px 24px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    cursor: "pointer",
-  },
-  disabledButton: {
-    opacity: 0.45,
-    cursor: "not-allowed",
-  },
-  infoRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "16px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#ffffff",
-    padding: "14px 16px",
-  },
-  infoLabel: {
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.5)",
-  },
-  infoValue: {
-    fontSize: "14px",
-    fontWeight: 700,
-    textAlign: "right",
-    color: "rgba(17,17,17,0.82)",
-  },
-  successText: {
-    color: "#1f7a37",
-  },
-  dangerText: {
-    color: "#b42318",
-  },
+  );
 }
