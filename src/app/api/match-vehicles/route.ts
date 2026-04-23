@@ -51,47 +51,50 @@ export async function POST(req: Request) {
     });
 
     const matches = inventory
-      .filter((v) => {
-        const price = toNumber(v.price);
+      .filter((unit) => {
+        const price = toNumber(unit.price);
         if (!price) return false;
         if (maxVehicle > 0 && price > maxVehicle) return false;
-        if (v.minCreditScore && toNumber(application.creditScore) < v.minCreditScore) {
+        if (
+          unit.minCreditScore &&
+          toNumber(application.creditScore) < unit.minCreditScore
+        ) {
           return false;
         }
         return true;
       })
-      .map((v) => {
+      .map((unit) => {
         let score = 50;
 
         if (
           application.vehicleMake &&
-          v.make &&
-          application.vehicleMake.toLowerCase() === v.make.toLowerCase()
+          unit.make &&
+          application.vehicleMake.toLowerCase() === unit.make.toLowerCase()
         ) {
           score += 20;
         }
 
         if (
           application.vehicleModel &&
-          v.model &&
-          application.vehicleModel.toLowerCase() === v.model.toLowerCase()
+          unit.model &&
+          application.vehicleModel.toLowerCase() === unit.model.toLowerCase()
         ) {
           score += 20;
         }
 
-        if (toNumber(v.mileage) <= 60000) score += 10;
-        if (toNumber(v.price) <= maxVehicle * 0.9) score += 10;
+        if (toNumber(unit.mileage) <= 60000) score += 10;
+        if (toNumber(unit.price) <= maxVehicle * 0.9) score += 10;
 
         return {
-          id: v.id,
-          stockNumber: v.stockNumber,
-          year: v.year,
-          make: v.make,
-          model: v.model,
-          mileage: v.mileage,
-          askingPrice: v.price,
-          vehicleClass: v.bodyStyle,
-          status: v.isAvailable ? "ACTIVE" : "INACTIVE",
+          id: unit.id,
+          stockNumber: unit.stockNumber,
+          year: unit.year,
+          make: unit.make,
+          model: unit.model,
+          mileage: unit.mileage,
+          askingPrice: unit.price,
+          vehicleClass: unit.bodyStyle,
+          status: unit.isAvailable ? "ACTIVE" : "INACTIVE",
           matchScore: Math.min(score, 100),
         };
       })
