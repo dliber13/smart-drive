@@ -23,7 +23,7 @@ function toNumber(value: unknown) {
 
 export async function GET() {
   try {
-    const inventory = (await prisma.inventoryUnit.findMany({
+    const inventory = (await prisma.vehicle.findMany({
       take: 500,
     })) as any[];
 
