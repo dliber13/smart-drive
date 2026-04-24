@@ -11,6 +11,7 @@ function stockSortValue(stockNumber: string | null | undefined) {
 
 function toNumber(value: unknown) {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
+
   if (
     typeof value === "string" &&
     value.trim() !== "" &&
@@ -18,12 +19,15 @@ function toNumber(value: unknown) {
   ) {
     return Number(value);
   }
+
   return 0;
 }
 
 export async function GET() {
   try {
-    const inventory = (await prisma.vehicle.findMany({
+    const db = prisma as any;
+
+    const inventory = (await db.vehicle.findMany({
       take: 500,
     })) as any[];
 
