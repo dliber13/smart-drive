@@ -3,58 +3,21 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_STATUSES = [
-  "DRAFT",
-  "READY",
-  "SUBMITTED",
-  "APPROVED",
-  "REJECTED",
-  "FUNDED",
-] as const;
-
-type AllowedStatus = (typeof ALLOWED_STATUSES)[number];
-
-function normalizeStatus(value: unknown): AllowedStatus | null {
-  const status = String(value ?? "").trim().toUpperCase();
-
-  if (ALLOWED_STATUSES.includes(status as AllowedStatus)) {
-    return status as AllowedStatus;
+function toText(value: unknown, fallback = "") {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
   }
-
-  return null;
-}
-
-function canTransition(currentStatus: string, nextStatus: AllowedStatus) {
-  const current = currentStatus.toUpperCase();
-
-  if (current === nextStatus) return true;
-
-  const allowedTransitions: Record<string, AllowedStatus[]> = {
-    DRAFT: ["READY", "SUBMITTED", "REJECTED"],
-    READY: ["SUBMITTED", "REJECTED", "DRAFT"],
-    SUBMITTED: ["APPROVED", "REJECTED", "READY"],
-    APPROVED: ["FUNDED", "SUBMITTED", "REJECTED"],
-    REJECTED: ["SUBMITTED", "READY"],
-    FUNDED: ["FUNDED"],
-  };
-
-  return allowedTransitions[current]?.includes(nextStatus) ?? false;
+  return fallback;
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const applicationId =
-      typeof body?.applicationId === "string"
-        ? body.applicationId
-        : typeof body?.id === "string"
-        ? body.id
-        : "";
-
-    const nextStatus = normalizeStatus(body?.status);
-    const note =
-      typeof body?.note === "string" && body.note.trim() ? body.note.trim() : null;
+    const applicationId = toText(body?.applicationId || body?.id);
+    const nextStatus = toText(body?.status).toUpperCase();
+    const note = toText(body?.note);
 
     if (!applicationId) {
       return NextResponse.json(
@@ -70,18 +33,17 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          reason:
-            "Invalid status. Allowed values: DRAFT, READY, SUBMITTED, APPROVED, REJECTED, FUNDED",
+          reason: "Missing status",
         },
         { status: 400 }
       );
     }
 
-    const existing = await prisma.application.findUnique({
+    const existingApplication = await prisma.application.findUnique({
       where: { id: applicationId },
     });
 
-    if (!existing) {
+    if (!existingApplication) {
       return NextResponse.json(
         {
           success: false,
@@ -91,42 +53,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const currentStatus = String(existing.status ?? "DRAFT").toUpperCase();
+    const updatedApplication = await prisma.application.update({
+      where: { id: applicationId },
+      data: {
+        status: nextStatus,
+        decisionReason: note || existingApplication.decisionReason,
+      },
+    });
 
-    if (!canTransition(currentStatus, nextStatus)) {
-      return NextResponse.json(
-        {
-          success: false,
-          reason: `Invalid status transition from ${currentStatus} to ${nextStatus}`,
-          currentStatus,
-          requestedStatus: nextStatus,
-        },
-        { status: 400 }
-      );
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedApplication = await tx.application.update({
-        where: { id: applicationId },
-        data: { status: nextStatus },
-      });
-
-      await tx.statusHistory.create({
-        data: {
-          applicationId,
-          fromStatus: currentStatus,
-          toStatus: nextStatus,
-          note,
-        },
-      });
-
-      return updatedApplication;
+    console.log("STATUS HISTORY SKIPPED (update-status)", {
+      applicationId: updatedApplication.id,
+      fromStatus: existingApplication.status ?? "DRAFT",
+      toStatus: nextStatus,
+      note,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Application status updated successfully",
-      application: result,
+      message: "Application status updated",
+      application: updatedApplication,
     });
   } catch (error: any) {
     console.error("Update status error:", error);

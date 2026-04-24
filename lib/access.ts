@@ -1,27 +1,24 @@
-export type AppRole = "ADMIN" | "CONTROLLER" | "SALES"
+export type AppRole = "ADMIN" | "CONTROLLER" | "SALES";
 
 export function normalizeRole(value: string | null | undefined): AppRole {
-  if (value === "ADMIN") return "ADMIN"
-  if (value === "CONTROLLER") return "CONTROLLER"
-  return "SALES"
+  if (value === "ADMIN") return "ADMIN";
+  if (value === "CONTROLLER") return "CONTROLLER";
+  return "SALES";
 }
 
 /**
- * Temporary role source for testing.
- * For now, the role comes from request header: x-user-role
- * If no header is sent, it defaults to SALES.
- *
- * Later, we will replace this with real session/auth lookup.
+ * Local testing override:
+ * always treat the current user as CONTROLLER.
+ * Later we will swap this back to real auth/session logic.
  */
-export function getCurrentUserRole(request: Request): AppRole {
-  const headerRole = request.headers.get("x-user-role")
-  return normalizeRole(headerRole)
+export function getCurrentUserRole(_request?: Request): AppRole {
+  return "CONTROLLER";
 }
 
 export function canPullCredit(role: AppRole): boolean {
-  return role === "ADMIN" || role === "CONTROLLER"
+  return role === "ADMIN" || role === "CONTROLLER";
 }
 
 export function canSubmitDeal(role: AppRole): boolean {
-  return role === "ADMIN" || role === "CONTROLLER" || role === "SALES"
+  return role === "ADMIN" || role === "CONTROLLER" || role === "SALES";
 }

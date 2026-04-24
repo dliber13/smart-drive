@@ -2,9 +2,21 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUserRole } from "@/lib/access";
 
+<<<<<<< HEAD
 function toNumber(value: unknown, fallback = 0) {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
   if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+=======
+export const dynamic = "force-dynamic";
+
+function toNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (
+    typeof value === "string" &&
+    value.trim() !== "" &&
+    !Number.isNaN(Number(value))
+  ) {
+>>>>>>> cafa814 (save current Smart Drive updates)
     return Number(value);
   }
   return fallback;
@@ -112,7 +124,11 @@ function smartDecision(application: {
   );
 
   let status: "APPROVED" | "DECLINED" = "APPROVED";
+<<<<<<< HEAD
   let decisionReason = `Recommended ${tier} with ${lender}.`;
+=======
+  let decisionReason = `Approved ${tier} with ${lender}. Recommended max payment ${maxPayment} and max vehicle ${maxVehicle}.`;
+>>>>>>> cafa814 (save current Smart Drive updates)
 
   if (creditScore < 500) {
     status = "DECLINED";
@@ -122,9 +138,13 @@ function smartDecision(application: {
     decisionReason = "Declined due to insufficient monthly income.";
   } else if (vehiclePrice > 0 && maxVehicle > 0 && vehiclePrice > maxVehicle * 1.15) {
     status = "DECLINED";
+<<<<<<< HEAD
     decisionReason = "Requested vehicle exceeds recommended structure.";
   } else {
     decisionReason = `Approved ${tier} with ${lender}. Recommended max payment ${maxPayment} and max vehicle ${maxVehicle}.`;
+=======
+    decisionReason = "Declined because requested vehicle exceeds recommended structure.";
+>>>>>>> cafa814 (save current Smart Drive updates)
   }
 
   return {

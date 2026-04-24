@@ -9,7 +9,20 @@ function toTextOrNull(value: unknown) {
   return text ? text : null;
 }
 
+<<<<<<< HEAD
 function toNumberOrNull(value: unknown) {
+=======
+function toIntOrNull(value: unknown) {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  const parsed = Number(text);
+  if (Number.isNaN(parsed)) return null;
+  return Math.round(parsed);
+}
+
+function toFloatOrNull(value: unknown) {
+>>>>>>> cafa814 (save current Smart Drive updates)
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
   if (!text) return null;
@@ -25,14 +38,15 @@ export async function POST(request: Request) {
       data: {
         firstName: toTextOrNull(body?.firstName),
         lastName: toTextOrNull(body?.lastName),
-        phone: toTextOrNull(body?.phone),
         email: toTextOrNull(body?.email),
+        phone: toTextOrNull(body?.phone),
 
         identityType: toTextOrNull(body?.identityType),
         identityValue: toTextOrNull(body?.identityValue),
         issuingCountry: toTextOrNull(body?.issuingCountry),
         identityStatus: toTextOrNull(body?.identityStatus) ?? "PENDING",
 
+<<<<<<< HEAD
         stockNumber: toTextOrNull(body?.stockNumber),
         vin: toTextOrNull(body?.vin),
         vehicleYear: toNumberOrNull(body?.vehicleYear),
@@ -46,6 +60,24 @@ export async function POST(request: Request) {
 
         creditScore: toNumberOrNull(body?.creditScore),
         monthlyIncome: toNumberOrNull(body?.monthlyIncome),
+=======
+        creditScore: toIntOrNull(body?.creditScore),
+        monthlyIncome: toIntOrNull(body?.monthlyIncome),
+
+        stockNumber: toTextOrNull(body?.stockNumber),
+        vin: toTextOrNull(body?.vin),
+        vehicleYear: toIntOrNull(body?.vehicleYear),
+        vehicleMake: toTextOrNull(body?.vehicleMake),
+        vehicleModel: toTextOrNull(body?.vehicleModel),
+        vehiclePrice: toFloatOrNull(body?.vehiclePrice),
+
+        downPayment: toFloatOrNull(body?.downPayment),
+        tradeIn: toFloatOrNull(body?.tradeIn),
+        amountFinanced: toFloatOrNull(body?.amountFinanced),
+
+        requestedVehicle: toTextOrNull(body?.requestedVehicle),
+        requestedPrice: toFloatOrNull(body?.requestedPrice),
+>>>>>>> cafa814 (save current Smart Drive updates)
 
         status: "DRAFT",
       },

@@ -6,12 +6,16 @@ import type { NextRequest } from "next/server";
 const SESSION_COOKIE = "sdf_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
+type AppRole = "ADMIN" | "CONTROLLER" | "SALES";
+
 type SessionPayload = {
   userId: string;
   exp: number;
+  role?: AppRole;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 };
-
-type AppRole = "ADMIN" | "CONTROLLER" | "SALES";
 
 type AuthUser = {
   id: string;
@@ -81,10 +85,20 @@ export function verifyPassword(password: string, storedHash: string) {
   return timingSafeEqual(a, b);
 }
 
-export function createSessionToken(userId: string) {
+export function createSessionToken(
+  userId: string,
+  role: AppRole = "SALES",
+  email: string | null = null,
+  firstName: string | null = null,
+  lastName: string | null = null
+) {
   const payload: SessionPayload = {
     userId,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+    role,
+    email,
+    firstName,
+    lastName,
   };
 
   const encoded = base64UrlEncode(JSON.stringify(payload));
@@ -130,22 +144,13 @@ export function sessionCookieOptions() {
   };
 }
 
-async function loadUserById(userId: string): Promise<AuthUser | null> {
-  const prismaModule = await import("@/lib/prisma");
-  const prisma = prismaModule.default;
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) return null;
-
+function userFromSession(session: SessionPayload): AuthUser {
   return {
-    id: user.id,
-    role: normalizeRole(user.role),
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    id: session.userId,
+    role: normalizeRole(session.role),
+    email: session.email ?? null,
+    firstName: session.firstName ?? null,
+    lastName: session.lastName ?? null,
   };
 }
 
@@ -156,7 +161,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   if (!session) return null;
 
-  return loadUserById(session.userId);
+  return userFromSession(session);
 }
 
 export async function requireUser() {
@@ -181,7 +186,7 @@ export async function getRequestUser(req: NextRequest): Promise<AuthUser | null>
 
   if (!session) return null;
 
-  return loadUserById(session.userId);
+  return userFromSession(session);
 }
 
 export function unauthorizedResponse() {

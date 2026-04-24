@@ -5,8 +5,20 @@ export const dynamic = "force-dynamic";
 
 function asNumber(value: unknown, fallback: number | null = null) {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
-  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+  if (
+    typeof value === "string" &&
+    value.trim() !== "" &&
+    !Number.isNaN(Number(value))
+  ) {
     return Number(value);
+  }
+  return fallback;
+}
+
+function asText(value: unknown, fallback = "") {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
   }
   return fallback;
 }
@@ -23,6 +35,10 @@ export async function POST(req: Request) {
         : "";
 
     const fundingAmount = asNumber(body?.fundingAmount);
+<<<<<<< HEAD
+=======
+    const note = asText(body?.note, "Application marked funded");
+>>>>>>> cafa814 (save current Smart Drive updates)
 
     const fundingDate =
       typeof body?.fundingDate === "string" && body.fundingDate.trim()
@@ -44,7 +60,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (fundingDate && Number.isNaN(fundingDate.getTime())) {
+    if (Number.isNaN(fundingDate.getTime())) {
       return NextResponse.json(
         {
           success: false,
@@ -92,6 +108,7 @@ export async function POST(req: Request) {
         },
       });
 
+<<<<<<< HEAD
       await tx.statusHistory.create({
         data: {
           applicationId,
@@ -101,6 +118,9 @@ export async function POST(req: Request) {
           note,
         },
       });
+=======
+      
+>>>>>>> cafa814 (save current Smart Drive updates)
 
       return updatedApplication;
     });

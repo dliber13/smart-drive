@@ -3,12 +3,17 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+<<<<<<< HEAD
 function stockSortValue(stockNumber: string | null | undefined) {
+=======
+function stockSortValue(stockNumber: string) {
+>>>>>>> cafa814 (save current Smart Drive updates)
   const text = String(stockNumber || "").trim().toUpperCase();
   const numeric = Number(text.replace(/[^0-9]/g, ""));
   return Number.isNaN(numeric) ? Number.MAX_SAFE_INTEGER : numeric;
 }
 
+<<<<<<< HEAD
 function toNumber(value: unknown) {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
   if (
@@ -60,10 +65,40 @@ export async function GET() {
       return String(a.stockNumber || a.stock_number || "").localeCompare(
         String(b.stockNumber || b.stock_number || "")
       );
+=======
+export async function GET() {
+  try {
+    const vehicles = await prisma.vehicle.findMany({
+      where: {
+        status: "ACTIVE",
+      },
+      select: {
+        id: true,
+        stockNumber: true,
+        year: true,
+        make: true,
+        model: true,
+        mileage: true,
+        vehicleClass: true,
+        askingPrice: true,
+        status: true,
+      },
+      take: 500,
+    });
+
+    const sortedVehicles = [...vehicles].sort((a, b) => {
+      const stockA = stockSortValue(a.stockNumber);
+      const stockB = stockSortValue(b.stockNumber);
+
+      if (stockA !== stockB) return stockA - stockB;
+
+      return String(a.stockNumber).localeCompare(String(b.stockNumber));
+>>>>>>> cafa814 (save current Smart Drive updates)
     });
 
     return NextResponse.json({
       success: true,
+<<<<<<< HEAD
       count: vehicles.length,
       vehicles: vehicles.map((v) => {
         const price =
@@ -96,6 +131,10 @@ export async function GET() {
           status: v.status || "ACTIVE",
         };
       }),
+=======
+      vehicles: sortedVehicles,
+      count: sortedVehicles.length,
+>>>>>>> cafa814 (save current Smart Drive updates)
     });
   } catch (error: any) {
     console.error("VEHICLE OPTIONS ERROR:", error);
@@ -108,4 +147,8 @@ export async function GET() {
       { status: 500 }
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> cafa814 (save current Smart Drive updates)
