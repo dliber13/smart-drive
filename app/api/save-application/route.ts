@@ -3,81 +3,80 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-function toTextOrNull(value: unknown) {
-  if (value === null || value === undefined) return null;
-  const text = String(value).trim();
-  return text ? text : null;
+function cleanString(value: unknown) {
+  if (typeof value !== "string") return null;
+  const cleaned = value.trim();
+  return cleaned.length ? cleaned : null;
 }
 
-<<<<<<< HEAD
-function toNumberOrNull(value: unknown) {
-=======
-function toIntOrNull(value: unknown) {
-  if (value === null || value === undefined) return null;
-  const text = String(value).trim();
-  if (!text) return null;
-  const parsed = Number(text);
-  if (Number.isNaN(parsed)) return null;
-  return Math.round(parsed);
+function cleanNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(String(value).replace(/[^0-9.-]/g, ""));
+  return Number.isNaN(number) ? null : number;
 }
 
-function toFloatOrNull(value: unknown) {
->>>>>>> cafa814 (save current Smart Drive updates)
-  if (value === null || value === undefined) return null;
-  const text = String(value).trim();
-  if (!text) return null;
-  const parsed = Number(text);
-  return Number.isNaN(parsed) ? null : parsed;
+function cleanInt(value: unknown) {
+  const number = cleanNumber(value);
+  return number === null ? null : Math.round(number);
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const db = prisma as any;
 
-    const application = await prisma.application.create({
+    const firstName = cleanString(body.firstName);
+    const lastName = cleanString(body.lastName);
+
+    const vehicleYear = cleanInt(body.vehicleYear);
+    const vehiclePrice = cleanNumber(body.vehiclePrice);
+    const downPayment = cleanNumber(body.downPayment);
+    const tradeIn = cleanNumber(body.tradeIn);
+
+    const amountFinanced =
+      cleanNumber(body.amountFinanced) ??
+      Math.max((vehiclePrice ?? 0) - (downPayment ?? 0) - (tradeIn ?? 0), 0);
+
+    const requestedVehicle =
+      cleanString(body.requestedVehicle) ||
+      [body.vehicleYear, body.vehicleMake, body.vehicleModel]
+        .filter(Boolean)
+        .join(" ")
+        .trim() ||
+      null;
+
+    const application = await db.application.create({
       data: {
-        firstName: toTextOrNull(body?.firstName),
-        lastName: toTextOrNull(body?.lastName),
-        email: toTextOrNull(body?.email),
-        phone: toTextOrNull(body?.phone),
+        firstName,
+        lastName,
+        customerFirstName: firstName,
+        customerLastName: lastName,
 
-        identityType: toTextOrNull(body?.identityType),
-        identityValue: toTextOrNull(body?.identityValue),
-        issuingCountry: toTextOrNull(body?.issuingCountry),
-        identityStatus: toTextOrNull(body?.identityStatus) ?? "PENDING",
+        email: cleanString(body.email),
+        phone: cleanString(body.phone),
 
-<<<<<<< HEAD
-        stockNumber: toTextOrNull(body?.stockNumber),
-        vin: toTextOrNull(body?.vin),
-        vehicleYear: toNumberOrNull(body?.vehicleYear),
-        vehicleMake: toTextOrNull(body?.vehicleMake),
-        vehicleModel: toTextOrNull(body?.vehicleModel),
-        vehiclePrice: toNumberOrNull(body?.vehiclePrice),
+        identityType: cleanString(body.identityType),
+        identityValue: cleanString(body.identityValue),
+        issuingCountry: cleanString(body.issuingCountry),
+        identityStatus: cleanString(body.identityStatus) || "PENDING",
 
-        downPayment: toNumberOrNull(body?.downPayment),
-        tradeIn: toNumberOrNull(body?.tradeIn),
-        amountFinanced: toNumberOrNull(body?.amountFinanced),
+        creditScore: cleanInt(body.creditScore),
+        monthlyIncome: cleanInt(body.monthlyIncome),
+        grossIncome: cleanNumber(body.monthlyIncome),
 
-        creditScore: toNumberOrNull(body?.creditScore),
-        monthlyIncome: toNumberOrNull(body?.monthlyIncome),
-=======
-        creditScore: toIntOrNull(body?.creditScore),
-        monthlyIncome: toIntOrNull(body?.monthlyIncome),
+        stockNumber: cleanString(body.stockNumber),
+        vin: cleanString(body.vin),
+        vehicleYear,
+        vehicleMake: cleanString(body.vehicleMake),
+        vehicleModel: cleanString(body.vehicleModel),
+        vehiclePrice,
 
-        stockNumber: toTextOrNull(body?.stockNumber),
-        vin: toTextOrNull(body?.vin),
-        vehicleYear: toIntOrNull(body?.vehicleYear),
-        vehicleMake: toTextOrNull(body?.vehicleMake),
-        vehicleModel: toTextOrNull(body?.vehicleModel),
-        vehiclePrice: toFloatOrNull(body?.vehiclePrice),
+        requestedVehicle,
+        requestedPrice: cleanNumber(body.requestedPrice) ?? vehiclePrice,
 
-        downPayment: toFloatOrNull(body?.downPayment),
-        tradeIn: toFloatOrNull(body?.tradeIn),
-        amountFinanced: toFloatOrNull(body?.amountFinanced),
-
-        requestedVehicle: toTextOrNull(body?.requestedVehicle),
-        requestedPrice: toFloatOrNull(body?.requestedPrice),
->>>>>>> cafa814 (save current Smart Drive updates)
+        downPayment,
+        tradeIn,
+        amountFinanced,
 
         status: "DRAFT",
       },
@@ -85,7 +84,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Draft saved successfully",
       application,
     });
   } catch (error: any) {
