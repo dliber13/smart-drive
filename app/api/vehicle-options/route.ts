@@ -11,7 +11,6 @@ function stockSortValue(stockNumber: string | null | undefined) {
 
 function toNumber(value: unknown) {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
-
   if (
     typeof value === "string" &&
     value.trim() !== "" &&
@@ -19,26 +18,47 @@ function toNumber(value: unknown) {
   ) {
     return Number(value);
   }
-
   return 0;
+}
+
+async function readInventory() {
+  const db = prisma as any;
+
+  const attempts = [
+    `SELECT * FROM public."Vehicle" LIMIT 500`,
+    `SELECT * FROM public."InventoryUnit" LIMIT 500`,
+    `SELECT * FROM public.vehicle LIMIT 500`,
+    `SELECT * FROM public.inventoryunit LIMIT 500`,
+  ];
+
+  let lastError: any = null;
+
+  for (const sql of attempts) {
+    try {
+      const rows = await db.$queryRawUnsafe(sql);
+      if (Array.isArray(rows)) {
+        return rows;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("No inventory table found");
 }
 
 export async function GET() {
   try {
-    const db = prisma as any;
-
-    const inventory = (await db.vehicle.findMany({
-      take: 500,
-    })) as any[];
+    const inventory = (await readInventory()) as any[];
 
     const vehicles = [...inventory].sort((a, b) => {
-      const stockA = stockSortValue(a.stockNumber);
-      const stockB = stockSortValue(b.stockNumber);
+      const stockA = stockSortValue(a.stockNumber || a.stock_number);
+      const stockB = stockSortValue(b.stockNumber || b.stock_number);
 
       if (stockA !== stockB) return stockA - stockB;
 
-      return String(a.stockNumber || "").localeCompare(
-        String(b.stockNumber || "")
+      return String(a.stockNumber || a.stock_number || "").localeCompare(
+        String(b.stockNumber || b.stock_number || "")
       );
     });
 
@@ -48,20 +68,30 @@ export async function GET() {
       vehicles: vehicles.map((v) => {
         const price =
           toNumber(v.askingPrice) ||
+          toNumber(v.asking_price) ||
           toNumber(v.price) ||
           toNumber(v.vehiclePrice) ||
+          toNumber(v.vehicle_price) ||
           toNumber(v.retailPrice) ||
-          toNumber(v.listPrice);
+          toNumber(v.retail_price) ||
+          toNumber(v.listPrice) ||
+          toNumber(v.list_price);
 
         return {
           id: v.id,
-          stockNumber: v.stockNumber || "",
-          vin: v.vin || "",
+          stockNumber: v.stockNumber || v.stock_number || "",
+          vin: v.vin || v.VIN || "",
           year: v.year || 0,
           make: v.make || "",
           model: v.model || "",
           mileage: v.mileage || 0,
-          vehicleClass: v.vehicleClass || v.bodyStyle || v.trim || "",
+          vehicleClass:
+            v.vehicleClass ||
+            v.vehicle_class ||
+            v.bodyStyle ||
+            v.body_style ||
+            v.trim ||
+            "",
           askingPrice: price,
           status: v.status || "ACTIVE",
         };
