@@ -11,7 +11,11 @@ function stockSortValue(stockNumber: string | null | undefined) {
 
 function toNumber(value: unknown) {
   if (typeof value === "number" && !Number.isNaN(value)) return value;
-  if (typeof value === "string" && value.trim() !== "" && !Number.isNaN(Number(value))) {
+  if (
+    typeof value === "string" &&
+    value.trim() !== "" &&
+    !Number.isNaN(Number(value))
+  ) {
     return Number(value);
   }
   return 0;
@@ -20,9 +24,6 @@ function toNumber(value: unknown) {
 export async function GET() {
   try {
     const inventory = (await prisma.inventoryUnit.findMany({
-      where: {
-        isAvailable: true,
-      },
       take: 500,
     })) as any[];
 
@@ -56,9 +57,9 @@ export async function GET() {
           make: v.make || "",
           model: v.model || "",
           mileage: v.mileage || 0,
-          vehicleClass: v.vehicleClass || v.bodyStyle || "",
+          vehicleClass: v.vehicleClass || v.bodyStyle || v.trim || "",
           askingPrice: price,
-          status: v.status || (v.isAvailable ? "ACTIVE" : "INACTIVE"),
+          status: v.status || "ACTIVE",
         };
       }),
     });
