@@ -1,56 +1,68 @@
-"use client"
+"use client";
 
-import { CSSProperties, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
 
-type IdentityType =
-  | "SSN"
-  | "ITIN"
-  | "DRIVERS_LICENSE"
-  | "STATE_ID"
-  | "PASSPORT"
-  | "MATRICULA"
-  | "OTHER"
-  | ""
+type DealerForm = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 
-type IdentityStatus = "PENDING" | "VERIFIED" | "REJECTED"
+  identityType: string;
+  identityValue: string;
+  issuingCountry: string;
+  identityStatus: string;
 
-type FormState = {
-  firstName: string
-  lastName: string
-  phone: string
-  email: string
+  dealType: string;
 
-  identityType: IdentityType
-  identityValue: string
-  issuingCountry: string
-  identityStatus: IdentityStatus
+  creditScore: string;
+  monthlyIncome: string;
 
-  stockNumber: string
-  vin: string
-  vehicleYear: string
-  vehicleMake: string
-  vehicleModel: string
-  vehiclePrice: string
+  selectedVehicleId: string;
+  stockNumber: string;
+  vin: string;
+  vehicleYear: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  vehiclePrice: string;
 
-  downPayment: string
-  tradeIn: string
-  amountFinanced: string
+  downPayment: string;
+  tradeIn: string;
+  amountFinanced: string;
 
-  creditScore: string
-  monthlyIncome: string
-}
+  acceptedTerms: boolean;
+};
 
-const initialForm: FormState = {
+type VehicleOption = {
+  id: string;
+  stockNumber: string;
+  vin?: string | null;
+  year: number;
+  make: string;
+  model: string;
+  mileage: number;
+  vehicleClass: string;
+  askingPrice: number;
+  status: string;
+};
+
+const initialForm: DealerForm = {
   firstName: "",
   lastName: "",
-  phone: "",
   email: "",
+  phone: "",
 
-  identityType: "",
+  identityType: "DRIVERS_LICENSE",
   identityValue: "",
-  issuingCountry: "",
-  identityStatus: "PENDING",
+  issuingCountry: "United States",
+  identityStatus: "VERIFIED",
 
+  dealType: "RETAIL",
+
+  creditScore: "",
+  monthlyIncome: "",
+
+  selectedVehicleId: "",
   stockNumber: "",
   vin: "",
   vehicleYear: "",
@@ -62,946 +74,736 @@ const initialForm: FormState = {
   tradeIn: "",
   amountFinanced: "",
 
-  creditScore: "",
-  monthlyIncome: "",
+  acceptedTerms: false,
+};
+
+function toNumber(value: string) {
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-type ChecklistItem = {
-  label: string
-  complete: boolean
+function formatMoneyInput(value: string) {
+  if (!value.trim()) return "";
+  const numeric = Number(value.replace(/[^0-9.-]/g, ""));
+  if (Number.isNaN(numeric)) return "";
+  return numeric.toFixed(2);
 }
 
-function toNumberOrNull(value: string) {
-  if (!value.trim()) return null
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? null : parsed
+function displayCurrency(value: string) {
+  if (!value.trim()) return "";
+  const numeric = Number(value);
+  if (Number.isNaN(numeric)) return "";
+  return `$${numeric.toFixed(2)}`;
 }
 
-function extractErrorText(data: any, fallback: string) {
-  if (!data) return fallback
-
-  if (typeof data?.message === "string" && data.message.trim()) {
-    return data.message
-  }
-
-  if (typeof data?.reason === "string" && data.reason.trim()) {
-    return data.reason
-  }
-
-  if (typeof data?.error === "string" && data.error.trim()) {
-    return data.error
-  }
-
-  if (Array.isArray(data?.validationReasons) && data.validationReasons.length > 0) {
-    return data.validationReasons.join(" | ")
-  }
-
-  try {
-    return JSON.stringify(data)
-  } catch {
-    return fallback
-  }
+function isValidVin(value: string) {
+  const vin = value.trim().toUpperCase();
+  return /^[A-HJ-NPR-Z0-9]{17}$/.test(vin);
 }
 
 export default function DealerPage() {
-  const [form, setForm] = useState<FormState>(initialForm)
-  const [applicationId, setApplicationId] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState("")
-  const [messageType, setMessageType] = useState<"success" | "error" | "info">(
-    "info"
-  )
+  const [form, setForm] = useState<DealerForm>(initialForm);
+  const [saving, setSaving] = useState(false);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
+  const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
 
-  function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
+  const calculatedAmountFinanced = useMemo(() => {
+    const vehiclePrice = toNumber(form.vehiclePrice);
+    const downPayment = toNumber(form.downPayment);
+    const tradeIn = toNumber(form.tradeIn);
+    const result = vehiclePrice - downPayment - tradeIn;
+    return result > 0 ? result : 0;
+  }, [form.vehiclePrice, form.downPayment, form.tradeIn]);
 
-  function showTopMessage(type: "success" | "error" | "info", text: string) {
-    setMessageType(type)
-    setMessage(text)
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
+  useEffect(() => {
+    async function loadVehicles() {
+      try {
+        setLoadingVehicles(true);
 
-  const checklist = useMemo<ChecklistItem[]>(() => {
-    return [
-      { label: "First name entered", complete: !!form.firstName.trim() },
-      { label: "Last name entered", complete: !!form.lastName.trim() },
-      { label: "Identity type selected", complete: !!form.identityType },
-      { label: "Identity value entered", complete: !!form.identityValue.trim() },
-      { label: "Issuing country entered", complete: !!form.issuingCountry.trim() },
-      { label: "Identity verified", complete: form.identityStatus === "VERIFIED" },
-    ]
-  }, [form])
+        const res = await fetch("/api/vehicle-options", {
+          cache: "no-store",
+        });
 
-  const readyForReview = useMemo(() => {
-    return (
-      !!form.firstName.trim() &&
-      !!form.lastName.trim() &&
-      !!form.identityType &&
-      !!form.identityValue.trim() &&
-      !!form.issuingCountry.trim()
-    )
-  }, [form])
+        const data = await res.json();
 
-  const canSubmit = useMemo(() => {
-    return readyForReview && form.identityStatus === "VERIFIED"
-  }, [form.identityStatus, readyForReview])
+        if (!res.ok || !data.success) {
+          setMessage(data?.reason || "Failed to load inventory");
+          setMessageType("error");
+          setVehicles([]);
+          return;
+        }
 
-  const currentStatus = useMemo(() => {
-    if (canSubmit) return "READY FOR SUBMISSION"
-    if (readyForReview) return "READY FOR CONTROLLER REVIEW"
-    return "DRAFT"
-  }, [canSubmit, readyForReview])
-
-  const blockReasons = useMemo(() => {
-    const reasons: string[] = []
-
-    if (!form.firstName.trim()) reasons.push("Missing first name")
-    if (!form.lastName.trim()) reasons.push("Missing last name")
-    if (!form.identityType) reasons.push("Missing identity type")
-    if (!form.identityValue.trim()) reasons.push("Missing identity value")
-    if (!form.issuingCountry.trim()) reasons.push("Missing issuing country")
-    if (form.identityStatus !== "VERIFIED") {
-      reasons.push("Identity verification required before submission")
+        setVehicles(Array.isArray(data.vehicles) ? data.vehicles : []);
+      } catch (error) {
+        console.error("LOAD VEHICLES ERROR:", error);
+        setMessage("Failed to load inventory");
+        setMessageType("error");
+        setVehicles([]);
+      } finally {
+        setLoadingVehicles(false);
+      }
     }
 
-    return reasons
-  }, [form])
+    loadVehicles();
+  }, []);
 
-  async function saveDraft() {
-    setSaving(true)
-    setMessage("")
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) {
+    const target = e.target;
+    const { name, value } = target;
+
+    if (target instanceof HTMLInputElement && target.type === "checkbox") {
+      setForm((prev) => ({
+        ...prev,
+        [name]: target.checked,
+      }));
+      return;
+    }
+
+    if (name === "vin") {
+      const cleaned = value
+        .toUpperCase()
+        .replace(/[^A-HJ-NPR-Z0-9]/g, "")
+        .slice(0, 17);
+
+      setForm((prev) => ({
+        ...prev,
+        vin: cleaned,
+      }));
+      return;
+    }
+
+    if (name === "selectedVehicleId") {
+      const selectedVehicle = vehicles.find((vehicle) => vehicle.id === value);
+
+      if (!selectedVehicle) {
+        setForm((prev) => ({
+          ...prev,
+          selectedVehicleId: "",
+          stockNumber: "",
+          vin: "",
+          vehicleYear: "",
+          vehicleMake: "",
+          vehicleModel: "",
+          vehiclePrice: "",
+        }));
+        return;
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        selectedVehicleId: selectedVehicle.id,
+        stockNumber: selectedVehicle.stockNumber || "",
+        vin: selectedVehicle.vin
+          ? selectedVehicle.vin
+              .toUpperCase()
+              .replace(/[^A-HJ-NPR-Z0-9]/g, "")
+              .slice(0, 17)
+          : "",
+        vehicleYear: String(selectedVehicle.year || ""),
+        vehicleMake: selectedVehicle.make || "",
+        vehicleModel: selectedVehicle.model || "",
+        vehiclePrice:
+          typeof selectedVehicle.askingPrice === "number"
+            ? selectedVehicle.askingPrice.toFixed(2)
+            : "",
+      }));
+      return;
+    }
+
+    if (
+      name === "vehiclePrice" ||
+      name === "downPayment" ||
+      name === "tradeIn" ||
+      name === "monthlyIncome"
+    ) {
+      const cleaned = value.replace(/[^0-9.]/g, "");
+      setForm((prev) => ({
+        ...prev,
+        [name]: cleaned,
+      }));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function handleBlurCurrency(e: React.FocusEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+
+    if (
+      name !== "vehiclePrice" &&
+      name !== "downPayment" &&
+      name !== "tradeIn" &&
+      name !== "monthlyIncome"
+    ) {
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: formatMoneyInput(value),
+    }));
+  }
+
+  async function handleSaveDraft() {
+    setMessage("");
+    setMessageType("");
+
+    if (!form.acceptedTerms) {
+      setMessage("You must accept Terms of Service and Privacy Policy before saving.");
+      setMessageType("error");
+      return;
+    }
+
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setMessage("First name and last name are required.");
+      setMessageType("error");
+      return;
+    }
+
+    if (!form.creditScore.trim() || !form.monthlyIncome.trim()) {
+      setMessage("Credit score and monthly income are required for underwriting.");
+      setMessageType("error");
+      return;
+    }
+
+    if (!form.selectedVehicleId.trim()) {
+      setMessage("Please select a vehicle from inventory.");
+      setMessageType("error");
+      return;
+    }
+
+    if (!isValidVin(form.vin)) {
+      setMessage("VIN must be exactly 17 valid characters and cannot contain I, O, or Q.");
+      setMessageType("error");
+      return;
+    }
+
+    if (!form.vehiclePrice.trim()) {
+      setMessage("Vehicle price is required.");
+      setMessageType("error");
+      return;
+    }
 
     try {
-      const response = await fetch("/api/save-application", {
+      setSaving(true);
+
+      const payload = {
+        ...form,
+        vin: form.vin.trim().toUpperCase(),
+        amountFinanced:
+          form.amountFinanced.trim() !== ""
+            ? formatMoneyInput(form.amountFinanced)
+            : calculatedAmountFinanced.toFixed(2),
+        requestedVehicle:
+          [form.vehicleYear, form.vehicleMake, form.vehicleModel]
+            .filter(Boolean)
+            .join(" ") || null,
+        requestedPrice: formatMoneyInput(form.vehiclePrice),
+      };
+
+      const res = await fetch("/api/save-application", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-user-role": "SALES",
         },
-        body: JSON.stringify({
-          ...buildPayload(form),
-          status: "DRAFT",
-        }),
-      })
+        body: JSON.stringify(payload),
+      });
 
-      const data = await response.json()
+      const data = await res.json();
 
-      if (!response.ok) {
-        showTopMessage("error", extractErrorText(data, "Draft save failed"))
-        return
+      if (!res.ok || !data.success) {
+        setMessage(data?.reason || "Failed to save draft");
+        setMessageType("error");
+        return;
       }
 
-      setApplicationId(data?.applicationId ?? null)
-      showTopMessage("success", "Draft saved successfully")
-    } catch (error: any) {
-      console.error("SAVE DRAFT FRONTEND ERROR:", error)
-      showTopMessage("error", error?.message || "Draft save failed")
+      setMessage("Draft saved successfully");
+      setMessageType("success");
+      setForm(initialForm);
+    } catch (error) {
+      console.error("DEALER SAVE DRAFT ERROR:", error);
+      setMessage("Failed to save draft");
+      setMessageType("error");
     } finally {
-      setSaving(false)
-    }
-  }
-
-  async function submitApplication() {
-    setSubmitting(true)
-    setMessage("")
-
-    try {
-      if (!applicationId) {
-        showTopMessage("error", "Please save the draft before submitting.")
-        return
-      }
-
-      const submitResponse = await fetch("/api/test-submit-application", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-role": "SALES",
-        },
-        body: JSON.stringify({
-          applicationId,
-        }),
-      })
-
-      const submitData = await submitResponse.json()
-
-      console.log("TEST SUBMIT RESPONSE:", submitData)
-
-      if (!submitResponse.ok) {
-        showTopMessage(
-          "error",
-          extractErrorText(
-            submitData,
-            "Application blocked. Review submission requirements."
-          )
-        )
-        return
-      }
-
-      showTopMessage("success", "Application submitted successfully")
-      setForm(initialForm)
-      setApplicationId(null)
-    } catch (error: any) {
-      console.error("FRONTEND SUBMIT ERROR:", error)
-      showTopMessage("error", error?.message || "Application submission failed")
-    } finally {
-      setSubmitting(false)
+      setSaving(false);
     }
   }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.headerRow}>
-          <div>
-            <div style={styles.kicker}>Smart Drive Elite</div>
-            <h1 style={styles.pageTitle}>Deal Intake</h1>
-            <p style={styles.pageSubtitle}>
-              Create a structured application for controller review and
-              underwriting. Identity must be complete and verified before a file
-              can be submitted.
-            </p>
+    <main className="min-h-screen bg-[#f7f4ee] px-5 py-8 text-[#111111] md:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8">
+          <div className="text-[13px] uppercase tracking-[0.32em] text-black/40">
+            Smart Drive Elite
           </div>
-
-          <div style={styles.badgeRow}>
-            <div style={styles.statusPill}>{currentStatus}</div>
-            <div style={styles.roleBadge}>SALES</div>
-          </div>
+          <h1 className="mt-4 text-6xl font-semibold tracking-[-0.06em]">
+            Deal Intake
+          </h1>
+          <p className="mt-4 max-w-4xl text-2xl leading-[1.6] text-black/65">
+            Create a structured application for controller review and underwriting.
+            Select live inventory and auto-populate vehicle details directly from your system.
+          </p>
         </div>
 
         {message ? (
           <div
-            style={{
-              ...styles.messageBox,
-              ...(messageType === "success"
-                ? styles.messageSuccess
-                : messageType === "error"
-                ? styles.messageError
-                : styles.messageInfo),
-            }}
+            className={`mb-8 rounded-[24px] border px-7 py-6 text-[18px] ${
+              messageType === "success"
+                ? "border-[#bfe3c6] bg-[#eaf6ee] text-[#2d7a45]"
+                : "border-[#efc7c7] bg-[#fff3f3] text-[#c64223]"
+            }`}
           >
             {message}
           </div>
         ) : null}
 
-        <div style={styles.grid}>
-          <div style={styles.leftColumn}>
-            <SectionCard
-              title="Applicant Information"
-              subtitle="Core borrower details"
-            >
-              <div style={styles.twoColumnGrid}>
-                <Field
-                  label="First Name"
-                  value={form.firstName}
-                  onChange={(v) => updateField("firstName", v)}
-                  placeholder="First name"
-                />
-                <Field
-                  label="Last Name"
-                  value={form.lastName}
-                  onChange={(v) => updateField("lastName", v)}
-                  placeholder="Last name"
-                />
-                <Field
-                  label="Phone"
-                  value={form.phone}
-                  onChange={(v) => updateField("phone", v)}
-                  placeholder="Phone number"
-                />
-                <Field
-                  label="Email"
-                  value={form.email}
-                  onChange={(v) => updateField("email", v)}
-                  placeholder="Email address"
-                />
+        <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
+          <section className="rounded-[32px] border border-black/8 bg-white p-7 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
+            <div className="grid gap-6">
+              <div className="rounded-[28px] border border-black/6 bg-[#fcfbf8] p-6">
+                <h2 className="text-[28px] font-semibold tracking-[-0.04em]">
+                  Applicant Information
+                </h2>
+                <p className="mt-2 text-[15px] text-black/55">Core borrower details</p>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <Field label="First Name" name="firstName" value={form.firstName} onChange={handleChange} />
+                  <Field label="Last Name" name="lastName" value={form.lastName} onChange={handleChange} />
+                  <Field label="Email" name="email" value={form.email} onChange={handleChange} />
+                  <Field label="Phone" name="phone" value={form.phone} onChange={handleChange} />
+                </div>
               </div>
-            </SectionCard>
 
-            <SectionCard
-              title="Identity Verification"
-              subtitle="Required before submission"
-              highlight
-            >
-              <div style={styles.twoColumnGrid}>
-                <SelectField
-                  label="Identity Type"
-                  value={form.identityType}
-                  onChange={(v) =>
-                    updateField("identityType", v as IdentityType)
-                  }
-                  options={[
-                    { label: "Select identity type", value: "" },
-                    { label: "SSN", value: "SSN" },
-                    { label: "ITIN", value: "ITIN" },
-                    { label: "Driver's License", value: "DRIVERS_LICENSE" },
-                    { label: "State ID (Non-Driver)", value: "STATE_ID" },
-                    { label: "Passport", value: "PASSPORT" },
-                    { label: "Matricula", value: "MATRICULA" },
-                    { label: "Other", value: "OTHER" },
-                  ]}
-                />
-                <Field
-                  label="Identity Value"
-                  value={form.identityValue}
-                  onChange={(v) => updateField("identityValue", v)}
-                  placeholder="Enter identity number/reference"
-                />
-                <Field
-                  label="Issuing Country"
-                  value={form.issuingCountry}
-                  onChange={(v) => updateField("issuingCountry", v)}
-                  placeholder="Country"
-                />
-                <SelectField
-                  label="Identity Status"
-                  value={form.identityStatus}
-                  onChange={(v) =>
-                    updateField("identityStatus", v as IdentityStatus)
-                  }
-                  options={[
-                    { label: "PENDING", value: "PENDING" },
-                    { label: "VERIFIED", value: "VERIFIED" },
-                    { label: "REJECTED", value: "REJECTED" },
-                  ]}
-                />
-              </div>
-            </SectionCard>
+              <div className="rounded-[28px] border border-black/6 bg-[#fcfbf8] p-6">
+                <h2 className="text-[28px] font-semibold tracking-[-0.04em]">
+                  Identity Verification
+                </h2>
+                <p className="mt-2 text-[15px] text-black/55">Verified identity data</p>
 
-            <SectionCard title="Vehicle Information" subtitle="Unit details">
-              <div style={styles.twoColumnGrid}>
-                <Field
-                  label="Stock Number"
-                  value={form.stockNumber}
-                  onChange={(v) => updateField("stockNumber", v)}
-                  placeholder="Stock #"
-                />
-                <Field
-                  label="VIN"
-                  value={form.vin}
-                  onChange={(v) => updateField("vin", v)}
-                  placeholder="VIN"
-                />
-                <Field
-                  label="Vehicle Year"
-                  value={form.vehicleYear}
-                  onChange={(v) => updateField("vehicleYear", v)}
-                  placeholder="Year"
-                />
-                <Field
-                  label="Vehicle Make"
-                  value={form.vehicleMake}
-                  onChange={(v) => updateField("vehicleMake", v)}
-                  placeholder="Make"
-                />
-                <Field
-                  label="Vehicle Model"
-                  value={form.vehicleModel}
-                  onChange={(v) => updateField("vehicleModel", v)}
-                  placeholder="Model"
-                />
-                <Field
-                  label="Vehicle Price"
-                  value={form.vehiclePrice}
-                  onChange={(v) => updateField("vehiclePrice", v)}
-                  placeholder="Vehicle price"
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Deal Structure" subtitle="Financial structure">
-              <div style={styles.threeColumnGrid}>
-                <Field
-                  label="Down Payment"
-                  value={form.downPayment}
-                  onChange={(v) => updateField("downPayment", v)}
-                  placeholder="Down payment"
-                />
-                <Field
-                  label="Trade In"
-                  value={form.tradeIn}
-                  onChange={(v) => updateField("tradeIn", v)}
-                  placeholder="Trade in"
-                />
-                <Field
-                  label="Amount Financed"
-                  value={form.amountFinanced}
-                  onChange={(v) => updateField("amountFinanced", v)}
-                  placeholder="Amount financed"
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Borrower Financials"
-              subtitle="Optional intake financials"
-            >
-              <div style={styles.twoColumnGrid}>
-                <Field
-                  label="Credit Score"
-                  value={form.creditScore}
-                  onChange={(v) => updateField("creditScore", v)}
-                  placeholder="Credit score"
-                />
-                <Field
-                  label="Monthly Income"
-                  value={form.monthlyIncome}
-                  onChange={(v) => updateField("monthlyIncome", v)}
-                  placeholder="Monthly income"
-                />
-              </div>
-            </SectionCard>
-
-            <div style={styles.actionBar}>
-              <button
-                type="button"
-                onClick={saveDraft}
-                disabled={saving}
-                style={{
-                  ...styles.secondaryButton,
-                  ...(saving ? styles.disabledButton : {}),
-                }}
-              >
-                {saving ? "Saving Draft..." : "Save Draft"}
-              </button>
-
-              <button
-                type="button"
-                onClick={submitApplication}
-                disabled={!canSubmit || submitting}
-                style={{
-                  ...styles.primaryButton,
-                  ...(!canSubmit || submitting ? styles.disabledButton : {}),
-                }}
-              >
-                {submitting ? "Submitting..." : "Submit Application"}
-              </button>
-            </div>
-          </div>
-
-          <div style={styles.rightColumn}>
-            <SectionCard
-              title="Submission Readiness"
-              subtitle="Everything the file must prove"
-            >
-              <div style={styles.stack}>
-                {checklist.map((item) => (
-                  <ChecklistRow
-                    key={item.label}
-                    label={item.label}
-                    complete={item.complete}
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <SelectField
+                    label="Identity Type"
+                    name="identityType"
+                    value={form.identityType}
+                    onChange={handleChange}
+                    options={[
+                      { value: "DRIVERS_LICENSE", label: "Driver's License" },
+                      { value: "SSN", label: "SSN" },
+                      { value: "PASSPORT", label: "Passport" },
+                      { value: "STATE_ID", label: "State ID" },
+                    ]}
                   />
-                ))}
-              </div>
-            </SectionCard>
 
-            <SectionCard
-              title="Current Status"
-              subtitle="Live workflow state"
+                  <Field
+                    label="Identity Number"
+                    name="identityValue"
+                    value={form.identityValue}
+                    onChange={handleChange}
+                  />
+
+                  <Field
+                    label="Issuing Country"
+                    name="issuingCountry"
+                    value={form.issuingCountry}
+                    onChange={handleChange}
+                  />
+
+                  <SelectField
+                    label="Identity Status"
+                    name="identityStatus"
+                    value={form.identityStatus}
+                    onChange={handleChange}
+                    options={[
+                      { value: "VERIFIED", label: "Verified" },
+                      { value: "PENDING", label: "Pending" },
+                      { value: "REJECTED", label: "Rejected" },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-black/6 bg-[#fcfbf8] p-6">
+                <h2 className="text-[28px] font-semibold tracking-[-0.04em]">
+                  Deal Structure
+                </h2>
+                <p className="mt-2 text-[15px] text-black/55">
+                  Select the financing structure for this file
+                </p>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <SelectField
+                    label="Deal Type"
+                    name="dealType"
+                    value={form.dealType}
+                    onChange={handleChange}
+                    options={[
+                      { value: "RETAIL", label: "Retail" },
+                      { value: "IBL", label: "IBL (Income Based Lending)" },
+                      { value: "LEASE", label: "Lease" },
+                      { value: "SUBSCRIPTION", label: "Subscription" },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-black/6 bg-[#fcfbf8] p-6">
+                <h2 className="text-[28px] font-semibold tracking-[-0.04em]">
+                  Borrower Financials
+                </h2>
+                <p className="mt-2 text-[15px] text-black/55">
+                  Income and credit for underwriting
+                </p>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <Field
+                    label="Credit Score"
+                    name="creditScore"
+                    value={form.creditScore}
+                    onChange={handleChange}
+                    inputMode="numeric"
+                  />
+                  <CurrencyField
+                    label="Monthly Income"
+                    name="monthlyIncome"
+                    value={form.monthlyIncome}
+                    onChange={handleChange}
+                    onBlur={handleBlurCurrency}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-black/6 bg-[#fcfbf8] p-6">
+                <h2 className="text-[28px] font-semibold tracking-[-0.04em]">
+                  Vehicle Structure
+                </h2>
+                <p className="mt-2 text-[15px] text-black/55">
+                  Select live inventory and auto-populate the vehicle structure
+                </p>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <SelectField
+                    label={loadingVehicles ? "Loading Inventory..." : "Select Vehicle"}
+                    name="selectedVehicleId"
+                    value={form.selectedVehicleId}
+                    onChange={handleChange}
+                    options={[
+                      { value: "", label: loadingVehicles ? "Loading..." : "Choose vehicle" },
+                      ...vehicles.map((vehicle) => ({
+                        value: vehicle.id,
+                        label: `${vehicle.stockNumber} • ${vehicle.year} ${vehicle.make} ${vehicle.model} • $${vehicle.askingPrice.toLocaleString()}`,
+                      })),
+                    ]}
+                  />
+
+                  <Field
+                    label="Stock Number"
+                    name="stockNumber"
+                    value={form.stockNumber}
+                    onChange={handleChange}
+                  />
+
+                  <Field
+                    label="VIN"
+                    name="vin"
+                    value={form.vin}
+                    onChange={handleChange}
+                  />
+
+                  <Field
+                    label="Vehicle Year"
+                    name="vehicleYear"
+                    value={form.vehicleYear}
+                    onChange={handleChange}
+                    inputMode="numeric"
+                  />
+
+                  <Field
+                    label="Vehicle Make"
+                    name="vehicleMake"
+                    value={form.vehicleMake}
+                    onChange={handleChange}
+                  />
+
+                  <Field
+                    label="Vehicle Model"
+                    name="vehicleModel"
+                    value={form.vehicleModel}
+                    onChange={handleChange}
+                  />
+
+                  <CurrencyField
+                    label="Vehicle Price"
+                    name="vehiclePrice"
+                    value={form.vehiclePrice}
+                    onChange={handleChange}
+                    onBlur={handleBlurCurrency}
+                  />
+
+                  <CurrencyField
+                    label="Down Payment"
+                    name="downPayment"
+                    value={form.downPayment}
+                    onChange={handleChange}
+                    onBlur={handleBlurCurrency}
+                  />
+
+                  <CurrencyField
+                    label="Trade-In"
+                    name="tradeIn"
+                    value={form.tradeIn}
+                    onChange={handleChange}
+                    onBlur={handleBlurCurrency}
+                  />
+
+                  <CurrencyField
+                    label="Amount Financed"
+                    name="amountFinanced"
+                    value={
+                      form.amountFinanced.trim() !== ""
+                        ? form.amountFinanced
+                        : calculatedAmountFinanced
+                        ? calculatedAmountFinanced.toFixed(2)
+                        : ""
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlurCurrency}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="rounded-[32px] border border-black/8 bg-white p-7 shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
+            <h2 className="text-[32px] font-semibold tracking-[-0.05em]">
+              Submission Readiness
+            </h2>
+            <p className="mt-2 text-[16px] leading-[1.6] text-black/55">
+              Everything the file must provide before underwriting review.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <ReadinessRow label="First name entered" ready={!!form.firstName.trim()} />
+              <ReadinessRow label="Last name entered" ready={!!form.lastName.trim()} />
+              <ReadinessRow label="Identity verified" ready={form.identityStatus === "VERIFIED"} />
+              <ReadinessRow label="Deal type selected" ready={!!form.dealType.trim()} />
+              <ReadinessRow label="Credit score entered" ready={!!form.creditScore.trim()} />
+              <ReadinessRow label="Monthly income entered" ready={!!form.monthlyIncome.trim()} />
+              <ReadinessRow label="Inventory vehicle selected" ready={!!form.selectedVehicleId.trim()} />
+              <ReadinessRow label="VIN valid" ready={isValidVin(form.vin)} />
+              <ReadinessRow label="Vehicle price entered" ready={!!form.vehiclePrice.trim()} />
+              <ReadinessRow label="Terms accepted" ready={form.acceptedTerms} />
+            </div>
+
+            <div className="mt-8 rounded-[24px] border border-black/8 bg-[#faf7f1] p-5">
+              <div className="text-[14px] uppercase tracking-[0.22em] text-black/45">
+                Calculated Structure
+              </div>
+
+              <div className="mt-4 space-y-3 text-[16px] text-black/70">
+                <div className="flex items-center justify-between gap-4">
+                  <span>Deal Type</span>
+                  <span className="font-semibold text-black">
+                    {form.dealType || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span>Selected Vehicle</span>
+                  <span className="font-semibold text-black">
+                    {[form.vehicleYear, form.vehicleMake, form.vehicleModel]
+                      .filter(Boolean)
+                      .join(" ") || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span>VIN</span>
+                  <span className="font-semibold text-black">
+                    {form.vin || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span>Requested Price</span>
+                  <span className="font-semibold text-black">
+                    {displayCurrency(form.vehiclePrice) || "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span>Amount Financed</span>
+                  <span className="font-semibold text-black">
+                    ${calculatedAmountFinanced.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 rounded-[24px] border border-black/8 bg-[#faf7f1] p-5">
+              <label className="flex items-start gap-3 text-[15px] leading-[1.6] text-black/65">
+                <input
+                  type="checkbox"
+                  name="acceptedTerms"
+                  checked={form.acceptedTerms}
+                  onChange={handleChange}
+                  className="mt-1 h-4 w-4"
+                />
+                <span>
+                  I agree to the{" "}
+                  <a href="/terms" className="underline hover:text-black">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" className="underline hover:text-black">
+                    Privacy Policy
+                  </a>.
+                </span>
+              </label>
+            </div>
+
+            <button
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="mt-8 w-full rounded-[20px] bg-black px-6 py-4 text-[17px] font-semibold text-white disabled:opacity-60"
             >
-              <div style={styles.stack}>
-                <InfoRow label="Current Status" value={currentStatus} />
-                <InfoRow
-                  label="Next Step"
-                  value={
-                    canSubmit
-                      ? "Ready to submit into queue"
-                      : readyForReview
-                      ? "Ready for controller review"
-                      : "Complete required intake fields"
-                  }
-                />
-                <InfoRow
-                  label="Submission Eligibility"
-                  value={canSubmit ? "Allowed" : "Blocked"}
-                  emphasize={canSubmit ? "success" : "danger"}
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Block Reasons" subtitle="Why submission is held">
-              <div style={styles.stack}>
-                {canSubmit ? (
-                  <div style={{ ...styles.noticeBox, ...styles.noticeSuccess }}>
-                    File meets submission requirements.
-                  </div>
-                ) : (
-                  blockReasons.map((reason) => (
-                    <div
-                      key={reason}
-                      style={{ ...styles.noticeBox, ...styles.noticeError }}
-                    >
-                      {reason}
-                    </div>
-                  ))
-                )}
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Access Control" subtitle="Role restrictions">
-              <div style={styles.stack}>
-                <div style={styles.softCard}>
-                  Sales can create and save intake files.
-                </div>
-                <div style={styles.softCard}>
-                  Sales cannot pull credit.
-                </div>
-                <div style={styles.softCard}>
-                  Identity must be verified before submission.
-                </div>
-              </div>
-            </SectionCard>
-          </div>
+              {saving ? "Saving Draft..." : "Save Draft"}
+            </button>
+          </aside>
         </div>
       </div>
     </main>
-  )
-}
-
-function buildPayload(form: FormState) {
-  return {
-    firstName: form.firstName || null,
-    lastName: form.lastName || null,
-    phone: form.phone || null,
-    email: form.email || null,
-
-    identityType: form.identityType || null,
-    identityValue: form.identityValue || null,
-    issuingCountry: form.issuingCountry || null,
-    identityStatus: form.identityStatus || "PENDING",
-
-    stockNumber: form.stockNumber || null,
-    vin: form.vin || null,
-    vehicleYear: toNumberOrNull(form.vehicleYear),
-    vehicleMake: form.vehicleMake || null,
-    vehicleModel: form.vehicleModel || null,
-    vehiclePrice: toNumberOrNull(form.vehiclePrice),
-
-    downPayment: toNumberOrNull(form.downPayment),
-    tradeIn: toNumberOrNull(form.tradeIn),
-    amountFinanced: toNumberOrNull(form.amountFinanced),
-
-    creditScore: toNumberOrNull(form.creditScore),
-    monthlyIncome: toNumberOrNull(form.monthlyIncome),
-  }
-}
-
-function SectionCard({
-  title,
-  subtitle,
-  children,
-  highlight = false,
-}: {
-  title: string
-  subtitle?: string
-  children: React.ReactNode
-  highlight?: boolean
-}) {
-  return (
-    <section
-      style={{
-        ...styles.sectionCard,
-        ...(highlight ? styles.highlightCard : {}),
-      }}
-    >
-      <div style={styles.sectionHeader}>
-        <h2 style={styles.sectionTitle}>{title}</h2>
-        {subtitle ? <p style={styles.sectionSubtitle}>{subtitle}</p> : null}
-      </div>
-      {children}
-    </section>
-  )
+  );
 }
 
 function Field({
   label,
+  name,
   value,
   onChange,
-  placeholder,
+  inputMode,
 }: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder: string
+  label: string;
+  name: string;
+  value: string;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => void;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }) {
   return (
-    <label style={styles.labelWrap}>
-      <div style={styles.fieldLabel}>{label}</div>
+    <div>
+      <label className="mb-2 block text-[13px] uppercase tracking-[0.22em] text-black/45">
+        {label}
+      </label>
       <input
+        name={name}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={styles.input}
+        onChange={onChange}
+        inputMode={inputMode}
+        className="w-full rounded-[18px] border border-black/10 bg-white px-5 py-4 text-[18px] outline-none"
       />
-    </label>
-  )
+    </div>
+  );
+}
+
+function CurrencyField({
+  label,
+  name,
+  value,
+  onChange,
+  onBlur,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => void;
+  onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-[13px] uppercase tracking-[0.22em] text-black/45">
+        {label}
+      </label>
+      <div className="flex items-center rounded-[18px] border border-black/10 bg-white px-5">
+        <span className="text-[18px] text-black/55">$</span>
+        <input
+          name={name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          inputMode="decimal"
+          className="w-full bg-transparent px-3 py-4 text-[18px] outline-none"
+        />
+      </div>
+    </div>
+  );
 }
 
 function SelectField({
   label,
+  name,
   value,
   onChange,
   options,
 }: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  options: { label: string; value: string }[]
+  label: string;
+  name: string;
+  value: string;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => void;
+  options: Array<{ value: string; label: string }>;
 }) {
   return (
-    <label style={styles.labelWrap}>
-      <div style={styles.fieldLabel}>{label}</div>
+    <div>
+      <label className="mb-2 block text-[13px] uppercase tracking-[0.22em] text-black/45">
+        {label}
+      </label>
       <select
+        name={name}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={styles.input}
+        onChange={onChange}
+        className="w-full rounded-[18px] border border-black/10 bg-white px-5 py-4 text-[18px] outline-none"
       >
         {options.map((option) => (
-          <option key={`${label}-${option.value}`} value={option.value}>
+          <option key={`${name}-${option.value}`} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-    </label>
-  )
+    </div>
+  );
 }
 
-function ChecklistRow({
+function ReadinessRow({
   label,
-  complete,
+  ready,
 }: {
-  label: string
-  complete: boolean
+  label: string;
+  ready: boolean;
 }) {
   return (
-    <div style={styles.checkRow}>
-      <span style={styles.checkRowLabel}>{label}</span>
+    <div className="flex items-center justify-between gap-4 rounded-[18px] border border-black/8 bg-white px-4 py-4">
+      <span className="text-[15px] text-black/65">{label}</span>
       <span
-        style={{
-          ...styles.checkBadge,
-          ...(complete ? styles.completeBadge : styles.missingBadge),
-        }}
+        className={`rounded-full px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.16em] ${
+          ready
+            ? "bg-[#eaf6ee] text-[#2d7a45]"
+            : "bg-[#f5f1ea] text-black/45"
+        }`}
       >
-        {complete ? "Complete" : "Missing"}
+        {ready ? "Ready" : "Missing"}
       </span>
     </div>
-  )
-}
-
-function InfoRow({
-  label,
-  value,
-  emphasize,
-}: {
-  label: string
-  value: string
-  emphasize?: "success" | "danger"
-}) {
-  return (
-    <div style={styles.infoRow}>
-      <div style={styles.infoLabel}>{label}</div>
-      <div
-        style={{
-          ...styles.infoValue,
-          ...(emphasize === "success"
-            ? styles.successText
-            : emphasize === "danger"
-            ? styles.dangerText
-            : {}),
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
-
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#f7f4ee",
-    padding: "32px 24px",
-    color: "#111111",
-    fontFamily:
-      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  },
-  container: {
-    maxWidth: "1280px",
-    margin: "0 auto",
-  },
-  headerRow: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: "16px",
-    marginBottom: "32px",
-  },
-  kicker: {
-    fontSize: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "0.28em",
-    color: "rgba(17,17,17,0.45)",
-  },
-  pageTitle: {
-    marginTop: "12px",
-    marginBottom: "8px",
-    fontSize: "56px",
-    lineHeight: 1,
-    fontWeight: 700,
-    letterSpacing: "-0.04em",
-  },
-  pageSubtitle: {
-    maxWidth: "760px",
-    fontSize: "16px",
-    lineHeight: 1.7,
-    color: "rgba(17,17,17,0.65)",
-    margin: 0,
-  },
-  badgeRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  statusPill: {
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    borderRadius: "999px",
-    padding: "12px 16px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.2em",
-    color: "rgba(17,17,17,0.75)",
-  },
-  roleBadge: {
-    borderRadius: "999px",
-    padding: "12px 16px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.2em",
-    color: "#ffffff",
-    backgroundColor: "#111111",
-  },
-  messageBox: {
-    marginBottom: "24px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    padding: "16px 18px",
-    fontSize: "14px",
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-  },
-  messageSuccess: {
-    backgroundColor: "#eefaf1",
-    borderColor: "#b7e3c2",
-    color: "#1f7a37",
-  },
-  messageError: {
-    backgroundColor: "#fff1f1",
-    borderColor: "#efc0c0",
-    color: "#b42318",
-  },
-  messageInfo: {
-    backgroundColor: "#ffffff",
-    borderColor: "rgba(17,17,17,0.1)",
-    color: "rgba(17,17,17,0.75)",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1.4fr) minmax(320px, 0.8fr)",
-    gap: "24px",
-    alignItems: "start",
-  },
-  leftColumn: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-  },
-  rightColumn: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-    position: "sticky",
-    top: "24px",
-  },
-  sectionCard: {
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "28px",
-    padding: "24px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-  },
-  highlightCard: {
-    backgroundColor: "#fffaf1",
-    borderColor: "#d8c7a1",
-  },
-  sectionHeader: {
-    marginBottom: "20px",
-  },
-  sectionTitle: {
-    margin: 0,
-    fontSize: "28px",
-    lineHeight: 1.1,
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
-  },
-  sectionSubtitle: {
-    marginTop: "6px",
-    marginBottom: 0,
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.55)",
-  },
-  twoColumnGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    gap: "16px",
-  },
-  threeColumnGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: "16px",
-  },
-  labelWrap: {
-    display: "block",
-  },
-  fieldLabel: {
-    marginBottom: "8px",
-    fontSize: "11px",
-    textTransform: "uppercase",
-    letterSpacing: "0.22em",
-    color: "rgba(17,17,17,0.45)",
-    fontWeight: 700,
-  },
-  input: {
-    width: "100%",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    padding: "14px 16px",
-    fontSize: "14px",
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  actionBar: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "12px",
-    backgroundColor: "#ffffff",
-    border: "1px solid rgba(17,17,17,0.08)",
-    borderRadius: "28px",
-    padding: "20px",
-    boxShadow: "0 18px 50px rgba(0,0,0,0.04)",
-  },
-  secondaryButton: {
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.1)",
-    backgroundColor: "#ffffff",
-    padding: "14px 24px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "rgba(17,17,17,0.75)",
-    cursor: "pointer",
-  },
-  primaryButton: {
-    borderRadius: "18px",
-    border: "none",
-    backgroundColor: "#111111",
-    padding: "14px 24px",
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#ffffff",
-    cursor: "pointer",
-  },
-  disabledButton: {
-    opacity: 0.45,
-    cursor: "not-allowed",
-  },
-  stack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  checkRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "12px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "14px 16px",
-  },
-  checkRowLabel: {
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.75)",
-  },
-  checkBadge: {
-    borderRadius: "999px",
-    padding: "6px 12px",
-    fontSize: "11px",
-    fontWeight: 700,
-    textTransform: "uppercase",
-    letterSpacing: "0.18em",
-  },
-  completeBadge: {
-    backgroundColor: "#dff5e6",
-    color: "#1f7a37",
-  },
-  missingBadge: {
-    backgroundColor: "#fde4e4",
-    color: "#b42318",
-  },
-  infoRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "16px",
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "14px 16px",
-  },
-  infoLabel: {
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.5)",
-  },
-  infoValue: {
-    fontSize: "14px",
-    fontWeight: 700,
-    textAlign: "right",
-    color: "rgba(17,17,17,0.82)",
-  },
-  successText: {
-    color: "#1f7a37",
-  },
-  dangerText: {
-    color: "#b42318",
-  },
-  noticeBox: {
-    borderRadius: "18px",
-    padding: "14px 16px",
-    fontSize: "14px",
-    border: "1px solid transparent",
-  },
-  noticeSuccess: {
-    backgroundColor: "#eefaf1",
-    borderColor: "#b7e3c2",
-    color: "#1f7a37",
-  },
-  noticeError: {
-    backgroundColor: "#fff1f1",
-    borderColor: "#efc0c0",
-    color: "#b42318",
-  },
-  softCard: {
-    borderRadius: "18px",
-    border: "1px solid rgba(17,17,17,0.08)",
-    backgroundColor: "#faf7f1",
-    padding: "14px 16px",
-    fontSize: "14px",
-    color: "rgba(17,17,17,0.72)",
-  },
+  );
 }
