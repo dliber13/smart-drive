@@ -488,7 +488,7 @@ export async function POST(
       monthlyIncome: application.monthlyIncome,
     });
 
-    const rawVehicleMatches = await prisma.vehicle.findMany({
+    const rawVehicleMatches = await (prisma as any).vehicle.findMany({
       where: {
         status: "ACTIVE",
         ...(baseDecision.maxVehicle > 0 && {

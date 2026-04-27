@@ -135,7 +135,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const inventory = await prisma.vehicle.findMany({
+    const inventory = await (prisma as any).vehicle.findMany({
       where: {
         status: "ACTIVE",
         askingPrice: {
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
       take: 100,
     });
 
-    const filtered = inventory.filter((unit) => {
+    const filtered = inventory.filter((unit: any) => {
       const vehicleClass = normalizeText(unit.vehicleClass);
       const mileage = asNumber(unit.mileage, 0);
       const year = asNumber(unit.year, 0);
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
       return true;
     });
 
-    const matches = filtered.map((unit) => {
+    const matches = filtered.map((unit: any) => {
       let score = 50;
 
       const price = asNumber(unit.askingPrice, 0);

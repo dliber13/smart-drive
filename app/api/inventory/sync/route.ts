@@ -52,7 +52,7 @@ export async function GET() {
       const mileage = toNumberOrNull(getTag("mileage"));
       const vehicleClass = toText(getTag("class") || getTag("vehicleClass"), "STANDARD");
 
-      const saved = await prisma.vehicle.upsert({
+      const saved = await (prisma as any).vehicle.upsert({
         where: { stockNumber },
         update: {
           make,

@@ -185,12 +185,12 @@ export async function POST(request: Request) {
 
       const vehicleClass = inferVehicleClass(make, model);
 
-      const existing = await prisma.vehicle.findUnique({
+      const existing = await (prisma as any).vehicle.findUnique({
         where: { stockNumber },
       });
 
       if (existing) {
-        await prisma.vehicle.update({
+        await (prisma as any).vehicle.update({
           where: { stockNumber },
           data: {
             year,
@@ -205,7 +205,7 @@ export async function POST(request: Request) {
         });
         updated += 1;
       } else {
-        await prisma.vehicle.create({
+        await (prisma as any).vehicle.create({
           data: {
             id: randomUUID(),
             stockNumber,
