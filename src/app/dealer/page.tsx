@@ -420,7 +420,7 @@ export default function DealerPage() {
                 <option value="">{loadingVehicles ? "Loading inventory..." : "Select a vehicle from inventory"}</option>
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.year} {v.make} {v.model} — Stock #{v.stockNumber} — {formatCurrency(v.askingPrice)}
+                    {v.year} {v.make} {v.model} — Stock #{v.stockNumber} — {v.vin || "N/A"} — {formatCurrency(v.askingPrice)}
                   </option>
                 ))}
               </select>
