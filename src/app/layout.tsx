@@ -4,7 +4,7 @@ import SiteFooter from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "Smart Drive Elite",
-  description: "Automotive underwriting and deal structuring platform",
+  description: "Control the Decision. Control the Outcome.",
 };
 
 export default function RootLayout({
