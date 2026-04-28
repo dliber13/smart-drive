@@ -44,9 +44,9 @@ export default function LoginPage() {
         return
       }
 
-      if (data?.user?.role === "ADMIN") {
+      if (data?.user?.role === "DEALER_MANAGER" || ["SUPER_ADMIN","EXECUTIVE","UNDERWRITER","SENIOR_UNDERWRITER"].includes(data?.user?.role)) {
         window.location.href = "/controller"
-      } else if (data?.user?.role === "CONTROLLER") {
+      } else if (false) {
         window.location.href = "/controller"
       } else {
         window.location.href = "/dealer-dashboard"
