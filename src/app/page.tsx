@@ -2,175 +2,221 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", background: "#FAFAF8", minHeight: "100vh" }}>
-
-      {/* Nav */}
-      <nav style={{ background: "#FFFFFF", borderBottom: "1px solid #E8E4DC", padding: "0 48px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: "#1a1a1a", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ width: 12, height: 12, border: "2px solid #C9A84C", borderRadius: 2 }} />
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", background: "#F8F6F1", minHeight: "100vh", overflowX: "hidden" }}>
+      <nav style={{ background: "rgba(248,246,241,0.95)", borderBottom: "1px solid rgba(201,168,76,0.2)", padding: "0 56px", height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0F0F0F"/><path d="M8 16 L13 10 L19 10 L24 16 L19 22 L13 22 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5"/><circle cx="16" cy="16" r="3" fill="#C9A84C"/></svg>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.4px", color: "#0F0F0F", lineHeight: 1 }}>Smart Drive Elite</div>
+            <div style={{ fontSize: 9, letterSpacing: "2px", color: "#C9A84C", fontWeight: 600, lineHeight: 1, marginTop: 2 }}>FINANCE INTELLIGENCE</div>
           </div>
-          <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.3px", color: "#1a1a1a" }}>Smart Drive Elite</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
-          <a href="#platform" style={{ fontSize: 14, color: "#666", textDecoration: "none" }}>Platform</a>
-          <a href="#lenders" style={{ fontSize: 14, color: "#666", textDecoration: "none" }}>Lenders</a>
-          <a href="#opportunity" style={{ fontSize: 14, color: "#666", textDecoration: "none" }}>Opportunity</a>
-          <Link href="/request-access" style={{ fontSize: 14, color: "#666", textDecoration: "none" }}>Request Access</Link>
-          <Link href="/login" style={{ fontSize: 13, fontWeight: 500, color: "#1a1a1a", background: "#F5F0E8", border: "1px solid #C9A84C", borderRadius: 6, padding: "7px 18px", textDecoration: "none" }}>Sign In</Link>
+        <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
+          <a href="#platform" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Platform</a>
+          <a href="#lenders" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Lenders</a>
+          <a href="#how" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>How It Works</a>
+          <a href="#opportunity" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Opportunity</a>
+          <div style={{ width: 1, height: 16, background: "#DDD" }} />
+          <Link href="/request-access" style={{ fontSize: 13, color: "#777", textDecoration: "none" }}>Request Access</Link>
+          <Link href="/login" style={{ fontSize: 13, fontWeight: 600, color: "#0F0F0F", background: "#C9A84C", borderRadius: 7, padding: "8px 20px", textDecoration: "none" }}>Sign In</Link>
         </div>
       </nav>
-
-      {/* Hero */}
-      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 48px 80px" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#F5F0E8", border: "1px solid #C9A84C", borderRadius: 100, padding: "5px 14px", marginBottom: 32 }}>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#C9A84C" }} />
-          <span style={{ fontSize: 12, fontWeight: 500, color: "#8B6914", letterSpacing: "0.5px" }}>AI-POWERED DEALERSHIP FINANCE</span>
+      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 56px 80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+        <div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0F0F0F", borderRadius: 100, padding: "5px 14px", marginBottom: 28 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ADE80" }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#C9A84C", letterSpacing: "1px" }}>LIVE PLATFORM · INSTANT DECISIONS</span>
+          </div>
+          <h1 style={{ fontSize: 62, fontWeight: 800, lineHeight: 1.02, letterSpacing: "-2.5px", color: "#0F0F0F", margin: "0 0 24px" }}>The finance desk.<br /><span style={{ color: "#C9A84C" }}>Rebuilt from</span><br />the ground up.</h1>
+          <p style={{ fontSize: 18, color: "#666", lineHeight: 1.65, maxWidth: 480, margin: "0 0 16px" }}>Submit a customer profile. Get a structured approval, lender match, and top inventory picks in under 60 seconds.</p>
+          <p style={{ fontSize: 14, color: "#999", lineHeight: 1.6, maxWidth: 440, margin: "0 0 40px" }}>No legacy software. No 1,500-lender network you will never use. Just AI-powered decisioning built specifically for independent dealers.</p>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 40 }}>
+            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Get Dealer Access</Link>
+            <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "14px 24px", textDecoration: "none" }}>Sign In</Link>
+          </div>
+          <div style={{ display: "flex", gap: 0 }}>
+            {[{ value: "5", label: "Lenders" }, { value: "<60s", label: "Decisions" }, { value: "10", label: "Risk tiers" }, { value: "100%", label: "Automated" }].map((s, i) => (
+              <div key={s.label} style={{ paddingRight: 28, marginRight: 28, borderRight: i < 3 ? "1px solid #E0DBD0" : "none" }}>
+                <div style={{ fontSize: 26, fontWeight: 800, color: "#0F0F0F", letterSpacing: "-1px", lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: "#999", marginTop: 3 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <h1 style={{ fontSize: 64, fontWeight: 700, lineHeight: 1.05, letterSpacing: "-2px", color: "#0F0F0F", margin: "0 0 24px", maxWidth: 720 }}>
-          Finance decisions<br />
-          <span style={{ color: "#C9A84C" }}>in under 60 seconds.</span>
-        </h1>
-        <p style={{ fontSize: 20, color: "#555", lineHeight: 1.6, maxWidth: 560, margin: "0 0 48px" }}>
-          Smart Drive Elite connects your dealership to a full lender waterfall — scoring risk, calculating PTI/DTI, and returning structured approvals instantly.
-        </p>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <Link href="/request-access" style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a", background: "#C9A84C", border: "none", borderRadius: 8, padding: "13px 28px", textDecoration: "none", letterSpacing: "-0.2px" }}>Request Dealer Access</Link>
-          <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "transparent", border: "1px solid #DDD", borderRadius: 8, padding: "13px 28px", textDecoration: "none" }}>Sign In →</Link>
+        <div style={{ position: "relative" }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 16, padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div><div style={{ fontSize: 11, color: "#999", letterSpacing: "1px", fontWeight: 600, marginBottom: 2 }}>DEAL DECISION</div><div style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F" }}>Marcus Johnson</div></div>
+              <div style={{ background: "#0F0F0F", color: "#4ADE80", fontSize: 11, fontWeight: 800, letterSpacing: "1.5px", padding: "6px 14px", borderRadius: 6 }}>APPROVED</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+              {[{ label: "Lender", value: "Global Lending" }, { label: "Tier", value: "TIER_2" }, { label: "Max Payment", value: "$612/mo" }, { label: "Max Vehicle", value: "$28,400" }, { label: "Deal Strength", value: "84 / 100" }, { label: "PTI", value: "18.2%" }].map(r => (
+                <div key={r.label} style={{ background: "#F8F6F1", borderRadius: 8, padding: "10px 12px" }}>
+                  <div style={{ fontSize: 10, color: "#AAA", letterSpacing: "0.5px", fontWeight: 600, marginBottom: 3 }}>{r.label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F" }}>{r.value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ borderTop: "1px solid #F0EBE0", paddingTop: 14, marginBottom: 14 }}>
+              <div style={{ fontSize: 10, color: "#AAA", letterSpacing: "1px", fontWeight: 600, marginBottom: 10 }}>LENDER WATERFALL</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[{ name: "GLS", active: true }, { name: "WFS", active: false }, { name: "CPS", active: false }, { name: "MAC", active: false }, { name: "WFI", active: false }].map(l => (
+                  <div key={l.name} style={{ flex: 1, textAlign: "center", padding: "6px 4px", borderRadius: 6, background: l.active ? "#0F0F0F" : "#F8F6F1", border: "1px solid " + (l.active ? "#0F0F0F" : "#E8E3D8") }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: l.active ? "#C9A84C" : "#CCC" }}>{l.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: "#F8F6F1", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ fontSize: 10, color: "#AAA", letterSpacing: "1px", fontWeight: 600, marginBottom: 6 }}>TOP VEHICLE MATCH</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div><div style={{ fontSize: 13, fontWeight: 700, color: "#0F0F0F" }}>2021 Ford Bronco Sport</div><div style={{ fontSize: 11, color: "#888" }}>Stock #7773 · 42,100 mi</div></div>
+                <div style={{ textAlign: "right" }}><div style={{ fontSize: 14, fontWeight: 800, color: "#0F0F0F" }}>$16,999</div><div style={{ fontSize: 10, color: "#4ADE80", fontWeight: 600 }}>WITHIN RANGE</div></div>
+              </div>
+            </div>
+          </div>
+          <div style={{ position: "absolute", top: -16, right: -16, background: "#C9A84C", borderRadius: 10, padding: "10px 16px" }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#0F0F0F" }}>Decision in</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-1px", lineHeight: 1 }}>47s</div>
+          </div>
         </div>
-
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: 48, marginTop: 72, paddingTop: 48, borderTop: "1px solid #E8E4DC" }}>
-          {[
-            { value: "5", label: "Active lenders" },
-            { value: "<60s", label: "Decision time" },
-            { value: "10", label: "Risk tiers" },
-            { value: "100%", label: "Automated waterfall" },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontSize: 32, fontWeight: 700, color: "#0F0F0F", letterSpacing: "-1px" }}>{s.value}</div>
-              <div style={{ fontSize: 13, color: "#888", marginTop: 2 }}>{s.label}</div>
+      </section>
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
+      <section id="how" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>HOW IT WORKS</div>
+          <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>Four steps. One decision.</h2>
+          <p style={{ fontSize: 16, color: "#777", maxWidth: 480, margin: "0 auto" }}>Everything a finance manager does manually — automated, documented, delivered instantly.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
+          {[{ step: "01", title: "Submit profile", desc: "Salesperson enters customer info — income, credit range, ID type. Takes 90 seconds.", dark: false }, { step: "02", title: "AI scores risk", desc: "Engine calculates PTI/DTI, assigns risk tier, flags income type and deal structure.", dark: false }, { step: "03", title: "Lender waterfall", desc: "Automatically routes GLS to Westlake to CPS to MAC to WFI. Stops at first approval.", dark: false }, { step: "04", title: "Structured output", desc: "Returns lender, tier, max payment, max vehicle, deal strength, and top 3 inventory matches.", dark: true }].map((s, i) => (
+            <div key={s.step} style={{ background: s.dark ? "#0F0F0F" : "#FFFFFF", padding: "32px 28px", borderRadius: i === 0 ? "12px 0 0 12px" : i === 3 ? "0 12px 12px 0" : 0, border: "1px solid " + (s.dark ? "#222" : "#E8E3D8"), borderLeft: i > 0 ? "none" : undefined }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C", letterSpacing: "1px", marginBottom: 16 }}>{s.step}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: s.dark ? "#FFFFFF" : "#0F0F0F", marginBottom: 10 }}>{s.title}</div>
+              <div style={{ fontSize: 13, color: "#777", lineHeight: 1.6 }}>{s.desc}</div>
             </div>
           ))}
         </div>
       </section>
-
-      {/* Gold divider */}
-      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C40, transparent)", margin: "0 48px" }} />
-
-      {/* Platform section */}
-      <section id="platform" style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ marginBottom: 56 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "2px", color: "#C9A84C", marginBottom: 12 }}>THE PLATFORM</div>
-          <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-1px", color: "#0F0F0F", margin: "0 0 16px" }}>Built for the deal desk.<br />Powered by AI.</h2>
-          <p style={{ fontSize: 17, color: "#666", maxWidth: 480, lineHeight: 1.6, margin: 0 }}>From customer profile to structured approval — every step automated, every decision documented.</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-          {[
-            { num: "01", title: "Risk Scoring", desc: "AI evaluates credit profile, income type, PTI/DTI ratios, and employment stability to assign a precise risk tier." },
-            { num: "02", title: "Lender Waterfall", desc: "Automatically routes through GLS → Westlake → CPS → MAC → WFI until the strongest approval is found." },
-            { num: "03", title: "Structured Decision", desc: "Returns max payment, max vehicle price, deal strength score, and lender match — all in under 60 seconds." },
-            { num: "04", title: "Inventory Matching", desc: "Top 3 vehicles ranked by approval likelihood and gross profit margin pulled directly from live inventory." },
-            { num: "05", title: "IBL Calculator", desc: "Income-based lending payment structures for self-employed and 1099 customers — no FICO required." },
-            { num: "06", title: "Audit Trail", desc: "Every decision logged with timestamp, lender reasoning, and compliance documentation built in." },
-          ].map(f => (
-            <div key={f.num} style={{ background: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: 12, padding: "28px 24px" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#C9A84C", letterSpacing: "1px", marginBottom: 12 }}>{f.num}</div>
-              <div style={{ fontSize: 16, fontWeight: 600, color: "#0F0F0F", marginBottom: 8 }}>{f.title}</div>
-              <div style={{ fontSize: 14, color: "#777", lineHeight: 1.6 }}>{f.desc}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Gold divider */}
-      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C40, transparent)", margin: "0 48px" }} />
-
-      {/* Lenders section */}
-      <section id="lenders" style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ marginBottom: 48 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "2px", color: "#C9A84C", marginBottom: 12 }}>LENDER NETWORK</div>
-          <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-1px", color: "#0F0F0F", margin: "0 0 16px" }}>Five lenders.<br />Every customer covered.</h2>
-          <p style={{ fontSize: 17, color: "#666", maxWidth: 480, lineHeight: 1.6, margin: 0 }}>From prime to catch-all — our waterfall ensures no deal is left behind.</p>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
-          {[
-            { name: "Global Lending", tier: "Tier 1", range: "400–680 FICO", note: "W2 only" },
-            { name: "Westlake", tier: "Tier 2", range: "No min FICO", note: "4 tiers" },
-            { name: "CPS", tier: "Tier 3", range: "No min FICO", note: "1099 OK" },
-            { name: "Midwest Accept.", tier: "Tier 4", range: "MO/IL/AR/KS", note: "5 tiers" },
-            { name: "Western Funding", tier: "Catch-All", range: "No minimums", note: "All titles" },
-          ].map((l, i) => (
-            <div key={l.name} style={{ background: i === 4 ? "#0F0F0F" : "#FFFFFF", border: `1px solid ${i === 4 ? "#333" : "#E8E4DC"}`, borderRadius: 12, padding: "24px 20px" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: i === 4 ? "#C9A84C" : "#C9A84C", letterSpacing: "1px", marginBottom: 8 }}>{l.tier}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: i === 4 ? "#FFFFFF" : "#0F0F0F", marginBottom: 6 }}>{l.name}</div>
-              <div style={{ fontSize: 12, color: i === 4 ? "#AAA" : "#888", marginBottom: 2 }}>{l.range}</div>
-              <div style={{ fontSize: 12, color: i === 4 ? "#888" : "#AAA" }}>{l.note}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Gold divider */}
-      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C40, transparent)", margin: "0 48px" }} />
-
-      {/* Opportunity section */}
-      <section id="opportunity" style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 48px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
+      <section id="platform" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 80, alignItems: "start" }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "2px", color: "#C9A84C", marginBottom: 12 }}>THE OPPORTUNITY</div>
-            <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-1px", color: "#0F0F0F", margin: "0 0 20px" }}>A platform built to scale to hundreds of dealerships.</h2>
-            <p style={{ fontSize: 17, color: "#666", lineHeight: 1.7, margin: "0 0 16px" }}>Smart Drive Elite was designed from the ground up for the independent dealership market — the segment most underserved by legacy finance software.</p>
-            <p style={{ fontSize: 17, color: "#666", lineHeight: 1.7, margin: "0 0 32px" }}>Every dealer gets the same AI decisioning engine that enterprise groups pay hundreds of thousands for — at a fraction of the cost.</p>
-            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a", background: "#C9A84C", borderRadius: 8, padding: "13px 28px", textDecoration: "none" }}>Get Early Access</Link>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>THE PLATFORM</div>
+            <h2 style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>Built for the deal desk.<br /><span style={{ color: "#C9A84C" }}>Powered by AI.</span></h2>
+            <p style={{ fontSize: 15, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Every feature was designed around one question: what does a finance manager actually need to close a deal?</p>
+            <Link href="/request-access" style={{ fontSize: 13, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 7, padding: "11px 24px", textDecoration: "none" }}>Request Access</Link>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            {[
-              { value: "40,000+", label: "Independent dealers in the US" },
-              { value: "$750B", label: "Used auto finance market" },
-              { value: "72%", label: "Deals need subprime routing" },
-              { value: "1", label: "Platform doing it with AI" },
-            ].map(s => (
-              <div key={s.label} style={{ background: "#FFFFFF", border: "1px solid #E8E4DC", borderRadius: 12, padding: "24px 20px" }}>
-                <div style={{ fontSize: 28, fontWeight: 700, color: "#0F0F0F", letterSpacing: "-1px", marginBottom: 4 }}>{s.value}</div>
-                <div style={{ fontSize: 13, color: "#888", lineHeight: 1.4 }}>{s.label}</div>
+            {[{ num: "01", title: "Risk Scoring Engine", desc: "Evaluates FICO range, income type (W2, 1099, self-employed), employment stability, PTI/DTI ratios, and identity to assign a precise risk tier from 1 to 10." }, { num: "02", title: "Lender Waterfall", desc: "5-lender automated waterfall. GLS, Westlake, CPS, Midwest, Western Funding. Every deal gets its best possible home without manual shopping." }, { num: "03", title: "Inventory Matching", desc: "Top 3 vehicles ranked by approval likelihood and gross profit margin, pulled live from your inventory. No guessing what fits the deal." }, { num: "04", title: "IBL Calculator", desc: "Income-Based Lending structures for self-employed and 1099 customers. No FICO required. CPS and Western Funding ready." }, { num: "05", title: "Deal Strength Score", desc: "Every decision includes a 0 to 100 deal strength score. A single number your team can use to prioritize deals and set expectations." }, { num: "06", title: "Audit Trail", desc: "Every decision logged with timestamp, lender reasoning, tier assignment, and compliance documentation built in from day one." }].map(f => (
+              <div key={f.num} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 12, padding: "24px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "#C9A84C", letterSpacing: "1.5px", marginBottom: 12 }}>{f.num}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", marginBottom: 8 }}>{f.title}</div>
+                <div style={{ fontSize: 13, color: "#777", lineHeight: 1.65 }}>{f.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
-
-      {/* CTA Banner */}
-      <section style={{ background: "#0F0F0F", margin: "0 48px 80px", borderRadius: 16, padding: "64px 64px" }}>
-        <div style={{ maxWidth: 600 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "2px", color: "#C9A84C", marginBottom: 16 }}>READY TO START</div>
-          <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-1px", color: "#FFFFFF", margin: "0 0 20px" }}>Your dealership deserves better than a fax machine and a prayer.</h2>
-          <p style={{ fontSize: 17, color: "#AAA", lineHeight: 1.6, margin: "0 0 32px" }}>Request access today and get your team set up with AI-powered finance decisioning.</p>
-          <div style={{ display: "flex", gap: 12 }}>
-            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a", background: "#C9A84C", borderRadius: 8, padding: "13px 28px", textDecoration: "none" }}>Request Dealer Access</Link>
-            <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#FFF", background: "transparent", border: "1px solid #444", borderRadius: 8, padding: "13px 28px", textDecoration: "none" }}>Sign In</Link>
+      <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
+      <section id="lenders" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+        <div style={{ marginBottom: 48 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>LENDER NETWORK</div>
+          <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>Five lenders. Every customer covered.</h2>
+          <p style={{ fontSize: 16, color: "#777", maxWidth: 520, lineHeight: 1.6 }}>From prime to catch-all. Our waterfall is engineered so no deal leaves your lot unfunded.</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
+          {[{ name: "Global Lending Services", short: "GLS", tier: "Tier 1 · First stop", range: "400-680 FICO", specs: ["W2 required", "Max $55K", "Max PTI 20%"], dark: false }, { name: "Westlake Financial", short: "WFS", tier: "Tier 2 · No min FICO", range: "4 tiers by score", specs: ["No min income", "Max $50K", "All income types"], dark: false }, { name: "Consumer Portfolio", short: "CPS", tier: "Tier 3 · Flexible", range: "No min FICO", specs: ["1099 OK", "Max $55K", "8 tiers"], dark: false }, { name: "Midwest Acceptance", short: "MAC", tier: "Tier 4 · Regional", range: "MO/IL/AR/KS", specs: ["5 tiers", "Max $20K", "Local focus"], dark: false }, { name: "Western Funding", short: "WFI", tier: "Catch-All", range: "No minimums", specs: ["All titles OK", "Unlimited miles", "True catch-all"], dark: true }].map(l => (
+            <div key={l.short} style={{ background: l.dark ? "#0F0F0F" : "#FFFFFF", border: "1px solid " + (l.dark ? "#2A2A2A" : "#E8E3D8"), borderRadius: 12, padding: "24px 18px" }}>
+              <div style={{ width: 36, height: 36, background: l.dark ? "#1A1A1A" : "#F8F6F1", border: "1px solid " + (l.dark ? "#333" : "#E8E3D8"), borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C" }}>{l.short}</span>
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: l.dark ? "#FFFFFF" : "#0F0F0F", marginBottom: 4 }}>{l.name}</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "#C9A84C", marginBottom: 12 }}>{l.tier}</div>
+              <div style={{ fontSize: 11, color: l.dark ? "#666" : "#BBB", marginBottom: 10 }}>{l.range}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {l.specs.map(sp => (
+                  <div key={sp} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#C9A84C", flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, color: l.dark ? "#777" : "#888" }}>{sp}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section style={{ background: "#0F0F0F", padding: "64px 56px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>WHY SMART DRIVE ELITE</div>
+            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: 0 }}>Everything they cannot do. Nothing you do not need.</h2>
+          </div>
+          <div style={{ border: "1px solid #2A2A2A", borderRadius: 12, overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", borderBottom: "1px solid #2A2A2A" }}>
+              <div style={{ padding: "14px 24px", background: "#1A1A1A" }}><span style={{ fontSize: 11, color: "#555", fontWeight: 700 }}>FEATURE</span></div>
+              <div style={{ padding: "14px 24px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}><span style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C" }}>Smart Drive Elite</span></div>
+              <div style={{ padding: "14px 24px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}><span style={{ fontSize: 11, color: "#555" }}>DealerTrack</span></div>
+              <div style={{ padding: "14px 24px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}><span style={{ fontSize: 11, color: "#555" }}>Reynolds and Reynolds</span></div>
+            </div>
+            {[{ feature: "AI risk scoring engine", sde: true, dt: false, rr: false }, { feature: "Automated lender waterfall", sde: true, dt: false, rr: false }, { feature: "IBL and 1099 income support", sde: true, dt: false, rr: false }, { feature: "Deal strength score", sde: true, dt: false, rr: false }, { feature: "Built for independent dealers", sde: true, dt: false, rr: false }, { feature: "Under 60-second decisions", sde: true, dt: false, rr: false }, { feature: "Live inventory matching", sde: true, dt: true, rr: false }, { feature: "Subprime routing", sde: true, dt: true, rr: true }].map((row, i) => (
+              <div key={row.feature} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", borderBottom: i < 7 ? "1px solid #1A1A1A" : "none" }}>
+                <div style={{ padding: "13px 24px" }}><span style={{ fontSize: 13, color: "#888" }}>{row.feature}</span></div>
+                <div style={{ padding: "13px 24px", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>{row.sde ? <span style={{ color: "#4ADE80", fontSize: 16, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#333" }}>&#8212;</span>}</div>
+                <div style={{ padding: "13px 24px", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>{row.dt ? <span style={{ color: "#4ADE80", fontSize: 16, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#333" }}>&#8212;</span>}</div>
+                <div style={{ padding: "13px 24px", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>{row.rr ? <span style={{ color: "#4ADE80", fontSize: 16, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#333" }}>&#8212;</span>}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer style={{ borderTop: "1px solid #E8E4DC", padding: "32px 48px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 20, height: 20, background: "#1a1a1a", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ width: 8, height: 8, border: "1.5px solid #C9A84C", borderRadius: 1 }} />
+      <section id="opportunity" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>THE OPPORTUNITY</div>
+            <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>The platform the independent dealer market has been waiting for.</h2>
+            <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7, margin: "0 0 16px" }}>DealerTrack was built for franchises. Reynolds and Reynolds was built in another era. Neither was built for you.</p>
+            <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Smart Drive Elite gives independent dealers the same AI decisioning infrastructure that enterprise groups pay hundreds of thousands for — at a fraction of the cost, with none of the bloat.</p>
+            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "13px 28px", textDecoration: "none", display: "inline-block" }}>Get Early Access</Link>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>Smart Drive Elite LLC</span>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {[{ value: "40,000+", label: "Independent dealers in the US", sub: "Underserved by legacy software" }, { value: "$750B", label: "Used auto finance market", sub: "Annual originations" }, { value: "72%", label: "Deals need subprime routing", sub: "Most platforms skip this" }, { value: "1", label: "AI platform for independents", sub: "Built from scratch" }].map(s => (
+              <div key={s.label} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 12, padding: "24px 20px" }}>
+                <div style={{ fontSize: 30, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-1.5px", marginBottom: 6, lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#444", marginBottom: 4 }}>{s.label}</div>
+                <div style={{ fontSize: 11, color: "#AAA" }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 24 }}>
-          <Link href="/privacy" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>Privacy</Link>
-          <Link href="/terms" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>Terms</Link>
-          <Link href="/login" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>Sign In</Link>
+      </section>
+      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "0 56px 96px" }}>
+        <div style={{ background: "#0F0F0F", borderRadius: 20, padding: "72px 80px" }}>
+          <div style={{ maxWidth: 640 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 20 }}>READY TO TRANSFORM YOUR FINANCE DESK</div>
+            <h2 style={{ fontSize: 48, fontWeight: 900, letterSpacing: "-2px", color: "#FFFFFF", margin: "0 0 20px", lineHeight: 1.05 }}>Stop losing deals to slow decisions.</h2>
+            <p style={{ fontSize: 17, color: "#777", lineHeight: 1.7, margin: "0 0 40px", maxWidth: 520 }}>Request access today. Your team will be submitting deals and getting instant AI-powered approvals within 24 hours of onboarding.</p>
+            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+              <Link href="/request-access" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "15px 36px", textDecoration: "none" }}>Request Dealer Access</Link>
+              <Link href="/login" style={{ fontSize: 15, fontWeight: 500, color: "#777", background: "transparent", border: "1px solid #2A2A2A", borderRadius: 8, padding: "15px 28px", textDecoration: "none" }}>Sign In</Link>
+            </div>
+            <div style={{ marginTop: 32, fontSize: 12, color: "#444" }}>Missouri · USPTO Trademark #99764274 · Smart Drive Elite LLC 2026</div>
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: "#BBB" }}>© 2026 Smart Drive Elite LLC · Missouri · USPTO #99764274</div>
+      </section>
+      <footer style={{ borderTop: "1px solid #E8E3D8", padding: "28px 56px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F8F6F1" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0F0F0F"/><path d="M8 16 L13 10 L19 10 L24 16 L19 22 L13 22 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5"/><circle cx="16" cy="16" r="3" fill="#C9A84C"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#0F0F0F" }}>Smart Drive Elite LLC</span>
+        </div>
+        <div style={{ display: "flex", gap: 28 }}>
+          <Link href="/privacy" style={{ fontSize: 12, color: "#AAA", textDecoration: "none" }}>Privacy Policy</Link>
+          <Link href="/terms" style={{ fontSize: 12, color: "#AAA", textDecoration: "none" }}>Terms of Service</Link>
+          <Link href="/request-access" style={{ fontSize: 12, color: "#AAA", textDecoration: "none" }}>Request Access</Link>
+          <Link href="/login" style={{ fontSize: 12, color: "#AAA", textDecoration: "none" }}>Sign In</Link>
+        </div>
+        <div style={{ fontSize: 11, color: "#CCC" }}>2026 Smart Drive Elite LLC · All rights reserved</div>
       </footer>
-
     </div>
   );
 }
