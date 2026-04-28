@@ -161,6 +161,14 @@ model Dealer {
   id               String        @id
   name             String
   code             String        @unique
+  dealerNumber        String?         @unique
+  groupId             String?
+  phone               String?
+  address             String?
+  city                String?
+  state               String?
+  zip                 String?
+  DealerGroup         DealerGroup?    @relation("DealerGroupDealers", fields: [groupId], references: [id])
   status           DealerStatus  @default(ACTIVE)
   authorityLevel   String
   submissionScore  Int           @default(70)
@@ -376,4 +384,16 @@ enum UserRole {
   ANALYST
   ADMIN
   SALES
+}
+model DealerGroup {
+  id          String   @id @default(cuid())
+  groupNumber String   @unique
+  name        String
+  contactName String?
+  contactEmail String?
+  contactPhone String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Dealer      Dealer[]  @relation("DealerGroupDealers")
 }
