@@ -9,6 +9,12 @@ datasource db {
 
 model Application {
   id                  String                @id @default(cuid())
+  ssnEncrypted         String?
+  dobEncrypted         String?
+  dlEncrypted          String?
+  dlState              String?
+  ipAddress            String?
+  userAgent            String?
   externalReference   String?               @unique
   dealerId            String?
   createdByUserId     String?
