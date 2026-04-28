@@ -40,24 +40,24 @@ export async function POST(req: Request) {
       toNumber(application.vehiclePrice) ||
       toNumber(application.monthlyIncome) * 12 * 0.5;
 
-    const inventory = await prisma.inventoryUnit.findMany({
+    const inventory = await prisma.vehicle.findMany({
       where: {
-        isAvailable: true,
+        status: "ACTIVE",
       },
       orderBy: {
-        price: "asc",
+        askingPrice: "asc",
       },
       take: 50,
     });
 
     const matches = inventory
       .filter((unit) => {
-        const price = toNumber(unit.price);
+        const price = toNumber(unit.askingPrice);
         if (!price) return false;
         if (maxVehicle > 0 && price > maxVehicle) return false;
         if (
-          unit.minCreditScore &&
-          toNumber(application.creditScore) < unit.minCreditScore
+          unit.vehicleRiskScore &&
+          toNumber(application.creditScore) < unit.vehicleRiskScore
         ) {
           return false;
         }
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         }
 
         if (toNumber(unit.mileage) <= 60000) score += 10;
-        if (toNumber(unit.price) <= maxVehicle * 0.9) score += 10;
+        if (toNumber(unit.askingPrice) <= maxVehicle * 0.9) score += 10;
 
         return {
           id: unit.id,
@@ -92,9 +92,9 @@ export async function POST(req: Request) {
           make: unit.make,
           model: unit.model,
           mileage: unit.mileage,
-          askingPrice: unit.price,
-          vehicleClass: unit.bodyStyle,
-          status: unit.isAvailable ? "ACTIVE" : "INACTIVE",
+          askingPrice: unit.askingPrice,
+          vehicleClass: unit.vehicleClass,
+          status: unit.status,
           matchScore: Math.min(score, 100),
         };
       })

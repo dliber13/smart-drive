@@ -7,119 +7,373 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AppRole {
-  ADMIN
-  CONTROLLER
-  SALES
-}
-
-enum DealType {
-  RETAIL
-  IBL
-  LEASE
-  SUBSCRIPTION
-}
-
 model Application {
-  id                 String          @id @default(cuid())
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-
-  firstName          String?
-  lastName           String?
-  phone              String?
-  email              String?
-
-  identityType       String?
-  identityValue      String?
-  issuingCountry     String?
-  identityStatus     String?
-
-  stockNumber        String?
-  vin                String?
-  vehicleYear        Int?
-  vehicleMake        String?
-  vehicleModel       String?
-  vehiclePrice       Float?
-  dealType           DealType        @default(RETAIL)
-
-  downPayment        Float?
-  tradeIn            Float?
-  amountFinanced     Float?
-
-  creditScore        Int?
-  monthlyIncome      Float?
-
-  status             String?         @default("DRAFT")
-  lender             String?
-  tier               String?
-  maxPayment         Float?
-  maxVehicle         Float?
-  decisionReason     String?
-  dealStrength       Int?
-
-  fundingDate        DateTime?
-  fundingAmount      Float?
-  acceptedTerms      Boolean         @default(false)
-
-  statusHistory      StatusHistory[]
+  id                  String                @id @default(cuid())
+  externalReference   String?               @unique
+  dealerId            String?
+  createdByUserId     String?
+  customerFirstName   String?
+  customerLastName    String?
+  verifiedIncome      Float?
+  grossIncome         Float?
+  payFrequency        String?
+  residenceMonths     Int?
+  employmentMonths    Int?
+  creditScore         Int?
+  mvrBand             String?
+  requestedVehicle    String?
+  requestedPrice      Float?
+  downPayment         Float?
+  status              String?               @default("DRAFT")
+  exceptionStatus     String?
+  submittedAt         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  monthlyIncome       Int?
+  ltv                 Int?
+  ownerId             String?
+  teamId              String?
+  firstName           String?
+  lastName            String?
+  email               String?
+  phone               String?
+  stockNumber         String?
+  vin                 String?
+  vehicleYear         Int?
+  vehicleMake         String?
+  vehicleModel        String?
+  vehiclePrice        Float?
+  tradeIn             Float?
+  amountFinanced      Float?
+  tier                String?
+  lender              String?
+  maxPayment          Float?
+  maxVehicle          Float?
+  decisionReason      String?
+  dealStrength        Float?
+  identityType        String?
+  identityValue       String?
+  issuingCountry      String?
+  identityStatus      String?               @default("PENDING")
+  fundingDate         DateTime?
+  fundingAmount       Float?
+  lenderConfirmation  String?
+  User                User?                 @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  Dealer              Dealer?               @relation(fields: [dealerId], references: [id], onDelete: Restrict)
+  ApplicationDocument ApplicationDocument[]
+  Deal                Deal[]
+  DecisionRun         DecisionRun[]
+  statusHistory       StatusHistory[]
 }
 
 model StatusHistory {
-  id                 String       @id @default(cuid())
-  createdAt          DateTime     @default(now())
-
-  applicationId      String
-  fromStatus         String?
-  toStatus           String?
-  changedByRole      String?
-  note               String?
-
-  application        Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  applicationId String
+  fromStatus    String?
+  toStatus      String
+  note          String?
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId])
-  @@index([createdAt])
 }
 
 model User {
-  id                 String    @id @default(cuid())
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  email              String    @unique
-  password           String?
-  role               AppRole   @default(SALES)
-  firstName          String?
-  lastName           String?
-  isActive           Boolean   @default(true)
+  id           String        @id @default(cuid())
+  firstName    String?
+  lastName     String?
+  email        String        @unique
+  passwordHash String?
+  role         UserRole
+  isActive     Boolean       @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  fullName     String?
+  teamId       String?
+  Application  Application[]
+  AuditEvent   AuditEvent[]
+  DealerUser   DealerUser[]
 }
 
-model InventoryUnit {
-  id                 String    @id @default(cuid())
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+model ApplicationDocument {
+  id               String               @id
+  applicationId    String
+  documentType     String
+  fileKey          String
+  verifyStatus     DocumentVerifyStatus @default(PENDING)
+  verifiedByUserId String?
+  verifiedAt       DateTime?
+  notes            String?
+  createdAt        DateTime             @default(now())
+  Application      Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
 
-  stockNumber        String    @unique
-  vin                String?   @unique
-  year               Int?
-  make               String?
-  model              String?
-  trim               String?
-  price              Float?
-  mileage            Int?
+model AuditEvent {
+  id           String   @id
+  userId       String?
+  entityType   String
+  entityId     String
+  action       String
+  oldValueJson Json?
+  newValueJson Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  User         User?    @relation(fields: [userId], references: [id])
+}
 
-  bodyStyle          String?
-  exteriorColor      String?
-  interiorColor      String?
+model CollectionNote {
+  id          String   @id
+  accountId   String
+  note        String
+  actionType  String
+  createdById String?
+  createdAt   DateTime @default(now())
+}
 
-  isAvailable        Boolean   @default(true)
+model Deal {
+  id                   String            @id
+  applicationId        String
+  selectedVehicleId    String
+  decisionRunId        String
+  approvalType         String
+  approvedPrice        Float
+  downPayment          Float
+  apr                  Float
+  termMonths           Int
+  paymentAmount        Float
+  paymentFrequency     String
+  pti                  Float
+  requiredControlsJson Json?
+  dealStatus           DealStatus        @default(DRAFT)
+  fundedAt             DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime
+  Application          Application       @relation(fields: [applicationId], references: [id])
+  DecisionRun          DecisionRun       @relation(fields: [decisionRunId], references: [id])
+  Vehicle              Vehicle           @relation(fields: [selectedVehicleId], references: [id])
+  FundedAccount        FundedAccount?
+  FundingChecklist     FundingChecklist?
+}
 
-  minCreditScore     Int?
-  maxAdvance         Float?    @default(1.15)
-  featuredRank       Int?      @default(0)
+model Dealer {
+  id               String        @id
+  name             String
+  code             String        @unique
+  status           DealerStatus  @default(ACTIVE)
+  authorityLevel   String
+  submissionScore  Int           @default(70)
+  earlyDefaultRate Float         @default(0)
+  repoRate         Float         @default(0)
+  restrictionsJson Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime
+  Application      Application[]
+  DealerUser       DealerUser[]
+}
 
-  @@index([isAvailable])
-  @@index([make, model])
-  @@index([price])
-  @@index([minCreditScore])
+model DealerUser {
+  id        String   @id
+  dealerId  String
+  userId    String
+  title     String?
+  createdAt DateTime @default(now())
+  Dealer    Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([dealerId, userId])
+}
+
+model DecisionRun {
+  id                   String         @id
+  applicationId        String
+  rulesetVersion       String
+  scorePayloadJson     Json
+  riskTier             String
+  defaultProbability   Float
+  maxMonthlyPayment    Float
+  maxPti               Float
+  requiredControlsJson Json
+  createdAt            DateTime       @default(now())
+  Deal                 Deal[]
+  Application          Application    @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  VehicleMatch         VehicleMatch[]
+}
+
+model EarlyWarningScore {
+  id                String        @id
+  accountId         String
+  score             Int
+  disruptionFlag    Boolean       @default(false)
+  nsfCount          Int           @default(0)
+  insuranceFlag     Boolean       @default(false)
+  paymentTrendFlag  Boolean       @default(false)
+  recommendedAction String
+  createdAt         DateTime      @default(now())
+  FundedAccount     FundedAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model FundedAccount {
+  id                  String              @id
+  dealId              String              @unique
+  accountNumber       String              @unique
+  firstPaymentDueDate DateTime?
+  originalBalance     Float
+  currentBalance      Float
+  interestRate        Float
+  accountStatus       AccountStatus       @default(CURRENT)
+  daysPastDue         Int                 @default(0)
+  nextAction          String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime
+  EarlyWarningScore   EarlyWarningScore[]
+  Deal                Deal                @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model FundingChecklist {
+  id                       String    @id
+  dealId                   String    @unique
+  identityVerified         Boolean   @default(false)
+  poiVerified              Boolean   @default(false)
+  porVerified              Boolean   @default(false)
+  insuranceVerified        Boolean   @default(false)
+  gpsVerified              Boolean   @default(false)
+  starterInterruptVerified Boolean   @default(false)
+  contractComplete         Boolean   @default(false)
+  finalStructureVerified   Boolean   @default(false)
+  readyToFund              Boolean   @default(false)
+  lastReviewedAt           DateTime?
+  Deal                     Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model PolicyRuleset {
+  id              String   @id
+  version         String   @unique
+  name            String
+  status          String
+  rulesJson       Json
+  effectiveAt     DateTime
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+}
+
+model Vehicle {
+  id               String         @id @default(dbgenerated("(gen_random_uuid())::text"))
+  stockNumber      String         @unique
+  year             Int
+  make             String
+  model            String
+  mileage          Int
+  vehicleClass     String
+  askingPrice      Float
+  reliabilityScore Int?
+  vehicleRiskScore Int?
+  maxTermDefault   Int?
+  status           String         @default("ACTIVE")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime
+  vin              String?
+  trim             String?
+  totalCost        Float?
+  bookValue        Float?
+  bodyType         String?
+  driveTrain       String?
+  fuelType         String?
+  transmission     String?
+  daysInInventory  Int?
+  dateInStock      DateTime?      @db.Timestamp(6)
+  Deal             Deal[]
+  VehicleMatch     VehicleMatch[]
+}
+
+model VehicleMatch {
+  id                   String      @id
+  decisionRunId        String
+  vehicleId            String
+  fitScore             Int
+  recommendationType   String
+  structurePayloadJson Json
+  matchStatus          String
+  createdAt            DateTime    @default(now())
+  DecisionRun          DecisionRun @relation(fields: [decisionRunId], references: [id], onDelete: Cascade)
+  Vehicle              Vehicle     @relation(fields: [vehicleId], references: [id])
+}
+
+model DealerRequest {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  firstName    String
+  lastName     String
+  email        String
+  phone        String?
+  dealerName   String
+  city         String?
+  state        String?
+  monthlyUnits String?
+  message      String?
+  status       String   @default("PENDING")
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum AccountStatus {
+  CURRENT
+  LATE
+  DELINQUENT
+  REPO_REVIEW
+  REPOSSESSED
+  CHARGED_OFF
+  CLOSED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  DOCS_NEEDED
+  APPROVED
+  APPROVED_CONDITIONAL
+  APPROVED_ALT_VEHICLE
+  DENIED
+  READY_FOR_FUNDING
+  FUNDED
+}
+
+enum DealStatus {
+  DRAFT
+  APPROVED
+  LOCKED
+  FUNDING_HOLD
+  FUNDED
+  CANCELLED
+}
+
+enum DealerStatus {
+  ACTIVE
+  WATCH
+  RESTRICTED
+  INACTIVE
+}
+
+enum DocumentVerifyStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  EXECUTIVE
+  UNDERWRITER
+  SENIOR_UNDERWRITER
+  FUNDING
+  DEALER_MANAGER
+  DEALER_USER
+  COLLECTIONS
+  COMPLIANCE
+  ANALYST
+  ADMIN
+  SALES
 }
