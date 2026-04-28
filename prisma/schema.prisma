@@ -179,6 +179,7 @@ model Dealer {
   updatedAt        DateTime
   Application      Application[]
   DealerUser       DealerUser[]
+  Vehicle              Vehicle[]        @relation("DealerVehicles")
 }
 
 model DealerUser {
@@ -281,6 +282,8 @@ model Vehicle {
   status           String         @default("ACTIVE")
   createdAt        DateTime       @default(now())
   updatedAt        DateTime
+  dealerId             String?
+  Dealer               Dealer?          @relation("DealerVehicles", fields: [dealerId], references: [id])
   vin              String?
   trim             String?
   totalCost        Float?
