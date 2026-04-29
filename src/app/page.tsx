@@ -47,7 +47,13 @@ export default function HomePage() {
           <div style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 16, padding: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div><div style={{ fontSize: 11, color: "#999", letterSpacing: "1px", fontWeight: 600, marginBottom: 2 }}>DEAL DECISION</div><div style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F" }}>Marcus Johnson</div></div>
-              <div style={{ background: "#0F0F0F", color: "#4ADE80", fontSize: 11, fontWeight: 800, letterSpacing: "1.5px", padding: "6px 14px", borderRadius: 6 }}>APPROVED</div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                <div style={{ background: "#0F0F0F", color: "#4ADE80", fontSize: 11, fontWeight: 800, letterSpacing: "1.5px", padding: "6px 14px", borderRadius: 6 }}>APPROVED</div>
+                <div style={{ background: "#C9A84C", borderRadius: 6, padding: "4px 10px", textAlign: "center" }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "#0F0F0F" }}>Decision in</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-0.5px", lineHeight: 1 }}>47s</div>
+                </div>
+              </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
               {[{ label: "Lender", value: "Global Lending" }, { label: "Tier", value: "TIER_2" }, { label: "Max Payment", value: "$612/mo" }, { label: "Max Vehicle", value: "$28,400" }, { label: "Deal Strength", value: "84 / 100" }, { label: "PTI", value: "18.2%" }].map(r => (
@@ -75,10 +81,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div style={{ position: "absolute", bottom: -16, left: -16, background: "#C9A84C", borderRadius: 10, padding: "10px 16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#0F0F0F" }}>Decision in</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-1px", lineHeight: 1 }}>47s</div>
-          </div>
+
         </div>
       </section>
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
