@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { signSession } from "@/lib/session";
+import { rateLimit, getIP, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 5 attempts per IP per 15 minutes
+    const ip = getIP(req);
+    const rl = rateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
+    if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
     const { email, password } = await req.json();
     if (!email || !password) return NextResponse.json({ error: "Email and password required" }, { status: 400 });
 
