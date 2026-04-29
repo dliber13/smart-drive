@@ -218,6 +218,9 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <p style={{ fontSize: 11, color: "#444", fontStyle: "italic" }}>* Competitive assessment based on publicly available product information as of 2026. Feature availability may vary by plan, tier, or third-party integration. Smart Drive Elite makes no claim that competitors are incapable of building or offering similar features.</p>
+          </div>
         </div>
       </section>
       <section id="opportunity" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
