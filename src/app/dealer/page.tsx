@@ -231,8 +231,23 @@ export default function DealerPage() {
 
   const handleStipChange = async (key: keyof Stips, file: File) => {
     setStips((prev) => ({ ...prev, [key]: { file, status: "uploading" } }));
-    await new Promise((r) => setTimeout(r, 1200));
-    setStips((prev) => ({ ...prev, [key]: { file, status: "uploaded", fileKey: `${key}-${Date.now()}` } }));
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", key);
+      const res = await fetch("/api/upload-document", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStips((prev) => ({ ...prev, [key]: { file, status: "error", error: data.error || "Upload failed" } }));
+        return;
+      }
+      setStips((prev) => ({ ...prev, [key]: { file, status: "uploaded", fileKey: data.fileKey } }));
+    } catch {
+      setStips((prev) => ({ ...prev, [key]: { file, status: "error", error: "Upload failed" } }));
+    }
   };
 
   const handleVehicleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
