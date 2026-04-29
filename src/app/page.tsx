@@ -179,41 +179,45 @@ export default function HomePage() {
           <div style={{ overflowX: "auto" }}>
             <div style={{ minWidth: 1100, border: "1px solid #2A2A2A", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr", borderBottom: "1px solid #2A2A2A" }}>
-                <div style={{ padding: "14px 20px", background: "#1A1A1A" }}><span style={{ fontSize: 11, color: "#555", fontWeight: 700 }}>FEATURE</span></div>
+                <div style={{ padding: "14px 20px", background: "#1A1A1A" }}>
+                  <span style={{ fontSize: 11, color: "#555", fontWeight: 700 }}>CAPABILITY</span>
+                  <div style={{ fontSize: 9, color: "#333", marginTop: 3 }}>They manage the dealership. We decision the deal.</div>
+                </div>
                 {[
-                  { name: "Smart Drive Elite", gold: true },
-                  { name: "DealerTrack", gold: false },
-                  { name: "Reynolds", gold: false },
-                  { name: "RouteOne", gold: false },
-                  { name: "DealerSocket", gold: false },
-                  { name: "700Credit", gold: false },
-                  { name: "vAuto", gold: false },
-                  { name: "Darwin Auto", gold: false },
-                  { name: "Tekion", gold: false },
+                  { name: "Smart Drive Elite", sub: "Decision Intelligence", gold: true },
+                  { name: "DealerTrack", sub: "Infrastructure", gold: false },
+                  { name: "RouteOne", sub: "Infrastructure", gold: false },
+                  { name: "CDK Global", sub: "DMS", gold: false },
+                  { name: "Tekion", sub: "DMS", gold: false },
+                  { name: "DealerCenter", sub: "DMS/CRM", gold: false },
+                  { name: "DealerSocket", sub: "CRM", gold: false },
+                  { name: "Darwin Auto", sub: "F&I Menu", gold: false },
+                  { name: "Reynolds", sub: "Legacy DMS", gold: false },
                 ].map(h => (
-                  <div key={h.name} style={{ padding: "14px 8px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: h.gold ? "#C9A84C" : "#444" }}>{h.name}</span>
+                  <div key={h.name} style={{ padding: "10px 8px", background: h.gold ? "rgba(201,168,76,0.08)" : "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: h.gold ? "#C9A84C" : "#444", display: "block" }}>{h.name}</span>
+                    <span style={{ fontSize: 9, color: h.gold ? "#7A6030" : "#333", display: "block", marginTop: 2 }}>{h.sub}</span>
                   </div>
                 ))}
               </div>
               {[
-                { feature: "AI risk scoring engine",         v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "AI deal decisioning",            v: [1,0,0,0,0,0,0,0,0] },
                 { feature: "Automated lender waterfall",     v: [1,0,0,0,0,0,0,0,0] },
                 { feature: "IBL / BHPH income support",      v: [1,0,0,0,0,0,0,0,0] },
                 { feature: "Deal strength score",            v: [1,0,0,0,0,0,0,0,0] },
                 { feature: "Under 60-second decisions",      v: [1,0,0,0,0,0,0,0,0] },
                 { feature: "Built for independent dealers",  v: [1,0,0,0,0,0,0,0,0] },
                 { feature: "Stip gate — docs required",      v: [1,0,0,0,0,0,0,0,0] },
-                { feature: "1099 / self-employed routing",   v: [1,0,0,0,1,0,0,0,0] },
-                { feature: "Subprime lender routing",        v: [1,1,1,1,0,0,0,1,0] },
-                { feature: "Live inventory matching",        v: [1,1,0,0,1,0,1,0,1] },
-                { feature: "Credit pull integration",        v: [1,1,1,1,1,1,0,1,1] },
-                { feature: "F&I menu / deal structure",      v: [1,1,1,0,1,0,0,1,1] },
+                { feature: "1099 / self-employed routing",   v: [1,0,0,0,0,0,0,1,0] },
+                { feature: "Subprime lender routing",        v: [1,1,1,0,0,0,1,1,1] },
+                { feature: "Live inventory matching",        v: [1,1,0,1,1,1,1,0,0] },
+                { feature: "F&I menu / deal structure",      v: [1,1,0,1,1,0,1,1,1] },
+                { feature: "Deal management / DMS",          v: [1,1,1,1,1,1,1,0,1] },
               ].map((row, i) => (
                 <div key={row.feature} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr", borderBottom: i < 11 ? "1px solid #1A1A1A" : "none" }}>
                   <div style={{ padding: "12px 20px" }}><span style={{ fontSize: 12, color: "#888" }}>{row.feature}</span></div>
                   {row.v.map((val, j) => (
-                    <div key={j} style={{ padding: "12px 8px", borderLeft: "1px solid #2A2A2A", textAlign: "center", background: j === 0 ? "rgba(201,168,76,0.05)" : "transparent" }}>
+                    <div key={j} style={{ padding: "12px 8px", borderLeft: "1px solid #2A2A2A", textAlign: "center", background: j === 0 ? "rgba(201,168,76,0.08)" : "transparent" }}>
                       {val ? <span style={{ color: j === 0 ? "#C9A84C" : "#4ADE80", fontSize: 15, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#2A2A2A" }}>&#8212;</span>}
                     </div>
                   ))}
