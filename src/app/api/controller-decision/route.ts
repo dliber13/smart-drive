@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+const ADMIN_ROLES = ["SUPER_ADMIN","EXECUTIVE","UNDERWRITER","SENIOR_UNDERWRITER","FUNDING","COLLECTIONS","COMPLIANCE","ANALYST"];
 
 function toTextOrNull(value: unknown) {
   if (value === null || value === undefined) return null;
@@ -23,37 +26,24 @@ function normalizeStatus(value: unknown) {
   return "";
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const token = req.cookies.get("sde_session")?.value;
+    if (!token) return NextResponse.json({ success: false, reason: "Unauthorized" }, { status: 401 });
+    const user = verifySession(token) as any;
+    if (!user || !ADMIN_ROLES.includes(user.role)) {
+      return NextResponse.json({ success: false, reason: "Forbidden" }, { status: 403 });
+    }
 
+    const body = await req.json();
     const applicationId = toTextOrNull(body?.applicationId);
     const nextStatus = normalizeStatus(body?.status);
 
-    if (!applicationId) {
-      return NextResponse.json(
-        { success: false, reason: "Missing applicationId" },
-        { status: 400 }
-      );
-    }
+    if (!applicationId) return NextResponse.json({ success: false, reason: "Missing applicationId" }, { status: 400 });
+    if (!nextStatus) return NextResponse.json({ success: false, reason: "Status must be APPROVED or DECLINED" }, { status: 400 });
 
-    if (!nextStatus) {
-      return NextResponse.json(
-        { success: false, reason: "Status must be APPROVED or DECLINED" },
-        { status: 400 }
-      );
-    }
-
-    const existing = await prisma.application.findUnique({
-      where: { id: applicationId },
-    });
-
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, reason: "Application not found" },
-        { status: 404 }
-      );
-    }
+    const existing = await prisma.application.findUnique({ where: { id: applicationId } });
+    if (!existing) return NextResponse.json({ success: false, reason: "Application not found" }, { status: 404 });
 
     const updated = await prisma.application.update({
       where: { id: applicationId },
@@ -65,18 +55,17 @@ export async function POST(req: Request) {
         maxVehicle: toNumberOrNull(body?.maxVehicle),
         dealStrength: toNumberOrNull(body?.dealStrength),
         decisionReason: toTextOrNull(body?.decisionReason),
+        submittedAt: nextStatus === "APPROVED" ? new Date() : undefined,
       },
     });
 
     await prisma.statusHistory.create({
       data: {
         id: crypto.randomUUID(),
-        applicationId: applicationId,
+        applicationId,
         fromStatus: String(existing.status ?? "SUBMITTED"),
         toStatus: nextStatus,
-        note:
-          toTextOrNull(body?.decisionReason) ||
-          `Application ${nextStatus.toLowerCase()} by controller`,
+        note: toTextOrNull(body?.decisionReason) || `Application ${nextStatus.toLowerCase()} by ${user.fullName || user.email}`,
       },
     });
 
@@ -87,13 +76,6 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     console.error("CONTROLLER DECISION ERROR:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        reason: error?.message || "Failed to process controller decision",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, reason: error?.message || "Failed to process controller decision" }, { status: 500 });
   }
 }
