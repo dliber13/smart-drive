@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { runDecisionEngine } from "../../../lib/decision-engine";
+import { pullCredit } from "../../../lib/creditEngine";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,21 @@ export async function POST(req: Request) {
       repoCount: toNumberOrNull(body?.repoCount),
       state: toTextOrNull(body?.state),
     };
+
+    // Pull credit (mock until 700Credit live)
+    const creditResult = await pullCredit({
+      ssn: toTextOrNull(body?.ssn),
+      dob: toTextOrNull(body?.dob),
+      firstName: toTextOrNull(body?.firstName),
+      lastName: toTextOrNull(body?.lastName),
+      creditScore: toNumberOrNull(body?.creditScore),
+      monthlyIncome: toNumberOrNull(body?.monthlyIncome),
+    });
+
+    // Merge credit data into decision input
+    decisionInput.creditScore = decisionInput.creditScore ?? creditResult.score;
+    decisionInput.bankruptcyStatus = creditResult.bankruptcyStatus;
+    decisionInput.repoCount = creditResult.repoCount;
 
     const decision = runDecisionEngine(decisionInput);
 
