@@ -170,7 +170,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>WHY SMART DRIVE ELITE</div>
-            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: "0 0 12px" }}>Everything they cannot do. Nothing you do not need.</h2>
+            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: "0 0 12px" }}>Built for what they were never designed for.</h2>
             <p style={{ fontSize: 14, color: "#555", margin: 0 }}>Head-to-head against every major platform in the market.</p>
           </div>
           <div style={{ overflowX: "auto" }}>
