@@ -3,6 +3,27 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", background: "#F8F6F1", minHeight: "100vh", overflowX: "hidden" }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .hero-section { grid-template-columns: 1fr !important; padding: 40px 20px 40px !important; gap: 32px !important; }
+          .hero-decision-card { display: none !important; }
+          .nav-links { display: none !important; }
+          .nav-inner { padding: 0 20px !important; }
+          .how-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+          .platform-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .platform-features { grid-template-columns: 1fr !important; }
+          .lender-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          .comparison-section { padding: 40px 20px !important; }
+          .opportunity-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .opportunity-stats { grid-template-columns: 1fr 1fr !important; }
+          .cta-section { padding: 40px 24px !important; }
+          .footer-inner { flex-direction: column !important; gap: 16px !important; text-align: center !important; padding: 24px 20px !important; }
+          .section-pad { padding: 60px 20px !important; }
+          h1 { font-size: 42px !important; }
+          h2 { font-size: 32px !important; }
+        }
+      `}</style>
+
       <nav style={{ background: "rgba(248,246,241,0.95)", borderBottom: "1px solid rgba(201,168,76,0.2)", padding: "0 56px", height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0F0F0F"/><path d="M8 16 L13 10 L19 10 L24 16 L19 22 L13 22 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5"/><circle cx="16" cy="16" r="3" fill="#C9A84C"/></svg>
@@ -11,7 +32,7 @@ export default function HomePage() {
             <div style={{ fontSize: 9, letterSpacing: "2px", color: "#C9A84C", fontWeight: 600, lineHeight: 1, marginTop: 2 }}>FINANCE INTELLIGENCE</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
+        <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 36 }}>
           <a href="#platform" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Platform</a>
           <a href="#lenders" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Lenders</a>
           <a href="#how" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>How It Works</a>
@@ -21,7 +42,7 @@ export default function HomePage() {
           <Link href="/login" style={{ fontSize: 13, fontWeight: 600, color: "#0F0F0F", background: "#C9A84C", borderRadius: 7, padding: "8px 20px", textDecoration: "none" }}>Sign In</Link>
         </div>
       </nav>
-      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "100px 56px 80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <section className="hero-section" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px 80px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
         <div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0F0F0F", borderRadius: 100, padding: "5px 14px", marginBottom: 28 }}>
             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ADE80" }} />
@@ -43,7 +64,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-        <div style={{ position: "relative" }}>
+        <div className="hero-decision-card" style={{ position: "relative" }}>
           <div style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 16, padding: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div><div style={{ fontSize: 11, color: "#999", letterSpacing: "1px", fontWeight: 600, marginBottom: 2 }}>DEAL DECISION</div><div style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F" }}>Marcus Johnson</div></div>
@@ -85,13 +106,13 @@ export default function HomePage() {
         </div>
       </section>
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
-      <section id="how" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+      <section id="how" className="section-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>HOW IT WORKS</div>
           <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>Four steps. One decision.</h2>
           <p style={{ fontSize: 16, color: "#777", maxWidth: 480, margin: "0 auto" }}>Everything a finance manager does manually — automated, documented, delivered instantly.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
+        <div className="how-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
           {[{ step: "01", title: "Capture the deal", desc: "Salesperson enters customer info, uploads required documents, and submits. 90 seconds.", dark: false }, { step: "02", title: "Score and structure instantly", desc: "Engine calculates PTI/DTI, assigns a precise risk tier, and builds the deal structure automatically.", dark: false }, { step: "03", title: "Route to the right tier", desc: "Automatically routes through all applicable tiers in order. Stops at the highest-probability approval.", dark: false }, { step: "04", title: "Return a funded path", desc: "Returns tier, max payment, max vehicle, deal strength score, and top inventory matches — ready to present.", dark: true }].map((s, i) => (
             <div key={s.step} style={{ background: s.dark ? "#0F0F0F" : "#FFFFFF", padding: "32px 28px", borderRadius: i === 0 ? "12px 0 0 12px" : i === 3 ? "0 12px 12px 0" : 0, border: "1px solid " + (s.dark ? "#222" : "#E8E3D8"), borderLeft: i > 0 ? "none" : undefined }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C", letterSpacing: "1px", marginBottom: 16 }}>{s.step}</div>
@@ -102,15 +123,15 @@ export default function HomePage() {
         </div>
       </section>
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
-      <section id="platform" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 80, alignItems: "start" }}>
+      <section id="platform" className="section-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+        <div className="platform-grid" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 80, alignItems: "start" }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>THE PLATFORM</div>
             <h2 style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>Built for the deal desk.<br /><span style={{ color: "#C9A84C" }}>Powered by AI.</span></h2>
             <p style={{ fontSize: 15, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Every feature is built to increase approvals, reduce time-to-decision, and eliminate lender guesswork.</p>
             <Link href="/request-access" style={{ fontSize: 13, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 7, padding: "11px 24px", textDecoration: "none" }}>Request Access</Link>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className="platform-features" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[{ num: "01", title: "Risk Scoring Engine", desc: "Instantly assigns a precise risk tier so every deal starts structured correctly — before it ever reaches a lender." }, { num: "02", title: "Lender Waterfall", desc: "Multi-tier automated waterfall. Prime to catch-all. Every deal gets its best possible home without manual shopping or lender guessing." }, { num: "03", title: "Inventory Matching", desc: "Shows only the vehicles most likely to get approved — ranked by fit and pulled live from your inventory. No guesswork." }, { num: "04", title: "IBL Calculator", desc: "Structures income-based approvals for customers traditional lenders miss. No FICO required. Income is the qualifier — and every deal gets a path." }, { num: "05", title: "Deal Strength Score", desc: "Every decision returns a 0–100 score. One number that tells your team exactly where the deal stands and what to expect." }, { num: "06", title: "Audit Trail", desc: "Every decision logged with timestamp, tier assignment, and reasoning. Compliance documentation built in from day one — no retrofitting." }].map(f => (
               <div key={f.num} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 12, padding: "24px 20px" }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: "#C9A84C", letterSpacing: "1.5px", marginBottom: 12 }}>{f.num}</div>
@@ -122,13 +143,13 @@ export default function HomePage() {
         </div>
       </section>
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
-      <section id="lenders" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+      <section id="lenders" className="section-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>LENDER NETWORK</div>
           <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>Every customer profile has a home.</h2>
           <p style={{ fontSize: 16, color: "#777", maxWidth: 560, margin: "0 auto", lineHeight: 1.6 }}>Our multi-tier lender network covers prime to no-credit, W2 to 1099, standard to IBL. The engine finds the right fit automatically — no manual shopping required.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 48 }}>
+        <div className="lender-grid" style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 48 }}>
           {[
             { tier: "TIER 1", title: "Prime", sub: "Standard financing", range: "Strong credit profile", specs: ["W2 income", "Competitive APR", "Max vehicle flexibility"], dark: false },
             { tier: "TIER 2", title: "Near Prime", sub: "Flexible programs", range: "Moderate credit profile", specs: ["All income types", "Extended terms", "Higher PTI allowance"], dark: false },
@@ -169,7 +190,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <section style={{ background: "#0F0F0F", padding: "64px 56px" }}>
+      <section className="comparison-section" style={{ background: "#0F0F0F", padding: "64px 56px" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>WHY SMART DRIVE ELITE</div>
@@ -230,8 +251,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <section id="opportunity" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <section id="opportunity" className="section-pad" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
+        <div className="opportunity-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>THE OPPORTUNITY</div>
             <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>The platform the independent dealer market has been waiting for.</h2>
@@ -239,7 +260,7 @@ export default function HomePage() {
             <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Smart Drive Elite gives independent dealers the same AI decisioning infrastructure that enterprise groups pay hundreds of thousands for — at a fraction of the cost, with none of the bloat.</p>
             <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "13px 28px", textDecoration: "none", display: "inline-block" }}>Get Early Access</Link>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="opportunity-stats" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {[{ value: "40,000+", label: "Independent dealers in the US", sub: "Underserved by legacy software" }, { value: "$750B", label: "Used auto finance market", sub: "Annual originations" }, { value: "72%", label: "Deals need subprime routing", sub: "Most platforms skip this" }, { value: "1", label: "AI platform for independents", sub: "Built from scratch" }].map(s => (
               <div key={s.label} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 12, padding: "24px 20px" }}>
                 <div style={{ fontSize: 30, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-1.5px", marginBottom: 6, lineHeight: 1 }}>{s.value}</div>
@@ -250,7 +271,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "0 56px 96px" }}>
+      <section className="cta-section" style={{ maxWidth: 1200, margin: "0 auto", padding: "0 56px 96px" }}>
         <div style={{ background: "#0F0F0F", borderRadius: 20, padding: "72px 80px" }}>
           <div style={{ maxWidth: 640 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 20 }}>READY TO TRANSFORM YOUR FINANCE DESK</div>
@@ -264,7 +285,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <footer style={{ borderTop: "1px solid #E8E3D8", padding: "28px 56px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F8F6F1" }}>
+      <footer className="footer-inner" style={{ borderTop: "1px solid #E8E3D8", padding: "28px 56px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F8F6F1" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#0F0F0F"/><path d="M8 16 L13 10 L19 10 L24 16 L19 22 L13 22 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5"/><circle cx="16" cy="16" r="3" fill="#C9A84C"/></svg>
           <span style={{ fontSize: 13, fontWeight: 700, color: "#0F0F0F" }}>Smart Drive Elite LLC</span>
