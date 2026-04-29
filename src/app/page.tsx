@@ -120,30 +120,50 @@ export default function HomePage() {
       </section>
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
       <section id="lenders" style={{ maxWidth: 1200, margin: "0 auto", padding: "80px 56px" }}>
-        <div style={{ marginBottom: 48 }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>LENDER NETWORK</div>
-          <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>Five lenders. Every customer covered.</h2>
-          <p style={{ fontSize: 16, color: "#777", maxWidth: 520, lineHeight: 1.6 }}>From prime to catch-all. Our waterfall is engineered so no deal leaves your lot unfunded.</p>
+          <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>Every customer profile has a home.</h2>
+          <p style={{ fontSize: 16, color: "#777", maxWidth: 560, margin: "0 auto", lineHeight: 1.6 }}>Our multi-tier lender network covers prime to no-credit, W2 to 1099, standard to IBL. The engine finds the right fit automatically — no manual shopping required.</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
-          {[{ name: "Global Lending Services", short: "GLS", tier: "Tier 1 · First stop", range: "400-680 FICO", specs: ["W2 required", "Max $55K", "Max PTI 20%"], dark: false }, { name: "Westlake Financial", short: "WFS", tier: "Tier 2 · No min FICO", range: "4 tiers by score", specs: ["No min income", "Max $50K", "All income types"], dark: false }, { name: "Consumer Portfolio", short: "CPS", tier: "Tier 3 · Flexible", range: "No min FICO", specs: ["1099 OK", "Max $55K", "8 tiers"], dark: false }, { name: "Midwest Acceptance", short: "MAC", tier: "Tier 4 · Regional", range: "MO/IL/AR/KS", specs: ["5 tiers", "Max $20K", "Local focus"], dark: false }, { name: "Western Funding", short: "WFI", tier: "Catch-All", range: "No minimums", specs: ["All titles OK", "Unlimited miles", "True catch-all"], dark: true }].map(l => (
-            <div key={l.short} style={{ background: l.dark ? "#0F0F0F" : "#FFFFFF", border: "1px solid " + (l.dark ? "#2A2A2A" : "#E8E3D8"), borderRadius: 12, padding: "24px 18px" }}>
-              <div style={{ width: 36, height: 36, background: l.dark ? "#1A1A1A" : "#F8F6F1", border: "1px solid " + (l.dark ? "#333" : "#E8E3D8"), borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C" }}>{l.short}</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 48 }}>
+          {[
+            { tier: "TIER 1", title: "Prime", sub: "Standard financing", range: "Strong credit profile", specs: ["W2 income", "Competitive APR", "Max vehicle flexibility"], dark: false },
+            { tier: "TIER 2", title: "Near Prime", sub: "Flexible programs", range: "Moderate credit profile", specs: ["All income types", "Extended terms", "Higher PTI allowance"], dark: false },
+            { tier: "TIER 3", title: "Subprime", sub: "Income-based approval", range: "Challenged credit", specs: ["1099 accepted", "Self-employed OK", "Multiple tiers"], dark: false },
+            { tier: "TIER 4", title: "Deep Subprime", sub: "BHPH programs", range: "Minimal credit history", specs: ["Income verified", "Down payment flex", "In-house options"], dark: false },
+            { tier: "CATCH-ALL", title: "IBL", sub: "No credit required", range: "Income is the qualifier", specs: ["All titles accepted", "No FICO minimum", "True last resort"], dark: true },
+          ].map(l => (
+            <div key={l.tier} style={{ background: l.dark ? "#0F0F0F" : "#FFFFFF", border: "1px solid " + (l.dark ? "#2A2A2A" : "#E8E3D8"), borderRadius: 12, padding: "24px 18px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", background: l.dark ? "#1A1A1A" : "#F8F6F1", border: "1px solid " + (l.dark ? "#333" : "#E8E3D8"), borderRadius: 6, padding: "4px 10px", marginBottom: 14 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#C9A84C", letterSpacing: "1px" }}>{l.tier}</span>
               </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: l.dark ? "#FFFFFF" : "#0F0F0F", marginBottom: 4 }}>{l.name}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "#C9A84C", marginBottom: 12 }}>{l.tier}</div>
-              <div style={{ fontSize: 11, color: l.dark ? "#666" : "#BBB", marginBottom: 10 }}>{l.range}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: l.dark ? "#FFFFFF" : "#0F0F0F", marginBottom: 4 }}>{l.title}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: "#C9A84C", marginBottom: 8 }}>{l.sub}</div>
+              <div style={{ fontSize: 11, color: l.dark ? "#555" : "#BBB", marginBottom: 12 }}>{l.range}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {l.specs.map(sp => (
                   <div key={sp} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#C9A84C", flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, color: l.dark ? "#777" : "#888" }}>{sp}</span>
+                    <span style={{ fontSize: 11, color: l.dark ? "#666" : "#888" }}>{sp}</span>
                   </div>
                 ))}
               </div>
             </div>
           ))}
+        </div>
+        <div style={{ background: "#0F0F0F", borderRadius: 12, padding: "28px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF", marginBottom: 4 }}>Multi-tier waterfall. Fully automated.</div>
+            <div style={{ fontSize: 13, color: "#555" }}>The engine routes every deal through all applicable tiers in under 60 seconds. No manual lender shopping. No missed approvals.</div>
+          </div>
+          <div style={{ display: "flex", gap: 32, flexShrink: 0 }}>
+            {[{ val: "5", label: "Tiers" }, { val: "100%", label: "Automated" }, { val: "<60s", label: "Decision" }].map(s => (
+              <div key={s.label} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 24, fontWeight: 900, color: "#C9A84C", letterSpacing: "-1px", lineHeight: 1 }}>{s.val}</div>
+                <div style={{ fontSize: 10, color: "#555", marginTop: 4 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
       <section style={{ background: "#0F0F0F", padding: "64px 56px" }}>
