@@ -1,7 +1,7 @@
 # Smart Drive Elite — Project Status
 
 **Last Updated:** April 29, 2026
-**Overall Completion:** 83%
+**Overall Completion:** 85%
 **Estimated Valuation (current):** $350,000 - $450,000
 **Estimated Valuation (at 100%):** $1,200,000 - $2,500,000
 
@@ -88,14 +88,6 @@ CTA: Access the Decision Engine
 Comparison header: Legacy platforms manage deals. Smart Drive Elite decides them.
 Comparison sub: Most platforms help you submit deals. We control the outcome.
 
-Competitor table (9 competitors, correct categories):
-- Smart Drive Elite = Decision Intelligence (NEW CATEGORY)
-- DealerTrack / RouteOne = Infrastructure
-- CDK / Tekion / DealerCenter = DMS
-- DealerSocket = CRM
-- Darwin Auto = F&I Menu
-- Reynolds = Legacy DMS
-
 ---
 
 ## Completed Features
@@ -103,7 +95,7 @@ Competitor table (9 competitors, correct categories):
 ### Security
 - AES-256-GCM encryption — src/lib/encryption.ts
 - HMAC-SHA256 signed sessions — src/lib/session.ts
-- Hardened middleware
+- Hardened middleware (Edge-compatible, no Node crypto)
 - PII fields: ssnEncrypted, dobEncrypted, dlEncrypted, dlState, ipAddress, userAgent
 
 ### Homepage
@@ -114,6 +106,12 @@ Competitor table (9 competitors, correct categories):
 - Legal disclaimer on comparison table
 - Outcome-driven copy throughout
 
+### Login / Auth
+- Custom HMAC-SHA256 session — cookie: sde_session
+- Edge-compatible middleware session verification
+- Role-based routing: DEALER_USER → /dealer, DEALER_MANAGER → /dealer-dashboard, admins → /controller
+- Fixed Edge runtime crypto bug 4/29/2026
+
 ### Deal Submission Form (src/app/dealer/page.tsx)
 - Customer: firstName, lastName, phone, email
 - Identity: SSN, DOB, DL number, DL state
@@ -121,10 +119,7 @@ Competitor table (9 competitors, correct categories):
 - Stability: residenceMonths, employmentMonths
 - Credit score (optional)
 - Vehicle dropdown from inventory
-- Stip upload gate — 3 required docs before submit allowed:
-  - Government-issued ID
-  - Proof of Income
-  - Proof of Residence
+- Stip upload gate — 3 required docs before submit allowed
 - Real file upload wired to Vercel Blob
 - Files stored at: stips/{userId}/{documentType}/{timestamp}.{ext}
 - 10MB max, allowed: PDF, JPG, PNG, HEIC
@@ -132,48 +127,33 @@ Competitor table (9 competitors, correct categories):
 
 ### Infrastructure
 - Vercel Blob storage LIVE (smart-drive-cjbl-blob)
-- @vercel/blob package installed
 - Decision engine — 5-lender waterfall, PTI/DTI, risk scoring
 - Admin panel — dealers, users, groups
 - CSV import API
 - 34 vehicles active with VIN
 
+### Cleanup (4/29/2026)
+- autoComplete="off" on request-access form
+- Deleted dead auth.ts
+- Fixed Edge runtime warning in middleware
+
 ---
 
 ## Foundation Build Order (Remaining — Do In Order)
 
-1. TEST document upload end to end
-   - Login as dealer at smartdriveelite.com/dealer
-   - Upload all 3 stips
-   - Confirm files appear in Vercel Blob browser
-   - Confirm submit button unlocks
-
-2. ID Authentication
-   - Scan DL, verify expiry, name match
-   - Wire to identityStatus on Application
-
+1. ✅ TEST document upload end to end — COMPLETE 4/29/2026
+2. ID Authentication — NEEDS ANTHROPIC_API_KEY
+   - mkdir -p src/app/api/verify-identity (already done)
+   - Get API key from console.anthropic.com
+   - Add ANTHROPIC_API_KEY to Vercel env + .env.local
+   - Build verify-identity route using Claude vision
 3. 700Credit Integration
    - Sign up at 700credit.com — get API credentials
    - Add CREDIT_API_KEY to Vercel env vars
-   - Auto-fires on submission
-   - Returns score, tradelines, DTI data
-
 4. IBL Scoring Engine
-   - PTI/DTI calculation
-   - Income + residence stability scoring
-   - Risk tier assignment
-   - Uses 700Credit data + form data
-
 5. Program Router
-   - Auto-assigns IBL > Retail > Lease > Subscription
-   - No salesman input, full audit trail
-
 6. Vehicle Matching Engine
-   - Filter inventory to qualifying vehicles only
-
 7. Decision Screen
-   - Read only — no editable fields
-   - Approved/declined + program + vehicles + payment
 
 Then after foundation:
 - Dealer dashboard metrics
@@ -182,21 +162,19 @@ Then after foundation:
 - IBL payment calculator
 - Billing
 - CSV upload UI
-- autoComplete="off" on request-access form
 
 ---
 
 ## Known Issues
 
 1. SESSION_SECRET and ENCRYPTION_KEY wiped on every vercel env pull — always re-add manually
-2. crypto/Edge runtime warning in middleware — warning only, not breaking
-3. request-access form shows browser autofill — need autoComplete="off"
+2. request-access form browser autofill — FIXED 4/29/2026
 
 ---
 
 ## Valuation Trajectory
 
-- Today 83% complete: $350K-$450K
+- Today 85% complete: $350K-$450K
 - At 100%: $1.2M-$2.5M
 - With GoodAutos live revenue: $2M-$5M
 - With 10+ dealers: $5M-$15M
@@ -206,10 +184,11 @@ Then after foundation:
 
 ## File Structure Key Files
 
-src/app/api/upload-document/route.ts — Vercel Blob upload (NEW)
+src/app/api/upload-document/route.ts — Vercel Blob upload
+src/app/api/verify-identity/route.ts — ID auth (PENDING API KEY)
 src/app/dealer/page.tsx — deal form with stip gate + real upload
 src/app/page.tsx — homepage mobile responsive
 src/lib/encryption.ts — AES-256-GCM
 src/lib/session.ts — HMAC-SHA256
-src/middleware.ts — role-based auth
+src/middleware.ts — role-based auth (Edge-compatible)
 prisma/schema.prisma — full data model
