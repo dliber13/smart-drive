@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 
 export async function GET() {
   const users = await prisma.user.findMany({
@@ -15,10 +16,21 @@ export async function POST(req: NextRequest) {
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
     data: {
-      firstName, lastName, email: email.toLowerCase(),
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
       fullName: `${firstName} ${lastName}`,
-      passwordHash, role, isActive: true,
-      DealerUser: dealerId ? { create: { dealerId } } : undefined
+      passwordHash,
+      role,
+      isActive: true,
+      ...(dealerId ? {
+        DealerUser: {
+          create: {
+            id: randomUUID(),
+            dealerId: String(dealerId),
+          }
+        }
+      } : {})
     }
   });
   return NextResponse.json({ user });
