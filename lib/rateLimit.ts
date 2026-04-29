@@ -1,3 +1,5 @@
+import { NextRequest } from "next/server";
+
 type RateLimitEntry = {
   count: number;
   resetAt: number;
@@ -5,22 +7,18 @@ type RateLimitEntry = {
 
 const store = new Map<string, RateLimitEntry>();
 
-// Clean up expired entries every 5 minutes
-if (typeof setInterval !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-      if (entry.resetAt < now) store.delete(key);
-    }
-  }, 5 * 60 * 1000);
-}
-
 export function rateLimit(
   key: string,
   limit: number,
   windowMs: number
 ): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
+
+  // Clean expired entries
+  for (const [k, entry] of store.entries()) {
+    if (entry.resetAt < now) store.delete(k);
+  }
+
   const entry = store.get(key);
 
   if (!entry || entry.resetAt < now) {
@@ -36,10 +34,9 @@ export function rateLimit(
   return { allowed: true, remaining: limit - entry.count, resetAt: entry.resetAt };
 }
 
-export function getIP(req: Request): string {
-  const forwarded = (req.headers as any).get?.("x-forwarded-for") ||
-    (req.headers as any)["x-forwarded-for"];
-  if (forwarded) return String(forwarded).split(",")[0].trim();
+export function getIP(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
   return "unknown";
 }
 
