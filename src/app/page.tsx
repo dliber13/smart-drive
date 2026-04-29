@@ -28,10 +28,10 @@ export default function HomePage() {
             <span style={{ fontSize: 11, fontWeight: 600, color: "#C9A84C", letterSpacing: "1px" }}>LIVE PLATFORM · INSTANT DECISIONS</span>
           </div>
           <h1 style={{ fontSize: 62, fontWeight: 800, lineHeight: 1.02, letterSpacing: "-2.5px", color: "#0F0F0F", margin: "0 0 24px" }}>The finance desk.<br /><span style={{ color: "#C9A84C" }}>Rebuilt from</span><br />the ground up.</h1>
-          <p style={{ fontSize: 18, color: "#666", lineHeight: 1.65, maxWidth: 480, margin: "0 0 16px" }}>Submit a customer profile. Get a structured approval, lender match, and top inventory picks in under 60 seconds.</p>
+          <p style={{ fontSize: 18, color: "#666", lineHeight: 1.65, maxWidth: 480, margin: "0 0 16px" }}>Every deal structured, matched, and decisioned in under 60 seconds. No manual shopping. No guessing.</p>
           <p style={{ fontSize: 14, color: "#999", lineHeight: 1.6, maxWidth: 440, margin: "0 0 40px" }}>No legacy software. No 1,500-lender network you will never use. Just AI-powered decisioning built specifically for independent dealers.</p>
           <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 40 }}>
-            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Get Dealer Access</Link>
+            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Access the Decision Engine</Link>
             <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "14px 24px", textDecoration: "none" }}>Sign In</Link>
           </div>
           <div style={{ display: "flex", gap: 0 }}>
