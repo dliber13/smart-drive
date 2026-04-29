@@ -2,14 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type StatusHistoryItem = {
-  id: string;
-  createdAt: string;
-  fromStatus: string | null;
-  toStatus: string;
-  note: string | null;
-};
-
 type Application = {
   id: string;
   createdAt: string;
@@ -43,19 +35,20 @@ type Application = {
   fundingDate: string | null;
   fundingAmount: number | null;
   lenderConfirmation: string | null;
-  statusHistory?: StatusHistoryItem[];
+};
+
+type Metrics = {
+  approvalRate: number;
+  avgDealStrength: number;
+  pipelineValue: number;
+  fundedVolume: number;
 };
 
 type DealerDashboardResponse = {
   success: boolean;
   count: number;
-  counts: {
-    draft: number;
-    submitted: number;
-    approved: number;
-    declined: number;
-    funded: number;
-  };
+  counts: { draft: number; submitted: number; approved: number; declined: number; funded: number; };
+  metrics: Metrics;
   applications: Application[];
   currentUserRole: string;
   message?: string;
@@ -64,127 +57,69 @@ type DealerDashboardResponse = {
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null) return "N/A";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
 }
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "N/A";
-
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return "N/A";
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function getApplicantName(application: Application) {
-  const fullName = [application.firstName, application.lastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-
-  return fullName || "Unknown Applicant";
+function getApplicantName(app: Application) {
+  return [app.firstName, app.lastName].filter(Boolean).join(" ").trim() || "Unknown Applicant";
 }
 
-function getVehicleLabel(application: Application) {
-  const vehicle = [
-    application.vehicleYear,
-    application.vehicleMake,
-    application.vehicleModel,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-
-  return vehicle || "No vehicle selected";
+function getVehicleLabel(app: Application) {
+  return [app.vehicleYear, app.vehicleMake, app.vehicleModel].filter(Boolean).join(" ").trim() || "No vehicle selected";
 }
 
 function getStatusTone(status: string | null | undefined) {
-  const normalized = String(status ?? "DRAFT").toUpperCase();
-
-  if (normalized === "APPROVED") {
-    return "bg-[#eef6f2] text-[#2f6f55] border-[#d7e9df]";
-  }
-
-  if (normalized === "DECLINED") {
-    return "bg-[#fbefee] text-[#b42318] border-[#f0c8c4]";
-  }
-
-  if (normalized === "FUNDED") {
-    return "bg-[#f3f0ff] text-[#5b3cc4] border-[#ddd2ff]";
-  }
-
-  if (normalized === "SUBMITTED") {
-    return "bg-[#f8f2e8] text-[#9a6700] border-[#ead7b0]";
-  }
-
+  const s = String(status ?? "DRAFT").toUpperCase();
+  if (s === "APPROVED") return "bg-[#eef6f2] text-[#2f6f55] border-[#d7e9df]";
+  if (s === "DECLINED") return "bg-[#fbefee] text-[#b42318] border-[#f0c8c4]";
+  if (s === "FUNDED") return "bg-[#f3f0ff] text-[#5b3cc4] border-[#ddd2ff]";
+  if (s === "SUBMITTED") return "bg-[#f8f2e8] text-[#9a6700] border-[#ead7b0]";
   return "bg-[#f5f3ee] text-[#5f5a52] border-[#e2ddd4]";
+}
+
+function DealStrengthBar({ value }: { value: number | null }) {
+  if (value == null) return <span className="text-black/40">N/A</span>;
+  const color = value >= 70 ? "#2f6f55" : value >= 45 ? "#9a6700" : "#b42318";
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-2 rounded-full bg-black/8 overflow-hidden">
+        <div className="h-2 rounded-full transition-all" style={{ width: `${value}%`, backgroundColor: color }} />
+      </div>
+      <span className="text-[15px] font-semibold" style={{ color }}>{value}</span>
+    </div>
+  );
 }
 
 export default function DealerDashboardPage() {
   const [applications, setApplications] = useState<Application[]>([]);
-  const [counts, setCounts] = useState({
-    draft: 0,
-    submitted: 0,
-    approved: 0,
-    declined: 0,
-    funded: 0,
-  });
+  const [counts, setCounts] = useState({ draft: 0, submitted: 0, approved: 0, declined: 0, funded: 0 });
+  const [metrics, setMetrics] = useState<Metrics>({ approvalRate: 0, avgDealStrength: 0, pipelineValue: 0, fundedVolume: 0 });
   const [selectedId, setSelectedId] = useState<string>("");
-  const [currentUserRole, setCurrentUserRole] = useState("SALES");
+  const [currentUserRole, setCurrentUserRole] = useState("DEALER_USER");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   async function loadDashboard(refresh = false) {
     try {
-      if (refresh) {
-        setIsRefreshing(true); 
-      } else {
-        setIsLoading(true);
-      }
-
+      refresh ? setIsRefreshing(true) : setIsLoading(true);
       setErrorMessage("");
-
-      const response = await fetch("/api/dealer-dashboard", {
-        cache: "no-store",
-        headers: {
-          "x-user-role": "SALES",
-        },
-      });
-
+      const response = await fetch("/api/dealer-dashboard", { cache: "no-store" });
       const data: DealerDashboardResponse = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to load dealer dashboard");
-      }
-
+      if (!response.ok || !data.success) throw new Error(data.reason || "Failed to load");
       setApplications(data.applications || []);
-      setCounts(
-        data.counts || {
-          draft: 0,
-          submitted: 0,
-          approved: 0,
-          declined: 0,
-          funded: 0,
-        }
-      );
-      setCurrentUserRole(data.currentUserRole || "SALES");
-
+      setCounts(data.counts || { draft: 0, submitted: 0, approved: 0, declined: 0, funded: 0 });
+      setMetrics(data.metrics || { approvalRate: 0, avgDealStrength: 0, pipelineValue: 0, fundedVolume: 0 });
+      setCurrentUserRole(data.currentUserRole || "DEALER_USER");
       if (data.applications?.length) {
-        setSelectedId((current) => {
-          const stillExists = data.applications.some((app) => app.id === current);
-          return stillExists ? current : data.applications[0].id;
-        });
+        setSelectedId(cur => data.applications.some(a => a.id === cur) ? cur : data.applications[0].id);
       } else {
         setSelectedId("");
       }
@@ -196,446 +131,204 @@ export default function DealerDashboardPage() {
     }
   }
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  useEffect(() => { loadDashboard(); }, []);
 
-  const selectedApplication = useMemo(() => {
-    return applications.find((application) => application.id === selectedId) || null;
-  }, [applications, selectedId]);
+  const selectedApplication = useMemo(() => applications.find(a => a.id === selectedId) || null, [applications, selectedId]);
 
   return (
     <main className="min-h-screen bg-[#f7f4ee] px-6 py-8 text-[#111111]">
       <div className="mx-auto max-w-7xl">
+
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">
-              Smart Drive Elite
-            </div>
-            <h1 className="mt-3 text-[64px] font-semibold leading-none tracking-[-0.06em]">
-              Dealer Dashboard
-            </h1>
-            <p className="mt-4 max-w-3xl text-[18px] leading-8 text-black/60">
-              Track submitted deals, approval movement, funding progress, and key
-              underwriting metrics from one dealer-facing view.
-            </p>
+            <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">Smart Drive Elite</div>
+            <h1 className="mt-3 text-[56px] font-semibold leading-none tracking-[-0.06em]">Dealer Dashboard</h1>
+            <p className="mt-4 max-w-2xl text-[17px] leading-7 text-black/55">Track submitted deals, approval movement, funding progress, and key underwriting metrics.</p>
           </div>
-
           <div className="flex items-center gap-3">
-            <div className="rounded-full border border-black/10 bg-white px-5 py-3 text-[14px] font-semibold tracking-[0.18em] text-black/70">
-              {applications.length} FILES
-            </div>
-            <div className="rounded-full bg-black px-6 py-3 text-[14px] font-semibold tracking-[0.18em] text-white">
-              {currentUserRole}
-            </div>
+            <div className="rounded-full border border-black/10 bg-white px-5 py-3 text-[13px] font-semibold tracking-[0.18em] text-black/60">{applications.length} FILES</div>
+            <div className="rounded-full bg-black px-6 py-3 text-[13px] font-semibold tracking-[0.18em] text-white">{currentUserRole}</div>
           </div>
         </div>
 
-        {errorMessage ? (
-          <div className="mb-8 rounded-[24px] border border-[#f0c8c4] bg-[#fbefee] px-6 py-5 text-[16px] text-[#b42318]">
-            {errorMessage}
-          </div>
-        ) : (
-          <div className="mb-8 rounded-[24px] border border-[#d7e9df] bg-[#eef6f2] px-6 py-5 text-[16px] text-[#2f6f55]">
-            Dealer dashboard loaded
-          </div>
+        {errorMessage && (
+          <div className="mb-6 rounded-[20px] border border-[#f0c8c4] bg-[#fbefee] px-6 py-4 text-[15px] text-[#b42318]">{errorMessage}</div>
         )}
 
-        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-5">
-          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
-            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
-              Draft
+        {/* Pipeline counts */}
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+          {[
+            { label: "Draft", value: counts.draft },
+            { label: "Submitted", value: counts.submitted },
+            { label: "Approved", value: counts.approved },
+            { label: "Declined", value: counts.declined },
+            { label: "Funded", value: counts.funded },
+          ].map(s => (
+            <div key={s.label} className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_15px_35px_rgba(0,0,0,0.04)]">
+              <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">{s.label}</div>
+              <div className="mt-3 text-[32px] font-semibold tracking-[-0.05em]">{s.value}</div>
             </div>
-            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
-              {counts.draft}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
-            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
-              Submitted
-            </div>
-            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
-              {counts.submitted}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
-            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
-              Approved
-            </div>
-            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
-              {counts.approved}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
-            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
-              Declined
-            </div>
-            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
-              {counts.declined}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-black/8 bg-white p-5 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
-            <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">
-              Funded
-            </div>
-            <div className="mt-3 text-[34px] font-semibold tracking-[-0.05em]">
-              {counts.funded}
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1.02fr_1.18fr]">
+        {/* Performance metrics */}
+        <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[
+            { label: "Approval Rate", value: `${metrics.approvalRate}%`, sub: "of decisioned deals" },
+            { label: "Avg Deal Strength", value: metrics.avgDealStrength || "—", sub: "approved deals" },
+            { label: "Pipeline Value", value: formatCurrency(metrics.pipelineValue), sub: "approved vehicle value" },
+            { label: "Funded Volume", value: formatCurrency(metrics.fundedVolume), sub: "total funded" },
+          ].map(m => (
+            <div key={m.label} className="rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_15px_35px_rgba(0,0,0,0.04)]">
+              <div className="text-[11px] uppercase tracking-[0.24em] text-black/36">{m.label}</div>
+              <div className="mt-3 text-[26px] font-semibold tracking-[-0.04em]">{m.value}</div>
+              <div className="mt-1 text-[11px] text-black/40">{m.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[1fr_1.2fr]">
+          {/* Queue */}
           <section className="rounded-[34px] border border-black/8 bg-white p-7 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
             <div className="mb-6 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-[28px] font-semibold tracking-[-0.03em]">
-                  Dealer Queue
-                </h2>
-                <p className="mt-2 text-[15px] text-black/55">
-                  Live view of your submitted and decisioned files.
-                </p>
+                <h2 className="text-[26px] font-semibold tracking-[-0.03em]">Dealer Queue</h2>
+                <p className="mt-1 text-[14px] text-black/50">Live view of your submitted and decisioned files.</p>
               </div>
-
-              <button
-                onClick={() => loadDashboard(true)}
-                className="rounded-[18px] border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black/70 transition hover:bg-[#faf7f1]"
-              >
+              <button onClick={() => loadDashboard(true)} className="rounded-[16px] border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-black/60 hover:bg-[#faf7f1]">
                 {isRefreshing ? "Refreshing..." : "Refresh"}
               </button>
             </div>
-
             {isLoading ? (
-              <div className="rounded-[22px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
-                Loading dashboard...
-              </div>
+              <div className="rounded-[20px] border border-black/8 bg-[#faf7f1] p-6 text-black/50">Loading dashboard...</div>
             ) : applications.length === 0 ? (
-              <div className="rounded-[22px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
-                No deals found yet.
-              </div>
+              <div className="rounded-[20px] border border-black/8 bg-[#faf7f1] p-6 text-black/50">No deals found yet.</div>
             ) : (
-              <div className="space-y-4">
-                {applications.map((application) => {
-                  const isSelected = selectedId === application.id;
-
-                  return (
-                    <button
-                      key={application.id}
-                      onClick={() => setSelectedId(application.id)}
-                      className={`w-full rounded-[28px] border p-5 text-left transition ${
-                        isSelected
-                          ? "border-[#d8c19a] bg-[#fbf7ef] shadow-[0_18px_40px_rgba(0,0,0,0.04)]"
-                          : "border-black/8 bg-white hover:bg-[#faf7f1]"
-                      }`}
-                    >
-                      <div className="mb-4 flex items-start justify-between gap-4">
-                        <div>
-                          <div className="text-[15px] font-semibold">
-                            {getApplicantName(application)}
-                          </div>
-                          <div className="mt-1 text-[14px] text-black/55">
-                            {getVehicleLabel(application)}
-                          </div>
-                        </div>
-
-                        <div
-                          className={`rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(
-                            application.status
-                          )}`}
-                        >
-                          {application.status || "DRAFT"}
-                        </div>
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                {applications.map(app => (
+                  <button key={app.id} onClick={() => setSelectedId(app.id)}
+                    className={`w-full rounded-[24px] border p-5 text-left transition ${selectedId === app.id ? "border-[#d8c19a] bg-[#fbf7ef] shadow-[0_12px_30px_rgba(0,0,0,0.04)]" : "border-black/8 bg-white hover:bg-[#faf7f1]"}`}>
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-[15px] font-semibold">{getApplicantName(app)}</div>
+                        <div className="mt-0.5 text-[13px] text-black/50">{getVehicleLabel(app)}</div>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-[14px] text-black/60">
-                        <div>
-                          <span className="font-medium text-black/40">Created:</span>{" "}
-                          {formatDate(application.createdAt)}
-                        </div>
-                        <div>
-                          <span className="font-medium text-black/40">Tier:</span>{" "}
-                          {application.tier || "N/A"}
-                        </div>
-                        <div>
-                          <span className="font-medium text-black/40">Max Payment:</span>{" "}
-                          {formatCurrency(application.maxPayment)}
-                        </div>
-                        <div>
-                          <span className="font-medium text-black/40">Vehicle Price:</span>{" "}
-                          {formatCurrency(application.vehiclePrice)}
-                        </div>
+                      <div className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] ${getStatusTone(app.status)}`}>
+                        {app.status || "DRAFT"}
                       </div>
-                    </button>
-                  );
-                })}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-[13px] text-black/55">
+                      <div><span className="text-black/35">Date:</span> {formatDate(app.createdAt)}</div>
+                      <div><span className="text-black/35">Lender:</span> {app.lender || "—"}</div>
+                      <div><span className="text-black/35">Max Pmt:</span> {formatCurrency(app.maxPayment)}</div>
+                      <div><span className="text-black/35">Strength:</span> {app.dealStrength ?? "—"}</div>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </section>
 
+          {/* Detail */}
           <section className="rounded-[34px] border border-black/8 bg-white p-7 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
             <div className="mb-6">
-              <h2 className="text-[28px] font-semibold tracking-[-0.03em]">
-                Deal Detail
-              </h2>
-              <p className="mt-2 text-[15px] text-black/55">
-                Dealer-side file view with decision metrics and status history.
-              </p>
+              <h2 className="text-[26px] font-semibold tracking-[-0.03em]">Deal Detail</h2>
+              <p className="mt-1 text-[14px] text-black/50">Full file view with decision metrics and underwriting data.</p>
             </div>
-
             {!selectedApplication ? (
-              <div className="rounded-[22px] border border-black/8 bg-[#faf7f1] p-6 text-black/60">
-                Select a deal to view details.
-              </div>
+              <div className="rounded-[20px] border border-black/8 bg-[#faf7f1] p-6 text-black/50">Select a deal to view details.</div>
             ) : (
-              <div className="space-y-6">
-                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
-                  <div className="mb-5 flex items-start justify-between gap-4">
+              <div className="space-y-5">
+                {/* Header */}
+                <div className="rounded-[24px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="flex items-start justify-between gap-4 mb-4">
                     <div>
-                      <div className="text-[13px] uppercase tracking-[0.20em] text-black/36">
-                        Applicant
-                      </div>
-                      <div className="mt-2 text-[30px] font-semibold tracking-[-0.04em]">
-                        {getApplicantName(selectedApplication)}
-                      </div>
+                      <div className="text-[12px] uppercase tracking-[0.20em] text-black/36">Applicant</div>
+                      <div className="mt-1 text-[28px] font-semibold tracking-[-0.04em]">{getApplicantName(selectedApplication)}</div>
+                      <div className="mt-1 text-[14px] text-black/50">{selectedApplication.email || "No email"} · {selectedApplication.phone || "No phone"}</div>
                     </div>
-
-                    <div
-                      className={`rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] ${getStatusTone(
-                        selectedApplication.status
-                      )}`}
-                    >
+                    <div className={`rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.16em] ${getStatusTone(selectedApplication.status)}`}>
                       {selectedApplication.status || "DRAFT"}
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Phone
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.phone || "N/A"}
-                      </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">Identity Status</div>
+                      <div className="mt-1 text-[15px] font-semibold">{selectedApplication.identityStatus || "PENDING"}</div>
                     </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Email
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.email || "N/A"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Identity Type
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.identityType || "N/A"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Identity Status
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.identityStatus || "N/A"}
-                      </div>
+                    <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">Credit Score</div>
+                      <div className="mt-1 text-[15px] font-semibold">{selectedApplication.creditScore ?? "Not provided"}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
-                  <div className="mb-5 text-[13px] uppercase tracking-[0.20em] text-black/36">
-                    Vehicle & Finance
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Vehicle
+                {/* Vehicle & Finance */}
+                <div className="rounded-[24px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="mb-4 text-[12px] uppercase tracking-[0.20em] text-black/36">Vehicle & Finance</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Vehicle", value: getVehicleLabel(selectedApplication) },
+                      { label: "Stock #", value: selectedApplication.stockNumber || "N/A" },
+                      { label: "Vehicle Price", value: formatCurrency(selectedApplication.vehiclePrice) },
+                      { label: "Down Payment", value: formatCurrency(selectedApplication.downPayment) },
+                      { label: "Amount Financed", value: formatCurrency(selectedApplication.amountFinanced) },
+                      { label: "Monthly Income", value: formatCurrency(selectedApplication.monthlyIncome) },
+                    ].map(f => (
+                      <div key={f.label} className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">{f.label}</div>
+                        <div className="mt-1 text-[15px] font-semibold">{f.value}</div>
                       </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {getVehicleLabel(selectedApplication)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Stock Number
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.stockNumber || "N/A"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Vehicle Price
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.vehiclePrice)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Amount Financed
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.amountFinanced)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Down Payment
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.downPayment)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Monthly Income
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.monthlyIncome)}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
-                  <div className="mb-5 text-[13px] uppercase tracking-[0.20em] text-black/36">
-                    Controller Decision
+                {/* Decision */}
+                <div className="rounded-[24px] border border-black/8 bg-[#fcfbf8] p-6">
+                  <div className="mb-4 text-[12px] uppercase tracking-[0.20em] text-black/36">Decision Engine Output</div>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    {[
+                      { label: "Lender", value: selectedApplication.lender || "Pending" },
+                      { label: "Tier", value: selectedApplication.tier || "Pending" },
+                      { label: "Max Payment", value: formatCurrency(selectedApplication.maxPayment) },
+                      { label: "Max Vehicle", value: formatCurrency(selectedApplication.maxVehicle) },
+                    ].map(f => (
+                      <div key={f.label} className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">{f.label}</div>
+                        <div className="mt-1 text-[15px] font-semibold">{f.value}</div>
+                      </div>
+                    ))}
                   </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Lender
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.lender || "Pending"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Tier
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.tier || "Pending"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Max Payment
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.maxPayment)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Max Vehicle
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.maxVehicle)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Deal Strength
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.dealStrength ?? "N/A"}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Funding Amount
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatCurrency(selectedApplication.fundingAmount)}
-                      </div>
-                    </div>
+                  <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3 mb-3">
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-black/36 mb-2">Deal Strength</div>
+                    <DealStrengthBar value={selectedApplication.dealStrength} />
                   </div>
-
-                  <div className="mt-4 rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                    <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                      Decision Reason
-                    </div>
-                    <div className="mt-2 text-[17px] font-semibold">
-                      {selectedApplication.decisionReason || "No decision note yet."}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Funding Date
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {formatDate(selectedApplication.fundingDate)}
-                      </div>
-                    </div>
-
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4">
-                      <div className="text-[12px] uppercase tracking-[0.18em] text-black/36">
-                        Lender Confirmation
-                      </div>
-                      <div className="mt-2 text-[18px] font-semibold">
-                        {selectedApplication.lenderConfirmation || "Pending"}
-                      </div>
-                    </div>
+                  <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                    <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">Decision Reason</div>
+                    <div className="mt-1 text-[14px] text-black/70">{selectedApplication.decisionReason || "No decision note yet."}</div>
                   </div>
                 </div>
 
-                <div className="rounded-[28px] border border-black/8 bg-[#fcfbf8] p-6">
-                  <div className="mb-5 text-[13px] uppercase tracking-[0.20em] text-black/36">
-                    Status Timeline
+                {/* Funding */}
+                {(selectedApplication.fundingDate || selectedApplication.fundingAmount || selectedApplication.lenderConfirmation) && (
+                  <div className="rounded-[24px] border border-black/8 bg-[#fcfbf8] p-6">
+                    <div className="mb-4 text-[12px] uppercase tracking-[0.20em] text-black/36">Funding</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">Funding Date</div>
+                        <div className="mt-1 text-[15px] font-semibold">{formatDate(selectedApplication.fundingDate)}</div>
+                      </div>
+                      <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">Funded Amount</div>
+                        <div className="mt-1 text-[15px] font-semibold">{formatCurrency(selectedApplication.fundingAmount)}</div>
+                      </div>
+                      <div className="col-span-2 rounded-[16px] border border-black/8 bg-white px-4 py-3">
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-black/36">Lender Confirmation</div>
+                        <div className="mt-1 text-[15px] font-semibold">{selectedApplication.lenderConfirmation || "Pending"}</div>
+                      </div>
+                    </div>
                   </div>
-
-                  {!selectedApplication.statusHistory?.length ? (
-                    <div className="rounded-[20px] border border-black/8 bg-white px-5 py-4 text-black/55">
-                      No status history recorded yet.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {selectedApplication.statusHistory.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-[20px] border border-black/8 bg-white px-5 py-4"
-                        >
-                          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                            <div className="text-[16px] font-semibold">
-                              {item.fromStatus || "START"} → {item.toStatus}
-                            </div>
-                            <div className="text-[14px] text-black/50">
-                              {formatDate(item.createdAt)}
-                            </div>
-                          </div>
-
-                          <div className="mt-2 text-[14px] text-black/60">
-                            {item.note || "No note provided."}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             )}
           </section>
