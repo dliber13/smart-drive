@@ -1,8 +1,8 @@
 # Smart Drive Elite — Project Status
 
 **Last Updated:** April 29, 2026
-**Overall Completion:** 87%
-**Estimated Valuation (current):** $350,000 - $450,000
+**Overall Completion:** 90%
+**Estimated Valuation (current):** $400,000 - $500,000
 **Estimated Valuation (at 100%):** $1,200,000 - $2,500,000
 
 ---
@@ -27,6 +27,7 @@ Program waterfall order:
 - Deployment: Vercel PRO — unlimited deployments
 - Auth: Custom HMAC-SHA256 signed sessions (no NextAuth)
 - Encryption: AES-256-GCM for all PII fields
+- AI: Anthropic Claude (claude-opus-4-5) — ID vision extraction
 - Domain: smartdriveelite.com / smart-drive-cjbl.vercel.app
 
 ---
@@ -37,12 +38,14 @@ Every time you run `npx vercel env pull .env.local` it REMOVES SESSION_SECRET an
 
 SESSION_SECRET=f9f927b2532ba665690f476ac536ddc234d62c5fc243b790e2ebcc6d30d53157
 ENCRYPTION_KEY=65ad524efbf8c2af3a967a026d7dfdbe44eb374acd403b2240470fe848418176
+ANTHROPIC_API_KEY=sk-ant-api03-[GET FROM VERCEL DASHBOARD]
 
 Full .env.local needs:
 - DATABASE_URL (auto-pulled)
 - BLOB_READ_WRITE_TOKEN (auto-pulled)
 - SESSION_SECRET (manually add after pull)
 - ENCRYPTION_KEY (manually add after pull)
+- ANTHROPIC_API_KEY (manually add after pull)
 
 ---
 
@@ -73,35 +76,18 @@ NOTE: Lender names NOT shown on public homepage. Tiers only.
 
 ---
 
-## Competitive Positioning
-
-Smart Drive Elite is a NEW CATEGORY:
-- NOT a DMS (not CDK, Tekion, DealerCenter)
-- NOT infrastructure (not DealerTrack, RouteOne)
-- NOT a CRM (not DealerSocket)
-- NOT an F&I menu (not Darwin)
-- DECISION + OPTIMIZATION + INTELLIGENCE layer
-
-Slogan: Built for what they were never designed for.
-Hero: The finance desk. Rebuilt from the ground up.
-CTA: Access the Decision Engine
-Comparison header: Legacy platforms manage deals. Smart Drive Elite decides them.
-Comparison sub: Most platforms help you submit deals. We control the outcome.
-
----
-
 ## Completed Features
 
 ### Security
 - AES-256-GCM encryption — src/lib/encryption.ts
 - HMAC-SHA256 signed sessions — src/lib/session.ts
-- Edge-compatible middleware — no Node crypto
-- Auth on ALL API routes — controller-decision, dealer-dashboard, admin/applications, upload-document
+- Edge-compatible middleware
+- Auth on ALL API routes
+- Rate limiting: login (5/15min), upload (20/hr), request-access (3/hr)
 - Role-based access: DEALER_USER/MANAGER → /dealer, admins → /controller
-- PII fields: ssnEncrypted, dobEncrypted, dlEncrypted, dlState, ipAddress, userAgent
 
 ### Homepage
-- Mobile responsive — clamp-based fluid layout
+- Mobile responsive
 - Tier-based lender section (no lender names)
 - 9-competitor table with correct categories
 - Outcome-driven copy throughout
@@ -116,23 +102,31 @@ Comparison sub: Most platforms help you submit deals. We control the outcome.
 - Stip upload gate — 3 required docs before submit
 - Real file upload to Vercel Blob
 - Files: stips/{userId}/{documentType}/{timestamp}.{ext}
-- Upload API: src/app/api/upload-document/route.ts
+- Auto-fires identity verification after submission
+
+### ID Authentication (src/app/api/verify-identity/route.ts) ✅ COMPLETE
+- Downloads ID image from Vercel Blob
+- Sends to Claude vision (claude-opus-4-5)
+- Extracts: firstName, lastName, DOB, expiry, documentType
+- Checks expiry — rejects if expired
+- Checks name match against application
+- Updates identityStatus: VERIFIED or REJECTED
+- Updates ApplicationDocument.verifyStatus
+- Auto-fires after deal submission
 
 ### Dealer Dashboard (src/app/dealer-dashboard/page.tsx)
-- Dealer-filtered applications (security — dealers see only their deals)
-- Pipeline counts: Draft, Submitted, Approved, Declined, Funded
-- Metrics: Approval Rate, Avg Deal Strength, Pipeline Value, Funded Volume
+- Dealer-filtered applications (security)
+- Pipeline counts + metrics row
 - Deal strength bar with color coding
-- Full deal detail panel with funding info
+- Full deal detail panel
 
 ### Controller Dashboard (src/app/controller/page.tsx)
-- Sees ALL applications across ALL dealers
+- All applications across all dealers
 - Filter tabs: Submitted, Approved, Declined, All
 - Full metrics row
-- Stip status dots (identity/income/residence)
-- Identity status per application
-- Dealer name + dealer number shown
-- Underwriting decision form — green/red submit button
+- Stip status dots + identity status
+- Dealer name + number shown
+- Underwriting decision form
 - Vehicle matching engine panel
 - Auth locked — admin roles only
 
@@ -140,37 +134,29 @@ Comparison sub: Most platforms help you submit deals. We control the outcome.
 - Vercel Blob storage LIVE
 - Decision engine — 5-lender waterfall, PTI/DTI, risk scoring
 - Admin panel — dealers, users, groups
-- CSV import API
+- request-access API — saves to DealerRequest table
+- admin/applications API — auth-gated, all-dealer view
+- Rate limiting on key routes
 - 34 vehicles active with VIN
-- admin/applications API — auth-gated, returns counts + metrics
-
-### Cleanup (4/29/2026)
-- autoComplete="off" on request-access form
-- Deleted dead auth.ts
-- Fixed Edge runtime warning in middleware
 
 ---
 
 ## Foundation Build Order (Remaining — Do In Order)
 
 1. ✅ TEST document upload end to end — COMPLETE 4/29/2026
-2. ID Authentication — NEEDS ANTHROPIC_API_KEY
-   - mkdir already done: src/app/api/verify-identity/
-   - Get key from console.anthropic.com
-   - Add ANTHROPIC_API_KEY to .env.local and Vercel production
-   - Build verify-identity route using Claude vision
+2. ✅ ID Authentication — COMPLETE 4/29/2026
 3. 700Credit Integration
    - Sign up at 700credit.com
    - Add CREDIT_API_KEY to Vercel env
-   - Auto-fires on submission
+   - Auto-fires on submission, returns score + tradelines
 4. IBL Scoring Engine
 5. Program Router
 6. Vehicle Matching Engine
 7. Decision Screen
 
 Then after foundation:
-- Rate limiting on API routes
-- Audit trail
+- Logout button
+- Audit trail viewer
 - IBL payment calculator
 - Billing
 - CSV upload UI
@@ -179,13 +165,14 @@ Then after foundation:
 
 ## Known Issues
 
-1. SESSION_SECRET and ENCRYPTION_KEY wiped on every vercel env pull — always re-add manually
+1. SESSION_SECRET, ENCRYPTION_KEY, ANTHROPIC_API_KEY wiped on every vercel env pull — always re-add manually
+2. @/ alias maps to project root ./lib/ not ./src/lib/ — always put shared lib files in both /lib/ and /src/lib/
 
 ---
 
 ## Valuation Trajectory
 
-- Today 87% complete: $350K-$450K
+- Today 90% complete: $400K-$500K
 - At 100%: $1.2M-$2.5M
 - With GoodAutos live revenue: $2M-$5M
 - With 10+ dealers: $5M-$15M
@@ -195,16 +182,16 @@ Then after foundation:
 
 ## File Structure Key Files
 
+src/app/api/verify-identity/route.ts — Claude vision ID auth
 src/app/api/upload-document/route.ts — Vercel Blob upload
-src/app/api/verify-identity/route.ts — ID auth (PENDING API KEY)
 src/app/api/admin/applications/route.ts — admin all-dealer view
-src/app/api/controller-decision/route.ts — auth-gated decision save
-src/app/api/dealer-dashboard/route.ts — dealer-filtered applications
+src/app/api/controller-decision/route.ts — auth-gated decision
+src/app/api/dealer-dashboard/route.ts — dealer-filtered apps
+src/app/api/request-access/route.ts — dealer request form
 src/app/dealer/page.tsx — deal form with stip gate
 src/app/dealer-dashboard/page.tsx — dealer metrics dashboard
 src/app/controller/page.tsx — controller/admin dashboard
-src/app/page.tsx — homepage
-src/lib/encryption.ts — AES-256-GCM
-src/lib/session.ts — HMAC-SHA256
+src/lib/session.ts — HMAC-SHA256 (NOTE: also at /lib/session.ts)
+lib/rateLimit.ts — rate limiting (root lib folder)
 src/middleware.ts — Edge-compatible role-based auth
 prisma/schema.prisma — full data model
