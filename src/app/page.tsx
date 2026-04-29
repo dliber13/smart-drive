@@ -66,7 +66,7 @@ export default function HomePage() {
             <div style={{ borderTop: "1px solid #F0EBE0", paddingTop: 14, marginBottom: 14 }}>
               <div style={{ fontSize: 10, color: "#AAA", letterSpacing: "1px", fontWeight: 600, marginBottom: 10 }}>LENDER WATERFALL</div>
               <div style={{ display: "flex", gap: 6 }}>
-                {[{ name: "GLS", active: true }, { name: "WFS", active: false }, { name: "CPS", active: false }, { name: "MAC", active: false }, { name: "WFI", active: false }].map(l => (
+                {[{ name: "TIER 1", active: true }, { name: "TIER 2", active: false }, { name: "TIER 3", active: false }, { name: "TIER 4", active: false }, { name: "IBL", active: false }].map(l => (
                   <div key={l.name} style={{ flex: 1, textAlign: "center", padding: "6px 4px", borderRadius: 6, background: l.active ? "#0F0F0F" : "#F8F6F1", border: "1px solid " + (l.active ? "#0F0F0F" : "#E8E3D8") }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: l.active ? "#C9A84C" : "#CCC" }}>{l.name}</div>
                   </div>
@@ -92,7 +92,7 @@ export default function HomePage() {
           <p style={{ fontSize: 16, color: "#777", maxWidth: 480, margin: "0 auto" }}>Everything a finance manager does manually — automated, documented, delivered instantly.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
-          {[{ step: "01", title: "Submit profile", desc: "Salesperson enters customer info — income, credit range, ID type. Takes 90 seconds.", dark: false }, { step: "02", title: "AI scores risk", desc: "Engine calculates PTI/DTI, assigns risk tier, flags income type and deal structure.", dark: false }, { step: "03", title: "Lender waterfall", desc: "Automatically routes GLS to Westlake to CPS to MAC to WFI. Stops at first approval.", dark: false }, { step: "04", title: "Structured output", desc: "Returns lender, tier, max payment, max vehicle, deal strength, and top 3 inventory matches.", dark: true }].map((s, i) => (
+          {[{ step: "01", title: "Submit profile", desc: "Salesperson enters customer info — income, credit range, ID type. Takes 90 seconds.", dark: false }, { step: "02", title: "AI scores risk", desc: "Engine calculates PTI/DTI, assigns risk tier, flags income type and deal structure.", dark: false }, { step: "03", title: "Lender waterfall", desc: "Automatically routes through all applicable tiers. Stops at first approval.", dark: false }, { step: "04", title: "Structured output", desc: "Returns lender, tier, max payment, max vehicle, deal strength, and top 3 inventory matches.", dark: true }].map((s, i) => (
             <div key={s.step} style={{ background: s.dark ? "#0F0F0F" : "#FFFFFF", padding: "32px 28px", borderRadius: i === 0 ? "12px 0 0 12px" : i === 3 ? "0 12px 12px 0" : 0, border: "1px solid " + (s.dark ? "#222" : "#E8E3D8"), borderLeft: i > 0 ? "none" : undefined }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C", letterSpacing: "1px", marginBottom: 16 }}>{s.step}</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: s.dark ? "#FFFFFF" : "#0F0F0F", marginBottom: 10 }}>{s.title}</div>
