@@ -75,7 +75,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <div style={{ position: "absolute", top: -16, left: -16, background: "#C9A84C", borderRadius: 10, padding: "10px 16px" }}>
+          <div style={{ position: "absolute", bottom: -16, left: -16, background: "#C9A84C", borderRadius: 10, padding: "10px 16px" }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "#0F0F0F" }}>Decision in</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-1px", lineHeight: 1 }}>47s</div>
           </div>
