@@ -1,7 +1,7 @@
 # Smart Drive Elite — Project Status
 
 **Last Updated:** April 29, 2026
-**Overall Completion:** 85%
+**Overall Completion:** 87%
 **Estimated Valuation (current):** $350,000 - $450,000
 **Estimated Valuation (at 100%):** $1,200,000 - $2,500,000
 
@@ -51,7 +51,7 @@ Full .env.local needs:
 - GoodAutos Dealer ID: cmnoryqqa0000js04m6ybcf5v
 - GoodAutos Dealer #: D3393
 - GoodAutos Location: Gladstone, MO
-- Admin login: doug.liber@smartdriveelite.com
+- Admin login: doug.liber@smartdriveelite.com / Admin1234!
 - Dealer login: anthony.noll@goodautos.com / GoodAutos6417!
 - USPTO Trademark: #99764274 filed April 14, 2026
 - Legal entity: Smart Drive Elite LLC, Missouri
@@ -95,42 +95,54 @@ Comparison sub: Most platforms help you submit deals. We control the outcome.
 ### Security
 - AES-256-GCM encryption — src/lib/encryption.ts
 - HMAC-SHA256 signed sessions — src/lib/session.ts
-- Hardened middleware (Edge-compatible, no Node crypto)
+- Edge-compatible middleware — no Node crypto
+- Auth on ALL API routes — controller-decision, dealer-dashboard, admin/applications, upload-document
+- Role-based access: DEALER_USER/MANAGER → /dealer, admins → /controller
 - PII fields: ssnEncrypted, dobEncrypted, dlEncrypted, dlState, ipAddress, userAgent
 
 ### Homepage
 - Mobile responsive — clamp-based fluid layout
-- Viewport meta tag in layout.tsx
 - Tier-based lender section (no lender names)
 - 9-competitor table with correct categories
-- Legal disclaimer on comparison table
 - Outcome-driven copy throughout
 
 ### Login / Auth
-- Custom HMAC-SHA256 session — cookie: sde_session
-- Edge-compatible middleware session verification
-- Role-based routing: DEALER_USER → /dealer, DEALER_MANAGER → /dealer-dashboard, admins → /controller
 - Fixed Edge runtime crypto bug 4/29/2026
+- Custom HMAC-SHA256 session — cookie: sde_session
+- Role-based routing working correctly
 
-### Deal Submission Form (src/app/dealer/page.tsx)
-- Customer: firstName, lastName, phone, email
-- Identity: SSN, DOB, DL number, DL state
-- Financial: monthlyIncome, payFrequency, monthlyExpenses, downPayment
-- Stability: residenceMonths, employmentMonths
-- Credit score (optional)
-- Vehicle dropdown from inventory
-- Stip upload gate — 3 required docs before submit allowed
-- Real file upload wired to Vercel Blob
-- Files stored at: stips/{userId}/{documentType}/{timestamp}.{ext}
-- 10MB max, allowed: PDF, JPG, PNG, HEIC
+### Deal Submission (src/app/dealer/page.tsx)
+- Full customer, identity, financial, stability, vehicle intake
+- Stip upload gate — 3 required docs before submit
+- Real file upload to Vercel Blob
+- Files: stips/{userId}/{documentType}/{timestamp}.{ext}
 - Upload API: src/app/api/upload-document/route.ts
 
+### Dealer Dashboard (src/app/dealer-dashboard/page.tsx)
+- Dealer-filtered applications (security — dealers see only their deals)
+- Pipeline counts: Draft, Submitted, Approved, Declined, Funded
+- Metrics: Approval Rate, Avg Deal Strength, Pipeline Value, Funded Volume
+- Deal strength bar with color coding
+- Full deal detail panel with funding info
+
+### Controller Dashboard (src/app/controller/page.tsx)
+- Sees ALL applications across ALL dealers
+- Filter tabs: Submitted, Approved, Declined, All
+- Full metrics row
+- Stip status dots (identity/income/residence)
+- Identity status per application
+- Dealer name + dealer number shown
+- Underwriting decision form — green/red submit button
+- Vehicle matching engine panel
+- Auth locked — admin roles only
+
 ### Infrastructure
-- Vercel Blob storage LIVE (smart-drive-cjbl-blob)
+- Vercel Blob storage LIVE
 - Decision engine — 5-lender waterfall, PTI/DTI, risk scoring
 - Admin panel — dealers, users, groups
 - CSV import API
 - 34 vehicles active with VIN
+- admin/applications API — auth-gated, returns counts + metrics
 
 ### Cleanup (4/29/2026)
 - autoComplete="off" on request-access form
@@ -143,22 +155,22 @@ Comparison sub: Most platforms help you submit deals. We control the outcome.
 
 1. ✅ TEST document upload end to end — COMPLETE 4/29/2026
 2. ID Authentication — NEEDS ANTHROPIC_API_KEY
-   - mkdir -p src/app/api/verify-identity (already done)
-   - Get API key from console.anthropic.com
-   - Add ANTHROPIC_API_KEY to Vercel env + .env.local
+   - mkdir already done: src/app/api/verify-identity/
+   - Get key from console.anthropic.com
+   - Add ANTHROPIC_API_KEY to .env.local and Vercel production
    - Build verify-identity route using Claude vision
 3. 700Credit Integration
-   - Sign up at 700credit.com — get API credentials
-   - Add CREDIT_API_KEY to Vercel env vars
+   - Sign up at 700credit.com
+   - Add CREDIT_API_KEY to Vercel env
+   - Auto-fires on submission
 4. IBL Scoring Engine
 5. Program Router
 6. Vehicle Matching Engine
 7. Decision Screen
 
 Then after foundation:
-- Dealer dashboard metrics
+- Rate limiting on API routes
 - Audit trail
-- Rate limiting
 - IBL payment calculator
 - Billing
 - CSV upload UI
@@ -168,13 +180,12 @@ Then after foundation:
 ## Known Issues
 
 1. SESSION_SECRET and ENCRYPTION_KEY wiped on every vercel env pull — always re-add manually
-2. request-access form browser autofill — FIXED 4/29/2026
 
 ---
 
 ## Valuation Trajectory
 
-- Today 85% complete: $350K-$450K
+- Today 87% complete: $350K-$450K
 - At 100%: $1.2M-$2.5M
 - With GoodAutos live revenue: $2M-$5M
 - With 10+ dealers: $5M-$15M
@@ -186,9 +197,14 @@ Then after foundation:
 
 src/app/api/upload-document/route.ts — Vercel Blob upload
 src/app/api/verify-identity/route.ts — ID auth (PENDING API KEY)
-src/app/dealer/page.tsx — deal form with stip gate + real upload
-src/app/page.tsx — homepage mobile responsive
+src/app/api/admin/applications/route.ts — admin all-dealer view
+src/app/api/controller-decision/route.ts — auth-gated decision save
+src/app/api/dealer-dashboard/route.ts — dealer-filtered applications
+src/app/dealer/page.tsx — deal form with stip gate
+src/app/dealer-dashboard/page.tsx — dealer metrics dashboard
+src/app/controller/page.tsx — controller/admin dashboard
+src/app/page.tsx — homepage
 src/lib/encryption.ts — AES-256-GCM
 src/lib/session.ts — HMAC-SHA256
-src/middleware.ts — role-based auth (Edge-compatible)
+src/middleware.ts — Edge-compatible role-based auth
 prisma/schema.prisma — full data model
