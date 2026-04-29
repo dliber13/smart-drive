@@ -150,23 +150,53 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>WHY SMART DRIVE ELITE</div>
-            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: 0 }}>Everything they cannot do. Nothing you do not need.</h2>
+            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: "0 0 12px" }}>Everything they cannot do. Nothing you do not need.</h2>
+            <p style={{ fontSize: 14, color: "#555", margin: 0 }}>Head-to-head against every major platform in the market.</p>
           </div>
-          <div style={{ border: "1px solid #2A2A2A", borderRadius: 12, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", borderBottom: "1px solid #2A2A2A" }}>
-              <div style={{ padding: "14px 24px", background: "#1A1A1A" }}><span style={{ fontSize: 11, color: "#555", fontWeight: 700 }}>FEATURE</span></div>
-              <div style={{ padding: "14px 24px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}><span style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C" }}>Smart Drive Elite</span></div>
-              <div style={{ padding: "14px 24px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}><span style={{ fontSize: 11, color: "#555" }}>DealerTrack</span></div>
-              <div style={{ padding: "14px 24px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}><span style={{ fontSize: 11, color: "#555" }}>Reynolds and Reynolds</span></div>
-            </div>
-            {[{ feature: "AI risk scoring engine", sde: true, dt: false, rr: false }, { feature: "Automated lender waterfall", sde: true, dt: false, rr: false }, { feature: "IBL and 1099 income support", sde: true, dt: false, rr: false }, { feature: "Deal strength score", sde: true, dt: false, rr: false }, { feature: "Built for independent dealers", sde: true, dt: false, rr: false }, { feature: "Under 60-second decisions", sde: true, dt: false, rr: false }, { feature: "Live inventory matching", sde: true, dt: true, rr: false }, { feature: "Subprime routing", sde: true, dt: true, rr: true }].map((row, i) => (
-              <div key={row.feature} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", borderBottom: i < 7 ? "1px solid #1A1A1A" : "none" }}>
-                <div style={{ padding: "13px 24px" }}><span style={{ fontSize: 13, color: "#888" }}>{row.feature}</span></div>
-                <div style={{ padding: "13px 24px", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>{row.sde ? <span style={{ color: "#4ADE80", fontSize: 16, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#333" }}>&#8212;</span>}</div>
-                <div style={{ padding: "13px 24px", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>{row.dt ? <span style={{ color: "#4ADE80", fontSize: 16, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#333" }}>&#8212;</span>}</div>
-                <div style={{ padding: "13px 24px", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>{row.rr ? <span style={{ color: "#4ADE80", fontSize: 16, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#333" }}>&#8212;</span>}</div>
+          <div style={{ overflowX: "auto" }}>
+            <div style={{ minWidth: 1100, border: "1px solid #2A2A2A", borderRadius: 12, overflow: "hidden" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr", borderBottom: "1px solid #2A2A2A" }}>
+                <div style={{ padding: "14px 20px", background: "#1A1A1A" }}><span style={{ fontSize: 11, color: "#555", fontWeight: 700 }}>FEATURE</span></div>
+                {[
+                  { name: "Smart Drive Elite", gold: true },
+                  { name: "DealerTrack", gold: false },
+                  { name: "Reynolds", gold: false },
+                  { name: "RouteOne", gold: false },
+                  { name: "DealerSocket", gold: false },
+                  { name: "700Credit", gold: false },
+                  { name: "vAuto", gold: false },
+                  { name: "Darwin Auto", gold: false },
+                  { name: "Tekion", gold: false },
+                ].map(h => (
+                  <div key={h.name} style={{ padding: "14px 8px", background: "#1A1A1A", borderLeft: "1px solid #2A2A2A", textAlign: "center" }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: h.gold ? "#C9A84C" : "#444" }}>{h.name}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+              {[
+                { feature: "AI risk scoring engine",         v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "Automated lender waterfall",     v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "IBL / BHPH income support",      v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "Deal strength score",            v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "Under 60-second decisions",      v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "Built for independent dealers",  v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "Stip gate — docs required",      v: [1,0,0,0,0,0,0,0,0] },
+                { feature: "1099 / self-employed routing",   v: [1,0,0,0,1,0,0,0,0] },
+                { feature: "Subprime lender routing",        v: [1,1,1,1,0,0,0,1,0] },
+                { feature: "Live inventory matching",        v: [1,1,0,0,1,0,1,0,1] },
+                { feature: "Credit pull integration",        v: [1,1,1,1,1,1,0,1,1] },
+                { feature: "F&I menu / deal structure",      v: [1,1,1,0,1,0,0,1,1] },
+              ].map((row, i) => (
+                <div key={row.feature} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr", borderBottom: i < 11 ? "1px solid #1A1A1A" : "none" }}>
+                  <div style={{ padding: "12px 20px" }}><span style={{ fontSize: 12, color: "#888" }}>{row.feature}</span></div>
+                  {row.v.map((val, j) => (
+                    <div key={j} style={{ padding: "12px 8px", borderLeft: "1px solid #2A2A2A", textAlign: "center", background: j === 0 ? "rgba(201,168,76,0.05)" : "transparent" }}>
+                      {val ? <span style={{ color: j === 0 ? "#C9A84C" : "#4ADE80", fontSize: 15, fontWeight: 800 }}>&#10003;</span> : <span style={{ color: "#2A2A2A" }}>&#8212;</span>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
