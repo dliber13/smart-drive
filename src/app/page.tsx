@@ -92,7 +92,7 @@ export default function HomePage() {
           <p style={{ fontSize: 16, color: "#777", maxWidth: 480, margin: "0 auto" }}>Everything a finance manager does manually — automated, documented, delivered instantly.</p>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 2 }}>
-          {[{ step: "01", title: "Submit profile", desc: "Salesperson enters customer info — income, credit range, ID type. Takes 90 seconds.", dark: false }, { step: "02", title: "AI scores risk", desc: "Engine calculates PTI/DTI, assigns risk tier, flags income type and deal structure.", dark: false }, { step: "03", title: "Lender waterfall", desc: "Automatically routes through all applicable tiers. Stops at first approval.", dark: false }, { step: "04", title: "Structured output", desc: "Returns lender, tier, max payment, max vehicle, deal strength, and top 3 inventory matches.", dark: true }].map((s, i) => (
+          {[{ step: "01", title: "Capture the deal", desc: "Salesperson enters customer info, uploads required documents, and submits. 90 seconds.", dark: false }, { step: "02", title: "Score and structure instantly", desc: "Engine calculates PTI/DTI, assigns a precise risk tier, and builds the deal structure automatically.", dark: false }, { step: "03", title: "Route to the right tier", desc: "Automatically routes through all applicable tiers in order. Stops at the highest-probability approval.", dark: false }, { step: "04", title: "Return a funded path", desc: "Returns tier, max payment, max vehicle, deal strength score, and top inventory matches — ready to present.", dark: true }].map((s, i) => (
             <div key={s.step} style={{ background: s.dark ? "#0F0F0F" : "#FFFFFF", padding: "32px 28px", borderRadius: i === 0 ? "12px 0 0 12px" : i === 3 ? "0 12px 12px 0" : 0, border: "1px solid " + (s.dark ? "#222" : "#E8E3D8"), borderLeft: i > 0 ? "none" : undefined }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: "#C9A84C", letterSpacing: "1px", marginBottom: 16 }}>{s.step}</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: s.dark ? "#FFFFFF" : "#0F0F0F", marginBottom: 10 }}>{s.title}</div>
@@ -107,11 +107,11 @@ export default function HomePage() {
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>THE PLATFORM</div>
             <h2 style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>Built for the deal desk.<br /><span style={{ color: "#C9A84C" }}>Powered by AI.</span></h2>
-            <p style={{ fontSize: 15, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Every feature was designed around one question: what does a finance manager actually need to close a deal?</p>
+            <p style={{ fontSize: 15, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Every feature is built to increase approvals, reduce time-to-decision, and eliminate lender guesswork.</p>
             <Link href="/request-access" style={{ fontSize: 13, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 7, padding: "11px 24px", textDecoration: "none" }}>Request Access</Link>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            {[{ num: "01", title: "Risk Scoring Engine", desc: "Evaluates FICO range, income type (W2, 1099, self-employed), employment stability, PTI/DTI ratios, and identity to assign a precise risk tier from 1 to 10." }, { num: "02", title: "Lender Waterfall", desc: "Multi-tier automated waterfall. Prime to catch-all. Every deal gets its best possible home without manual shopping or lender guessing." }, { num: "03", title: "Inventory Matching", desc: "Top 3 vehicles ranked by approval likelihood and gross profit margin, pulled live from your inventory. No guessing what fits the deal." }, { num: "04", title: "IBL Calculator", desc: "Income-Based Lending structures for self-employed and 1099 customers. No FICO required. Income is the qualifier." }, { num: "05", title: "Deal Strength Score", desc: "Every decision includes a 0 to 100 deal strength score. A single number your team can use to prioritize deals and set expectations." }, { num: "06", title: "Audit Trail", desc: "Every decision logged with timestamp, lender reasoning, tier assignment, and compliance documentation built in from day one." }].map(f => (
+            {[{ num: "01", title: "Risk Scoring Engine", desc: "Instantly assigns a precise risk tier so every deal starts structured correctly — before it ever reaches a lender." }, { num: "02", title: "Lender Waterfall", desc: "Multi-tier automated waterfall. Prime to catch-all. Every deal gets its best possible home without manual shopping or lender guessing." }, { num: "03", title: "Inventory Matching", desc: "Shows only the vehicles most likely to get approved — ranked by fit and pulled live from your inventory. No guesswork." }, { num: "04", title: "IBL Calculator", desc: "Structures income-based approvals for customers traditional lenders miss. No FICO required. Income is the qualifier — and every deal gets a path." }, { num: "05", title: "Deal Strength Score", desc: "Every decision returns a 0–100 score. One number that tells your team exactly where the deal stands and what to expect." }, { num: "06", title: "Audit Trail", desc: "Every decision logged with timestamp, tier assignment, and reasoning. Compliance documentation built in from day one — no retrofitting." }].map(f => (
               <div key={f.num} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 12, padding: "24px 20px" }}>
                 <div style={{ fontSize: 10, fontWeight: 800, color: "#C9A84C", letterSpacing: "1.5px", marginBottom: 12 }}>{f.num}</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", marginBottom: 8 }}>{f.title}</div>
@@ -157,7 +157,7 @@ export default function HomePage() {
         <div style={{ background: "#0F0F0F", borderRadius: 12, padding: "28px 36px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#FFFFFF", marginBottom: 4 }}>Multi-tier waterfall. Fully automated.</div>
-            <div style={{ fontSize: 13, color: "#555" }}>The engine routes every deal through all applicable tiers in under 60 seconds. No manual lender shopping. No missed approvals.</div>
+            <div style={{ fontSize: 13, color: "#555" }}>Every deal routed. Every approval captured. Zero missed opportunities.</div>
           </div>
           <div style={{ display: "flex", gap: 32, flexShrink: 0 }}>
             {[{ val: "5", label: "Tiers" }, { val: "100%", label: "Automated" }, { val: "<60s", label: "Decision" }].map(s => (
@@ -173,8 +173,8 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>WHY SMART DRIVE ELITE</div>
-            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: "0 0 12px" }}>Built for what they were never designed for.</h2>
-            <p style={{ fontSize: 14, color: "#555", margin: 0 }}>Head-to-head against every major platform in the market.</p>
+            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1px", color: "#FFFFFF", margin: "0 0 12px" }}>Legacy platforms manage deals. Smart Drive Elite decides them.</h2>
+            <p style={{ fontSize: 14, color: "#555", margin: 0 }}>Most platforms help you submit deals. We control the outcome.</p>
           </div>
           <div style={{ overflowX: "auto" }}>
             <div style={{ minWidth: 1100, border: "1px solid #2A2A2A", borderRadius: 12, overflow: "hidden" }}>
