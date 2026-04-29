@@ -298,6 +298,13 @@ export default function DealerPage() {
       const data = await res.json();
       if (!res.ok) { setMessage(data?.reason || "Submission failed"); setSubmitting(false); return; }
       if (data?.decision) setDecision(data.decision);
+      if (data?.applicationId && stips.identity.fileKey) {
+        fetch('/api/verify-identity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ applicationId: data.applicationId, fileKey: stips.identity.fileKey }),
+        }).catch(() => {});
+      }
       setForm({
         firstName: "", lastName: "", phone: "", email: "",
         ssn: "", dob: "", dlNumber: "", dlState: "",
