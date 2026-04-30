@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { runDecisionEngine } from "../../../lib/decision-engine";
 import { pullCredit } from "../../../lib/creditEngine";
+import { runIBLEngine } from "../../../lib/iblEngine";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,27 @@ export async function POST(req: Request) {
     decisionInput.creditScore = decisionInput.creditScore ?? creditResult.score;
     decisionInput.bankruptcyStatus = creditResult.bankruptcyStatus;
     decisionInput.repoCount = creditResult.repoCount;
+
+    // Run IBL engine first (program waterfall: IBL → Retail → Lease → Subscription)
+    const iblResult = runIBLEngine({
+      monthlyIncome: toNumberOrNull(body?.monthlyIncome) ?? 0,
+      payFrequency: toTextOrNull(body?.payFrequency) ?? "BIWEEKLY",
+      monthlyExpenses: toNumberOrNull(body?.monthlyExpenses) ?? 0,
+      employmentMonths: toNumberOrNull(body?.employmentMonths) ?? 0,
+      residenceMonths: toNumberOrNull(body?.residenceMonths) ?? 0,
+      creditScore: decisionInput.creditScore ?? 0,
+      downPayment: toNumberOrNull(body?.downPayment) ?? 0,
+      tradeIn: toNumberOrNull(body?.tradeIn) ?? 0,
+      vehiclePrice: toNumberOrNull(body?.vehiclePrice) ?? 0,
+      bankruptcyStatus: creditResult.bankruptcyStatus,
+      repoCount: creditResult.repoCount,
+      incomeType: toTextOrNull(body?.incomeType) ?? "W2",
+    });
+
+    // If IBL eligible, override decision input with IBL max vehicle
+    if (iblResult.eligible) {
+      decisionInput.incomeType = decisionInput.incomeType || "IBL";
+    }
 
     const decision = runDecisionEngine(decisionInput);
 
