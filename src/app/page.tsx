@@ -36,7 +36,7 @@ export default function HomePage() {
             <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "14px 24px", textDecoration: "none" }}>Sign In</Link>
           </div>
           <div style={{ display: "flex", gap: 0 }}>
-            {[{ value: "5", label: "Lenders" }, { value: "<60s", label: "Decisions" }, { value: "10", label: "Risk tiers" }, { value: "100%", label: "Automated" }].map((s, i) => (
+            {[{ value: "100%", label: "Automated" }, { value: "<60s", label: "Decisions" }, { value: "10", label: "Risk tiers" }, { value: "Zero", label: "Manual steps" }].map((s, i) => (
               <div key={s.label} style={{ paddingRight: 28, marginRight: 28, borderRight: i < 3 ? "1px solid #E0DBD0" : "none" }}>
                 <div style={{ fontSize: 26, fontWeight: 800, color: "#0F0F0F", letterSpacing: "-1px", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 11, color: "#999", marginTop: 3 }}>{s.label}</div>
@@ -161,7 +161,7 @@ export default function HomePage() {
             <div style={{ fontSize: 13, color: "#555" }}>Every deal routed. Every approval captured. Zero missed opportunities.</div>
           </div>
           <div style={{ display: "flex", gap: 32, flexShrink: 0 }}>
-            {[{ val: "5", label: "Tiers" }, { val: "100%", label: "Automated" }, { val: "<60s", label: "Decision" }].map(s => (
+            {[{ val: "100%", label: "Automated" }, { val: "<60s", label: "Decision" }, { val: "Zero", label: "Manual steps" }].map(s => (
               <div key={s.label} style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 24, fontWeight: 900, color: "#C9A84C", letterSpacing: "-1px", lineHeight: 1 }}>{s.val}</div>
                 <div style={{ fontSize: 10, color: "#555", marginTop: 4 }}>{s.label}</div>
