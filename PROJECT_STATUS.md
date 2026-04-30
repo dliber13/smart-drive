@@ -1,6 +1,6 @@
 # Smart Drive Elite — Project Status
 
-**Last Updated:** April 29, 2026
+**Last Updated:** April 30, 2026
 **Overall Completion:** 100% — FULLY OPERATIONAL
 **Estimated Valuation (current):** $1,200,000 - $2,500,000
 **Estimated Valuation (with GoodAutos live revenue):** $2,000,000 - $5,000,000
@@ -13,12 +13,13 @@ Smart Drive Elite is a 100% automated real-time underwriting, deal structuring, 
 
 Full workflow:
 1. Dealer submits customer info + 3 stips
-2. Credit engine pulls score (mock → live 700Credit via env var)
+2. Credit engine pulls score (mock → live 700Credit via CREDIT_API_KEY env var)
 3. IBL engine scores income/stability/cash/credit/profile → Band A/B/C/D
 4. Program router assigns: IBL → Retail → Lease → Subscription
 5. Vehicle matching filters inventory by lender constraints
 6. Claude vision verifies ID expiry + name match
 7. Decision screen shows read-only result — program, lender, payments, eligible vehicles
+8. Auto-redirects to decision screen after submission
 
 ---
 
@@ -41,7 +42,7 @@ Every time you run `npx vercel env pull .env.local` it REMOVES these. Always re-
 
 SESSION_SECRET=f9f927b2532ba665690f476ac536ddc234d62c5fc243b790e2ebcc6d30d53157
 ENCRYPTION_KEY=65ad524efbf8c2af3a967a026d7dfdbe44eb374acd403b2240470fe848418176
-ANTHROPIC_API_KEY=[get from Vercel dashboard]
+ANTHROPIC_API_KEY=[get from Vercel dashboard — do not commit to git]
 
 ---
 
@@ -53,6 +54,8 @@ ANTHROPIC_API_KEY=[get from Vercel dashboard]
 - Admin login: doug.liber@smartdriveelite.com / Admin1234!
 - Dealer login: anthony.noll@goodautos.com / GoodAutos6417!
 - USPTO Trademark: #99764274 filed April 14, 2026
+- Occupational License: #2763 — City of Smithville, MO — Software Platform
+- Business Address: 13411 Forest Oaks Drive, Smithville, MO 64089
 - Legal entity: Smart Drive Elite LLC, Missouri
 - Vercel plan: PRO
 - Vercel project: smart-drive-cjbl
@@ -60,13 +63,22 @@ ANTHROPIC_API_KEY=[get from Vercel dashboard]
 
 ---
 
-## Lender Waterfall (Internal)
+## Lender Waterfall (Internal — program order not shown publicly)
 
 1. GLS — W2 only, 400-680 FICO, min $1,800/mo
 2. Westlake — Full spectrum, no min FICO
 3. CPS — Self-employed OK, open BK OK
 4. Midwest Acceptance — MO/IL/AR/KS only, max $20K
 5. WFI — True catch-all, max $24K
+
+---
+
+## Founder
+
+- Name: Douglas Liber
+- Title: Founder & CEO
+- Experience: 15+ years automotive finance
+- Lenders worked with: Ally, Westlake, CPS, Wells Fargo, Citizens Bank, Arvest, Santander, Credit Acceptance, Flagship, Exeter, Midwest Acceptance, GLS, WFI
 
 ---
 
@@ -99,6 +111,15 @@ ANTHROPIC_API_KEY=[get from Vercel dashboard]
 - Vehicle matching panel
 - Admin panel — dealers, users, groups
 
+### Homepage
+- Live platform preview section — decision screen, stip upload, pipeline mockups
+- Credibility section — License #2763, USPTO #99764274, LLC, address
+- About the Founder & CEO — Douglas Liber, 15+ years, full deal lifecycle bio
+- Integrated lender network — all 5 lenders named publicly
+- Competitor table — 9 competitors, correct categories
+- Stats: 100% Automated, <60s Decisions, 10 Risk tiers, Zero Manual steps
+- Footer — license number, trademark, address on every page
+
 ### Infrastructure
 - Vercel Blob storage live
 - request-access API — saves to DealerRequest table
@@ -112,8 +133,21 @@ ANTHROPIC_API_KEY=[get from Vercel dashboard]
 1. 700Credit live — awaiting approval, CREDIT_API_KEY env var ready
 2. Audit trail viewer — StatusHistory table exists, needs UI
 3. IBL payment calculator UI
-4. Billing / dealer onboarding (Stripe)
+4. Billing / dealer onboarding (Stripe) — required before dealer #2
 5. CSV upload UI for inventory
+6. Pricing page
+7. Platform screenshot section with real screenshots (currently mockups)
+
+---
+
+## Immediate Next Steps (In Order)
+
+1. Run first live deal with GoodAutos (anthony.noll@goodautos.com)
+2. Set up Stripe billing — Basic $299/mo, Pro $599/mo
+3. 700Credit live integration (awaiting approval)
+4. Audit trail viewer in controller dashboard
+5. Dealer #2 outreach — franchise or independent, MO/KS/IL/AR
+6. IBL payment calculator UI
 
 ---
 
@@ -121,6 +155,7 @@ ANTHROPIC_API_KEY=[get from Vercel dashboard]
 
 - Today 100% complete: $1.2M-$2.5M
 - With GoodAutos live revenue: $2M-$5M
+- With 5 dealers: $3M-$8M
 - With 10+ dealers: $5M-$15M
 - Series A target: $100M
 
@@ -151,6 +186,7 @@ src/app/dealer/page.tsx — deal form
 src/app/dealer/decision/[id]/page.tsx — decision screen
 src/app/dealer-dashboard/page.tsx — dealer metrics
 src/app/controller/page.tsx — controller dashboard
+src/app/page.tsx — homepage
 src/lib/decision-engine.ts — 5-lender waterfall engine
 src/lib/iblEngine.ts — IBL scoring engine
 src/lib/programRouter.ts — program waterfall router
@@ -159,3 +195,4 @@ src/lib/session.ts — HMAC-SHA256 auth
 lib/rateLimit.ts — rate limiting
 src/middleware.ts — Edge-compatible role-based auth
 prisma/schema.prisma — full data model
+components/site-footer.tsx — footer with legal credentials
