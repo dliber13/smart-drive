@@ -282,12 +282,13 @@ export default function HomePage() {
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>ABOUT THE FOUNDER</div>
             <h3 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", color: "#0F0F0F", margin: "0 0 16px" }}>Doug Liber</h3>
-            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 12px" }}>Doug has spent years in the automotive finance trenches — working directly with independent dealers, BHPH operators, and subprime lenders across Missouri and the Midwest.</p>
-            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: 0 }}>He built Smart Drive Elite because he watched too many dealers lose deals to slow, manual underwriting decisions. The engine does in seconds what used to take a finance manager 30 minutes — and it never has a bad day.</p>
+            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 12px" }}>Doug Liber has spent 15+ years on the front lines of automotive finance — not in a boardroom, but on the floor, at the desk, in the deal. He knows what it takes to build a deal from scratch: pulling credit, reading a bureau, finding the right lender, structuring the payment, negotiating the rate, getting the approval, working the stips, and finally — getting ink on paper.</p>
+            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 12px" }}>He has lived every step of that process hundreds of times over. He knows what a 540 FICO with 3 months on the job looks like to a lender. He knows when GLS won't touch it but Westlake will. He knows how to structure a deal around income when the credit file is thin. He knows the difference between a deal that funds and a deal that looks like it will.</p>
+            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: 0 }}>He built Smart Drive Elite because the tools available to independent dealers were built for someone else. Legacy platforms were designed for franchise groups with DMS contracts and captive lenders. Nothing was built for the independent dealer sitting across from a customer with a 580 score, a pay stub, and a $2,000 down payment — trying to get them into something reliable before the end of the month. Smart Drive Elite is that tool. Built from the desk up.</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {[
-              "10+ years automotive finance experience",
+              "15+ years automotive finance experience",
               "Direct relationships with GLS, Westlake, CPS, MAC, WFI",
               "Built for independent dealers — not franchises",
               "Missouri-based, dealer-focused",
