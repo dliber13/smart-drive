@@ -17,6 +17,7 @@ export default function HomePage() {
           <a href="#lenders" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Lenders</a>
           <a href="#how" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>How It Works</a>
           <a href="#opportunity" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Opportunity</a>
+          <a href="#demo" style={{ fontSize: 13, color: "#555", textDecoration: "none" }}>Demo</a>
           <div style={{ width: 1, height: 16, background: "#DDD" }} />
           <Link href="/request-access" style={{ fontSize: 13, color: "#777", textDecoration: "none" }}>Request Access</Link>
           <Link href="/login" style={{ fontSize: 13, fontWeight: 600, color: "#0F0F0F", background: "#C9A84C", borderRadius: 7, padding: "8px 20px", textDecoration: "none" }}>Sign In</Link>
@@ -32,7 +33,7 @@ export default function HomePage() {
           <p style={{ fontSize: 18, color: "#666", lineHeight: 1.65, maxWidth: 480, margin: "0 0 16px" }}>Every deal structured, matched, and decisioned in under 60 seconds. No manual shopping. No guessing.</p>
           <p style={{ fontSize: 14, color: "#999", lineHeight: 1.6, maxWidth: 440, margin: "0 0 40px" }}>No legacy software. No 1,500-lender network you will never use. Just AI-powered decisioning built specifically for independent dealers.</p>
           <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 40 }}>
-            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Access the Decision Engine</Link>
+            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Request Dealer Access</Link>
             <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "14px 24px", textDecoration: "none" }}>Sign In</Link>
           </div>
           <div style={{ display: "flex", gap: 0 }}>
@@ -354,13 +355,13 @@ export default function HomePage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: "clamp(32px, 5vw, 80px)", alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>THE OPPORTUNITY</div>
-            <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>The platform the independent dealer market has been waiting for.</h2>
+            <h2 style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 20px", lineHeight: 1.1 }}>The platform the dealer market has been waiting for.</h2>
             <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7, margin: "0 0 16px" }}>DealerTrack was built for franchises. Reynolds and Reynolds was built in another era. Neither was built for you.</p>
-            <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Smart Drive Elite gives independent dealers the same AI decisioning infrastructure that enterprise groups pay hundreds of thousands for — at a fraction of the cost, with none of the bloat.</p>
+            <p style={{ fontSize: 16, color: "#777", lineHeight: 1.7, margin: "0 0 32px" }}>Smart Drive Elite gives franchise and independent dealers the same AI decisioning infrastructure that enterprise groups pay hundreds of thousands for — at a fraction of the cost, with none of the bloat.</p>
             <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "13px 28px", textDecoration: "none", display: "inline-block" }}>Get Early Access</Link>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            {[{ value: "40,000+", label: "Independent dealers in the US", sub: "Underserved by legacy software" }, { value: "$750B", label: "Used auto finance market", sub: "Annual originations" }, { value: "72%", label: "Deals need subprime routing", sub: "Most platforms skip this" }, { value: "1", label: "AI platform for independents", sub: "Built from scratch" }].map(s => (
+            {[{ value: "40,000+", label: "Independent dealers in the US", sub: "Underserved by legacy software" }, { value: "$750B", label: "Used auto finance market", sub: "Annual originations" }, { value: "72%", label: "Deals need subprime routing", sub: "Most platforms skip this" }, { value: "1", label: "Built from the ground up for dealers", sub: "No legacy code. No shortcuts." }].map(s => (
               <div key={s.label} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 12, padding: "24px 20px" }}>
                 <div style={{ fontSize: 30, fontWeight: 900, color: "#0F0F0F", letterSpacing: "-1.5px", marginBottom: 6, lineHeight: 1 }}>{s.value}</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "#444", marginBottom: 4 }}>{s.label}</div>
@@ -443,7 +444,24 @@ export default function HomePage() {
               <Link href="/request-access" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "15px 36px", textDecoration: "none" }}>Request Dealer Access</Link>
               <Link href="/login" style={{ fontSize: 15, fontWeight: 500, color: "#777", background: "transparent", border: "1px solid #2A2A2A", borderRadius: 8, padding: "15px 28px", textDecoration: "none" }}>Sign In</Link>
             </div>
-            <div style={{ marginTop: 32, fontSize: 12, color: "#444" }}>Missouri · USPTO Trademark #99764274 · Smart Drive Elite LLC 2026</div>
+            <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <div style={{ background: "#1A1A1A", borderRadius: 10, padding: "12px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#C9A84C", marginBottom: 4 }}>BASIC</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#FFFFFF" }}>$299<span style={{ fontSize: 12, color: "#555", fontWeight: 400 }}>/mo</span></div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Up to 50 deals/mo</div>
+              </div>
+              <div style={{ background: "#C9A84C", borderRadius: 10, padding: "12px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#0F0F0F", marginBottom: 4 }}>PRO</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#0F0F0F" }}>$599<span style={{ fontSize: 12, color: "#7A6030", fontWeight: 400 }}>/mo</span></div>
+                <div style={{ fontSize: 11, color: "#7A6030", marginTop: 2 }}>Unlimited deals</div>
+              </div>
+              <div style={{ background: "#1A1A1A", borderRadius: 10, padding: "12px 20px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#C9A84C", marginBottom: 4 }}>ENTERPRISE</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#FFFFFF" }}>Custom</div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Multi-rooftop</div>
+              </div>
+            </div>
+            <div style={{ marginTop: 20, fontSize: 12, color: "#444" }}>Missouri · USPTO Trademark #99764274 · Smart Drive Elite LLC 2026</div>
           </div>
         </div>
       </section>
