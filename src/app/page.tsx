@@ -251,6 +251,68 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Credibility & Trust Section */}
+      <section style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(40px, 6vw, 80px) clamp(20px, 4vw, 56px)" }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>BUILT ON REAL CREDENTIALS</div>
+          <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1.5px", color: "#0F0F0F", margin: "0 0 16px" }}>A real company. A real platform. Real results.</h2>
+          <p style={{ fontSize: 16, color: "#777", maxWidth: 560, margin: "0 auto" }}>Smart Drive Elite is a licensed Missouri LLC built by an automotive finance professional with over a decade of dealership experience.</p>
+        </div>
+
+        {/* License & Legal Credentials */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 16, marginBottom: 48 }}>
+          {[
+            { icon: "🏛️", label: "Missouri LLC", value: "Smart Drive Elite LLC", sub: "Legally incorporated entity" },
+            { icon: "📋", label: "Occupational License", value: "License #2763", sub: "City of Smithville, MO · Software Platform" },
+            { icon: "™️", label: "USPTO Trademark", value: "#99764274", sub: "Filed April 14, 2026" },
+            { icon: "📍", label: "Business Address", value: "Smithville, MO 64089", sub: "13411 Forest Oaks Drive" },
+          ].map(item => (
+            <div key={item.label} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 16, padding: "24px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ fontSize: 24 }}>{item.icon}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: "#C9A84C", textTransform: "uppercase" }}>{item.label}</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: "#0F0F0F", letterSpacing: "-0.5px" }}>{item.value}</div>
+              <div style={{ fontSize: 12, color: "#999" }}>{item.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* About the founder */}
+        <div style={{ background: "#F8F6F1", border: "1px solid #E8E3D8", borderRadius: 20, padding: "clamp(28px, 4vw, 48px)", marginBottom: 48, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 32, alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>ABOUT THE FOUNDER</div>
+            <h3 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", color: "#0F0F0F", margin: "0 0 16px" }}>Doug Liber</h3>
+            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 12px" }}>Doug has spent years in the automotive finance trenches — working directly with independent dealers, BHPH operators, and subprime lenders across Missouri and the Midwest.</p>
+            <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: 0 }}>He built Smart Drive Elite because he watched too many dealers lose deals to slow, manual underwriting decisions. The engine does in seconds what used to take a finance manager 30 minutes — and it never has a bad day.</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              "10+ years automotive finance experience",
+              "Direct relationships with GLS, Westlake, CPS, MAC, WFI",
+              "Built for independent dealers — not franchises",
+              "Missouri-based, dealer-focused",
+            ].map(item => (
+              <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#C9A84C", marginTop: 7, flexShrink: 0 }} />
+                <span style={{ fontSize: 14, color: "#444", lineHeight: 1.5 }}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Lender network */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "2px", color: "#AAA", marginBottom: 24, textTransform: "uppercase" }}>Integrated Lender Network</div>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 12 }}>
+            {["Global Lending Services", "Westlake Financial", "Consumer Portfolio Services", "Midwest Acceptance Corp", "Western Funding"].map(lender => (
+              <div key={lender} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600, color: "#444" }}>
+                {lender}
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, color: "#CCC", marginTop: 16 }}>Lender availability subject to program eligibility, geographic restrictions, and applicant qualifications.</p>
+        </div>
+      </section>
       <section style={{ maxWidth: 1200, margin: "0 auto", padding: "0 clamp(20px, 4vw, 56px) clamp(48px, 6vw, 96px)" }}>
         <div style={{ background: "#0F0F0F", borderRadius: 20, padding: "clamp(40px, 6vw, 72px) clamp(24px, 5vw, 80px)" }}>
           <div style={{ maxWidth: 640 }}>
