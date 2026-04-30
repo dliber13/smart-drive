@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     // Run IBL engine first (program waterfall: IBL → Retail → Lease → Subscription)
     const iblResult = runIBLEngine({
       monthlyIncome: toNumberOrNull(body?.monthlyIncome) ?? 0,
-      payFrequency: toTextOrNull(body?.payFrequency) ?? "BIWEEKLY",
+      payFrequency: (toTextOrNull(body?.payFrequency) ?? "BIWEEKLY") as "WEEKLY" | "BIWEEKLY" | "SEMIMONTHLY" | "MONTHLY",
       monthlyExpenses: toNumberOrNull(body?.monthlyExpenses) ?? 0,
       employmentMonths: toNumberOrNull(body?.employmentMonths) ?? 0,
       residenceMonths: toNumberOrNull(body?.residenceMonths) ?? 0,
