@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { runDecisionEngine } from "../../../lib/decision-engine";
 import { pullCredit } from "../../../lib/creditEngine";
 import { runIBLEngine } from "../../../lib/iblEngine";
+import { runProgramRouter } from "../../../lib/programRouter";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,16 @@ export async function POST(req: Request) {
     }
 
     const decision = runDecisionEngine(decisionInput);
+
+    // Run program router — IBL → Retail → Lease → Subscription
+    const programResult = runProgramRouter({
+      ibl: iblResult,
+      retail: decision,
+      vehiclePrice: toNumberOrNull(body?.vehiclePrice) ?? 0,
+      monthlyIncome: toNumberOrNull(body?.monthlyIncome) ?? 0,
+      creditScore: decisionInput.creditScore ?? 0,
+      payFrequency: toTextOrNull(body?.payFrequency) ?? "BIWEEKLY",
+    });
 
     // 2. Save application with decision results
     const application = await prisma.application.create({
