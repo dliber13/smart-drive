@@ -2,8 +2,19 @@
 // Waterfall: IBL → Retail → Lease → Subscription
 // No salesman input. The engine decides.
 
-import { type IBLDecision } from "./iblEngine";
-import { type DecisionEngineOutput } from "./decision-engine";
+import type { IBLDecision } from "./iblEngine";
+
+type DecisionEngineOutput = {
+  status: string;
+  lender: string;
+  lenderTier: string;
+  apr: number;
+  termMonths: number;
+  maxPayment: number;
+  maxVehicle: number;
+  decisionReason: string;
+  [key: string]: any;
+};
 
 export type Program = "IBL" | "RETAIL" | "LEASE" | "SUBSCRIPTION" | "DECLINED";
 
