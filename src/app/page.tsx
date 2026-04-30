@@ -290,7 +290,7 @@ export default function HomePage() {
             {[
               "15+ years automotive finance experience",
               "Direct relationships with GLS, Westlake, CPS, MAC, WFI",
-              "Built for independent dealers — not franchises",
+              "Built for franchise and independent dealers alike",
               "Missouri-based, dealer-focused",
             ].map(item => (
               <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
