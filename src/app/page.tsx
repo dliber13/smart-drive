@@ -123,6 +123,125 @@ export default function HomePage() {
         </div>
       </section>
       <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #C9A84C, transparent)", margin: "0 56px", opacity: 0.3 }} />
+
+      {/* Platform Demo Section */}
+      <section id="demo" style={{ background: "#0F0F0F", padding: "clamp(48px, 6vw, 96px) clamp(20px, 4vw, 56px)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>LIVE PLATFORM PREVIEW</div>
+            <h2 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 800, letterSpacing: "-1.5px", color: "#FFFFFF", margin: "0 0 16px" }}>This is what your finance desk looks like.</h2>
+            <p style={{ fontSize: 16, color: "#777", maxWidth: 540, margin: "0 auto" }}>Real screens. Real decisions. No mock data — this is the actual platform running live.</p>
+          </div>
+
+          {/* Decision Screen Mockup */}
+          <div style={{ background: "#1A1A1A", borderRadius: 20, padding: 24, marginBottom: 24, border: "1px solid #2A2A2A" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#FF5F57" }} />
+              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#FFBD2E" }} />
+              <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#28C840" }} />
+              <div style={{ marginLeft: 12, fontSize: 12, color: "#555", fontFamily: "monospace" }}>smartdriveelite.com/dealer/decision/app_xyz</div>
+            </div>
+            <div style={{ background: "#F7F4EE", borderRadius: 14, padding: "clamp(20px, 3vw, 32px)" }}>
+              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>Smart Drive Elite · Decision Engine</div>
+              <div style={{ fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 600, letterSpacing: "-0.04em", color: "#111", marginBottom: 4 }}>John D. — 2019 Ford F-150</div>
+              <div style={{ fontSize: 13, color: "rgba(0,0,0,0.5)", marginBottom: 20 }}>anthony.noll@goodautos.com · Submitted 4/30/2026 9:14 AM</div>
+              <div style={{ background: "#eef6f2", border: "1px solid #d7e9df", borderRadius: 16, padding: "20px 24px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "#2f6f55", opacity: 0.7, marginBottom: 6 }}>Engine Decision</div>
+                  <div style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 600, color: "#2f6f55" }}>APPROVED</div>
+                  <div style={{ fontSize: 13, color: "rgba(0,0,0,0.55)", marginTop: 6, maxWidth: 400 }}>NEAR PRIME profile. Westlake Financial Gold. Max payment $714 / Max vehicle $34,424. Deal strength 72/100.</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.2em", color: "rgba(0,0,0,0.4)", marginBottom: 4 }}>Deal Strength</div>
+                  <div style={{ fontSize: 48, fontWeight: 600, color: "#1D9E75" }}>72</div>
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>out of 100</div>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+                {[["Lender", "Westlake Financial"], ["Max Monthly", "$714/mo"], ["Max Weekly", "$165/wk"], ["Max Vehicle", "$34,424"], ["APR", "15.99%"], ["Term", "72 months"]].map(([label, value]) => (
+                  <div key={label} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(0,0,0,0.35)", marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 15, fontWeight: 500 }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Two column — dealer form + pipeline */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 16 }}>
+
+            {/* Stip upload mockup */}
+            <div style={{ background: "#1A1A1A", borderRadius: 20, padding: 24, border: "1px solid #2A2A2A" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FF5F57" }} />
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FFBD2E" }} />
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28C840" }} />
+                <div style={{ marginLeft: 8, fontSize: 11, color: "#555", fontFamily: "monospace" }}>Deal Intake · Required Documents</div>
+              </div>
+              <div style={{ background: "#F7F4EE", borderRadius: 14, padding: 20 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.22em", color: "rgba(0,0,0,0.35)", marginBottom: 12 }}>Required Documents</div>
+                <div style={{ fontSize: 12, color: "rgba(0,0,0,0.5)", marginBottom: 12 }}>All three documents must be uploaded before submission.</div>
+                {[
+                  { label: "Government-Issued ID", status: "uploaded", file: "drivers_license.jpg" },
+                  { label: "Proof of Income", status: "uploaded", file: "paystub_april.pdf" },
+                  { label: "Proof of Residence", status: "uploaded", file: "utility_bill.pdf" },
+                ].map(doc => (
+                  <div key={doc.label} style={{ background: "#eef6f2", border: "1px solid #d7e9df", borderRadius: 12, padding: "12px 14px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#111" }}>{doc.label}</div>
+                      <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginTop: 2 }}>{doc.file}</div>
+                    </div>
+                    <span style={{ background: "#d7e9df", color: "#2f6f55", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>✓ Uploaded</span>
+                  </div>
+                ))}
+                <div style={{ background: "#111", color: "#fff", borderRadius: 12, padding: "12px", textAlign: "center", fontSize: 13, fontWeight: 600, marginTop: 12 }}>Submit Deal →</div>
+              </div>
+            </div>
+
+            {/* Pipeline mockup */}
+            <div style={{ background: "#1A1A1A", borderRadius: 20, padding: 24, border: "1px solid #2A2A2A" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FF5F57" }} />
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#FFBD2E" }} />
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28C840" }} />
+                <div style={{ marginLeft: 8, fontSize: 11, color: "#555", fontFamily: "monospace" }}>Dealer Dashboard · Live Pipeline</div>
+              </div>
+              <div style={{ background: "#F7F4EE", borderRadius: 14, padding: 20 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+                  {[["Submitted", "8"], ["Approved", "4"], ["Declined", "1"], ["Funded", "2"]].map(([label, val]) => (
+                    <div key={label} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: "rgba(0,0,0,0.35)" }}>{label}</div>
+                      <div style={{ fontSize: 22, fontWeight: 600, marginTop: 4 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+                {[
+                  { name: "Bill D.", vehicle: "Ford Expedition EL", status: "APPROVED", strength: 55, color: "#eef6f2", textColor: "#2f6f55" },
+                  { name: "Sarah M.", vehicle: "Chevy Silverado 1500", status: "SUBMITTED", strength: 68, color: "#f8f2e8", textColor: "#9a6700" },
+                  { name: "James R.", vehicle: "Dodge Charger", status: "DECLINED", strength: 23, color: "#fbefee", textColor: "#b42318" },
+                ].map(app => (
+                  <div key={app.name} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "10px 12px", marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{app.name}</div>
+                      <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)" }}>{app.vehicle}</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Strength: {app.strength}</span>
+                      <span style={{ background: app.color, color: app.textColor, borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>{app.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 32 }}>
+            <p style={{ fontSize: 13, color: "#555", marginBottom: 20 }}>This is the actual platform. Request access and your team is live within 24 hours.</p>
+            <a href="/request-access" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 36px", textDecoration: "none", display: "inline-block" }}>Request Dealer Access</a>
+          </div>
+        </div>
+      </section>
       <section id="lenders" style={{ maxWidth: 1200, margin: "0 auto", padding: "clamp(40px, 6vw, 80px) clamp(20px, 4vw, 56px)" }}>
         <div style={{ textAlign: "center", marginBottom: 56 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 12 }}>LENDER NETWORK</div>
