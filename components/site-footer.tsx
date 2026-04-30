@@ -48,9 +48,17 @@ export default function SiteFooter() {
           )}
         </div>
       </div>
-      <div className="border-t border-black/5 px-6 pb-6 text-center text-xs text-black/45">
-        Smart Drive Elite provides decision support tools for automotive deal structuring. 
-        Approval and funding are not guaranteed and remain subject to lender review.
+      <div className="border-t border-black/5 px-6 py-5">
+        <div className="mx-auto max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-black/45">
+          <div className="flex flex-col gap-1">
+            <div>Smart Drive Elite LLC · Smithville, Missouri 64089</div>
+            <div>Occupational License #2763 · City of Smithville, MO · Software Platform</div>
+            <div>USPTO Trademark #99764274 · Missouri LLC</div>
+          </div>
+          <div className="text-right text-xs text-black/35 max-w-sm">
+            Smart Drive Elite provides decision support tools for automotive deal structuring. Approval and funding are not guaranteed and remain subject to lender review.
+          </div>
+        </div>
       </div>
     </footer>
   );
