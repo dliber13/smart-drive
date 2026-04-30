@@ -298,6 +298,11 @@ export default function DealerPage() {
       const data = await res.json();
       if (!res.ok) { setMessage(data?.reason || "Submission failed"); setSubmitting(false); return; }
       if (data?.decision) setDecision(data.decision);
+      if (data?.applicationId) {
+        setTimeout(() => {
+          window.location.href = `/dealer/decision/${data.applicationId}`;
+        }, 2000);
+      }
       if (data?.applicationId && stips.identity.fileKey) {
         fetch('/api/verify-identity', {
           method: 'POST',
