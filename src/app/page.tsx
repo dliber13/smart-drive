@@ -280,7 +280,7 @@ export default function HomePage() {
         {/* About the founder */}
         <div style={{ background: "#F8F6F1", border: "1px solid #E8E3D8", borderRadius: 20, padding: "clamp(28px, 4vw, 48px)", marginBottom: 48, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 32, alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>ABOUT THE FOUNDER</div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", color: "#C9A84C", marginBottom: 16 }}>ABOUT THE FOUNDER & CEO</div>
             <h3 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", color: "#0F0F0F", margin: "0 0 16px" }}>Douglas Liber</h3>
             <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 12px" }}>Douglas Liber has spent 15+ years on the front lines of automotive finance — not in a boardroom, but on the floor, at the desk, in the deal. He knows what it takes to build a deal from scratch: pulling credit, reading a bureau, finding the right lender, structuring the payment, negotiating the rate, getting the approval, working the stips, and finally — getting ink on paper.</p>
             <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 12px" }}>He has lived every step of that process hundreds of times over. He knows what a 540 FICO with 3 months on the job looks like to a lender. He knows when GLS won't touch it but Westlake will. He knows how to structure a deal around income when the credit file is thin. He knows the difference between a deal that funds and a deal that looks like it will.</p>
