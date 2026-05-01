@@ -537,7 +537,7 @@ export default function DealerPage() {
                   </div>
                 </div>
                 {/* Residence time */}
-                <div>
+                <div className="col-span-1">
                   <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>Time at Residence</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <input name="residenceYears" placeholder="Years" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.residenceYears} style={{ flex: 1 }} />
@@ -545,7 +545,7 @@ export default function DealerPage() {
                   </div>
                 </div>
                 {/* Employment time */}
-                <div>
+                <div className="col-span-1">
                   <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>Time Employed</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <input name="employmentYears" placeholder="Years" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.employmentYears} style={{ flex: 1 }} />
