@@ -203,7 +203,8 @@ export default function DealerPage() {
     form.lastName.trim() !== "" &&
     form.monthlyIncome.trim() !== "" &&
     selectedVehicleId !== "" &&
-    (form.ssn === "" || form.ssn.replace(/\D/g, "").length === 9);
+    (form.ssn === "" || form.ssn.replace(/\D/g, "").length === 9) &&
+    (form.dob === "" || form.dob.replace(/\D/g, "").length === 8);
 
   const stipsRemaining = Object.values(stips).filter((s) => s.status !== "uploaded").length;
 
@@ -453,7 +454,20 @@ export default function DealerPage() {
                 }}
               />
               <div className="grid grid-cols-2 gap-3">
-                <input name="dob" placeholder="Date of Birth (MM/DD/YYYY)" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.dob} />
+                <input
+                  name="dob"
+                  placeholder="Date of Birth (MM/DD/YYYY)"
+                  className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm"
+                  value={form.dob}
+                  maxLength={10}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 8);
+                    let formatted = raw;
+                    if (raw.length > 4) formatted = raw.slice(0,2) + "/" + raw.slice(2,4) + "/" + raw.slice(4);
+                    else if (raw.length > 2) formatted = raw.slice(0,2) + "/" + raw.slice(2);
+                    setForm(prev => ({ ...prev, dob: formatted }));
+                  }}
+                />
                 <input name="dlNumber" placeholder="Driver's License #" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.dlNumber} />
               </div>
               <select name="dlState" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm bg-white" onChange={handleChange} value={form.dlState}>
