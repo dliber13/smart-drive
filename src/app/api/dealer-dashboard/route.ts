@@ -17,6 +17,17 @@ export async function GET(req: NextRequest) {
     // Dealers only see their own dealer's applications
     const whereClause = isAdmin ? {} : { dealerId: user.dealerId ?? "__none__" };
 
+    // Mark expired deals (30 days idle)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await prisma.application.updateMany({
+      where: {
+        dealerId: isAdmin ? undefined : user.dealerId ?? "__none__",
+        status: { in: ["DRAFT", "SUBMITTED"] },
+        updatedAt: { lt: thirtyDaysAgo },
+      },
+      data: { status: "EXPIRED" },
+    });
+
     const applications = await prisma.application.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },

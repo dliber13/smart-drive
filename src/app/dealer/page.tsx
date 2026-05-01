@@ -616,7 +616,13 @@ export default function DealerPage() {
                     {app.decisionReason && (
                       <div className="mt-4 rounded-[16px] border border-black/8 bg-white px-4 py-3 text-sm text-black/65">{app.decisionReason}</div>
                     )}
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); window.location.href = `/dealer/edit/${app.id}`; }}
+                        className="rounded-[12px] border border-black/15 bg-white text-black/70 px-4 py-2 text-xs font-semibold hover:bg-black/5 transition-colors"
+                      >
+                        Edit & Resubmit
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); window.location.href = `/dealer/decision/${app.id}`; }}
                         className="rounded-[12px] bg-black text-white px-4 py-2 text-xs font-semibold hover:bg-black/80 transition-colors"
