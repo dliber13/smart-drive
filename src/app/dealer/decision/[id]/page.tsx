@@ -348,8 +348,8 @@ export default function DecisionPage() {
                   },
                   {
                     step: "04",
-                    title: `Submit to ${application.lender || "lender"}\`,
-                    desc: `Submit via your lender portal (DealerTrack, RouteOne, or direct). Tier: ${application.tier || "—"}. Include all uploaded stips.`,
+                    title: "Submit to " + (application.lender || "lender"),
+                    desc: "Submit via your lender portal (DealerTrack, RouteOne, or direct). Tier: " + (application.tier || "—") + ". Include all uploaded stips.",
                   },
                   {
                     step: "05",
