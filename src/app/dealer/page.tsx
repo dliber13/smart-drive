@@ -206,7 +206,8 @@ export default function DealerPage() {
     form.monthlyIncome.trim() !== "" &&
     selectedVehicleId !== "" &&
     (form.ssn === "" || form.ssn.replace(/\D/g, "").length === 9) &&
-    (form.dob === "" || form.dob.replace(/\D/g, "").length === 8);
+    (form.dob === "" || form.dob.replace(/\D/g, "").length === 8) &&
+    (form.phone === "" || form.phone.replace(/\D/g, "").length === 10);
 
   const stipsRemaining = Object.values(stips).filter((s) => s.status !== "uploaded").length;
 
@@ -444,7 +445,20 @@ export default function DealerPage() {
                 <input name="lastName" placeholder="Last Name" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.lastName} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <input name="phone" placeholder="Phone" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.phone} />
+                <input
+                  name="phone"
+                  placeholder="Phone (XXX-XXX-XXXX)"
+                  className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm"
+                  value={form.phone}
+                  maxLength={12}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    let formatted = raw;
+                    if (raw.length > 6) formatted = raw.slice(0,3) + "-" + raw.slice(3,6) + "-" + raw.slice(6);
+                    else if (raw.length > 3) formatted = raw.slice(0,3) + "-" + raw.slice(3);
+                    setForm(prev => ({ ...prev, phone: formatted }));
+                  }}
+                />
                 <input name="email" placeholder="Email" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.email} />
               </div>
 
