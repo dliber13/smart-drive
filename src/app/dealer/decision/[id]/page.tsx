@@ -24,6 +24,7 @@ type Application = {
   lender: string | null;
   tier: string | null;
   apr: number | null;
+  termMonths: number | null;
   maxPayment: number | null;
   maxVehicle: number | null;
   dealStrength: number | null;
@@ -246,7 +247,7 @@ export default function DecisionPage() {
   const amountFinanced = Math.max(0, baseDealTotal + fiTotal - downPayment);
   const maxPayment = application?.maxPayment ?? 0;
   const apr = application?.apr ?? 0;
-  const termMonths = 72;
+  const termMonths = application?.termMonths ?? 72;
   const estimatedPayment = amountFinanced > 0 && apr > 0
     ? Math.round((amountFinanced * (apr / 12)) / (1 - Math.pow(1 + apr / 12, -termMonths)))
     : Math.round(amountFinanced / termMonths);
@@ -326,6 +327,7 @@ export default function DecisionPage() {
                 { label: "Max Bi-Weekly", value: formatCurrency(biweeklyPayment), sub: "payment" },
                 { label: "Max Vehicle", value: formatCurrency(application.maxVehicle), sub: "price" },
                 { label: "APR", value: apr ? `${(apr * 100).toFixed(2)}%` : "—", sub: "rate" },
+                { label: "Term", value: termMonths ? `${termMonths} months` : "—", sub: "loan term" },
               ].map(item => (
                 <div key={item.label} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 16, padding: "1rem 1.25rem" }}>
                   <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>{item.label}</div>
