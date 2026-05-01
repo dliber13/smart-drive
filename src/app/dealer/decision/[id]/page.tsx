@@ -3,6 +3,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+const ADMIN_FEE = 499;
+const TITLE_FEE = 9;
+
+const FI_PRODUCTS = [
+  { id: "vsc", label: "VSC / Extended Warranty", price: 1495, note: "Must be from lender-approved provider" },
+  { id: "gap", label: "GAP Insurance", price: 795, note: "Recommended for financed amounts over $10,000" },
+  { id: "paint", label: "Paint & Fabric Protection", price: 395, note: "" },
+  { id: "tire", label: "Tire & Wheel Protection", price: 495, note: "" },
+  { id: "key", label: "Key Replacement", price: 195, note: "" },
+];
+
 type Application = {
   id: string;
   firstName: string | null;
@@ -47,7 +58,7 @@ function formatCurrency(v: number | null | undefined) {
 }
 
 function DealStrengthBar({ value }: { value: number | null }) {
-  if (value == null) return <span style={{ color: "var(--color-text-tertiary)" }}>—</span>;
+  if (value == null) return <span>—</span>;
   const color = value >= 70 ? "#1D9E75" : value >= 45 ? "#BA7517" : "#A32D2D";
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -67,6 +78,8 @@ export default function DecisionPage() {
   const [vehicles, setVehicles] = useState<MatchedVehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedVehicle, setSelectedVehicle] = useState<MatchedVehicle | null>(null);
+  const [fiProducts, setFiProducts] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!id) return;
@@ -87,6 +100,23 @@ export default function DecisionPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const toggleFI = (id: string) => setFiProducts(prev => ({ ...prev, [id]: !prev[id] }));
+
+  const vehiclePrice = selectedVehicle?.askingPrice ?? application?.vehiclePrice ?? 0;
+  const baseDealTotal = vehiclePrice + ADMIN_FEE + TITLE_FEE;
+  const fiTotal = FI_PRODUCTS.filter(p => fiProducts[p.id]).reduce((sum, p) => sum + p.price, 0);
+  const downPayment = application?.downPayment ?? 0;
+  const amountFinanced = Math.max(0, baseDealTotal + fiTotal - downPayment);
+  const maxPayment = application?.maxPayment ?? 0;
+  const apr = application?.apr ?? 0;
+  const termMonths = 72;
+  const estimatedPayment = amountFinanced > 0 && apr > 0
+    ? Math.round((amountFinanced * (apr / 12)) / (1 - Math.pow(1 + apr / 12, -termMonths)))
+    : Math.round(amountFinanced / termMonths);
+  const estimatedWeekly = Math.round(estimatedPayment * 12 / 52);
+  const estimatedBiweekly = Math.round(estimatedPayment * 12 / 26);
+  const paymentOk = maxPayment > 0 ? estimatedPayment <= maxPayment : true;
+
   if (loading) return (
     <main style={{ minHeight: "100vh", background: "#f7f4ee", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ fontSize: 16, color: "#888" }}>Loading decision...</div>
@@ -101,13 +131,14 @@ export default function DecisionPage() {
 
   const approved = String(application.status ?? "").toUpperCase() === "APPROVED";
   const declined = String(application.status ?? "").toUpperCase() === "DECLINED";
-  const weeklyPayment = application.maxPayment ? Math.round(application.maxPayment * 12 / 52) : null;
-  const biweeklyPayment = application.maxPayment ? Math.round(application.maxPayment * 12 / 26) : null;
+  const weeklyPayment = maxPayment ? Math.round(maxPayment * 12 / 52) : null;
+  const biweeklyPayment = maxPayment ? Math.round(maxPayment * 12 / 26) : null;
 
   return (
     <main style={{ minHeight: "100vh", background: "#f7f4ee", padding: "2rem 1.5rem", color: "#111" }}>
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto" }}>
 
+        {/* Header */}
         <div style={{ marginBottom: "2rem" }}>
           <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>Smart Drive Elite · Decision Engine</div>
           <h1 style={{ fontSize: 42, fontWeight: 500, letterSpacing: "-0.04em", margin: 0 }}>
@@ -118,12 +149,8 @@ export default function DecisionPage() {
           </div>
         </div>
 
-        <div style={{
-          borderRadius: 24, padding: "2rem",
-          background: approved ? "#eef6f2" : declined ? "#fbefee" : "#f5f3ee",
-          border: `1px solid ${approved ? "#d7e9df" : declined ? "#f0c8c4" : "#e2ddd4"}`,
-          marginBottom: "1.5rem"
-        }}>
+        {/* Decision banner */}
+        <div style={{ borderRadius: 24, padding: "2rem", background: approved ? "#eef6f2" : declined ? "#fbefee" : "#f5f3ee", border: `1px solid ${approved ? "#d7e9df" : declined ? "#f0c8c4" : "#e2ddd4"}`, marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
             <div>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.24em", color: approved ? "#2f6f55" : "#b42318", marginBottom: 8, opacity: 0.7 }}>Engine Decision</div>
@@ -146,14 +173,15 @@ export default function DecisionPage() {
 
         {approved && (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: "1.5rem" }}>
+            {/* Lender terms */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: "1.5rem" }}>
               {[
                 { label: "Lender", value: application.lender || "—", sub: application.tier || "" },
-                { label: "Max Monthly", value: formatCurrency(application.maxPayment), sub: "payment" },
+                { label: "Max Monthly", value: formatCurrency(maxPayment), sub: "payment" },
                 { label: "Max Weekly", value: formatCurrency(weeklyPayment), sub: "payment" },
                 { label: "Max Bi-Weekly", value: formatCurrency(biweeklyPayment), sub: "payment" },
                 { label: "Max Vehicle", value: formatCurrency(application.maxVehicle), sub: "price" },
-                { label: "APR", value: application.apr ? `${(application.apr * 100).toFixed(2)}%` : "—", sub: "rate" },
+                { label: "APR", value: apr ? `${(apr * 100).toFixed(2)}%` : "—", sub: "rate" },
               ].map(item => (
                 <div key={item.label} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 16, padding: "1rem 1.25rem" }}>
                   <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>{item.label}</div>
@@ -163,11 +191,184 @@ export default function DecisionPage() {
               ))}
             </div>
 
+            {/* Deal strength bar */}
             <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 12 }}>Deal Strength</div>
               <DealStrengthBar value={application.dealStrength} />
             </div>
 
+            {/* Vehicle selector */}
+            {vehicles.length > 0 && (
+              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 4 }}>
+                  Select Vehicle for This Deal
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 12 }}>
+                  {vehicles.length} vehicles within program limits — click to select
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {vehicles.map(v => {
+                    const isSelected = selectedVehicle?.id === v.id;
+                    return (
+                      <button key={v.id} onClick={() => setSelectedVehicle(isSelected ? null : v)}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "0.75rem 1rem", background: isSelected ? "#eef6f2" : "#faf7f1", border: `1px solid ${isSelected ? "#d7e9df" : "rgba(0,0,0,0.08)"}`, borderRadius: 12, flexWrap: "wrap", cursor: "pointer", textAlign: "left", width: "100%" }}>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 500, color: "#111" }}>{v.year} {v.make} {v.model} {v.trim || ""}</div>
+                          <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginTop: 2 }}>Stock #{v.stockNumber} · {v.mileage?.toLocaleString()} mi</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: 16, fontWeight: 500 }}>{formatCurrency(v.askingPrice)}</div>
+                            <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{v.priceVsBudget}% of budget</div>
+                          </div>
+                          <div style={{ background: isSelected ? "#2f6f55" : v.matchScore >= 80 ? "#eef6f2" : "#f5f3ee", color: isSelected ? "#fff" : v.matchScore >= 80 ? "#2f6f55" : "#5f5a52", borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 500, minWidth: 60, textAlign: "center" }}>
+                            {isSelected ? "✓ Selected" : v.matchScore}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Deal Jacket */}
+            <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 16 }}>Deal Jacket</div>
+
+              {/* Base deal */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(0,0,0,0.5)", marginBottom: 8 }}>Base Deal</div>
+                {[
+                  { label: "Vehicle Price", value: vehiclePrice },
+                  { label: "Admin Fee", value: ADMIN_FEE },
+                  { label: "Title Fee", value: TITLE_FEE },
+                ].map(row => (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "0.5px solid rgba(0,0,0,0.06)", fontSize: 14 }}>
+                    <span style={{ color: "rgba(0,0,0,0.6)" }}>{row.label}</span>
+                    <span style={{ fontWeight: 500 }}>{formatCurrency(row.value)}</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", fontSize: 15, fontWeight: 600, borderTop: "1px solid rgba(0,0,0,0.1)", marginTop: 4 }}>
+                  <span>Base Deal Total</span>
+                  <span>{formatCurrency(baseDealTotal)}</span>
+                </div>
+              </div>
+
+              {/* F&I Products */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(0,0,0,0.5)", marginBottom: 8 }}>F&I Products (Optional)</div>
+                {FI_PRODUCTS.map(product => (
+                  <div key={product.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: fiProducts[product.id] ? "#eef6f2" : "#faf7f1", border: `0.5px solid ${fiProducts[product.id] ? "#d7e9df" : "rgba(0,0,0,0.06)"}`, borderRadius: 10, marginBottom: 6 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#111" }}>{product.label}</div>
+                      {product.note && <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginTop: 1 }}>⚠️ {product.note}</div>}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{formatCurrency(product.price)}</span>
+                      <button onClick={() => toggleFI(product.id)}
+                        style={{ background: fiProducts[product.id] ? "#2f6f55" : "#e0ddd8", color: fiProducts[product.id] ? "#fff" : "#888", border: "none", borderRadius: 999, padding: "4px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                        {fiProducts[product.id] ? "ON" : "OFF"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {fiTotal > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, color: "rgba(0,0,0,0.5)" }}>
+                    <span>F&I Total</span>
+                    <span>{formatCurrency(fiTotal)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Totals */}
+              <div style={{ borderTop: "1px solid rgba(0,0,0,0.1)", paddingTop: 12 }}>
+                {[
+                  { label: "Down Payment", value: -downPayment, note: "" },
+                ].map(row => (
+                  <div key={row.label} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 14 }}>
+                    <span style={{ color: "rgba(0,0,0,0.5)" }}>{row.label}</span>
+                    <span style={{ fontWeight: 500, color: "#b42318" }}>({formatCurrency(downPayment)})</span>
+                  </div>
+                ))}
+                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", fontSize: 18, fontWeight: 700, borderTop: "1px solid rgba(0,0,0,0.12)", marginTop: 6 }}>
+                  <span>Amount Financed</span>
+                  <span>{formatCurrency(amountFinanced)}</span>
+                </div>
+              </div>
+
+              {/* Payment check */}
+              <div style={{ background: paymentOk ? "#eef6f2" : "#fbefee", border: `1px solid ${paymentOk ? "#d7e9df" : "#f0c8c4"}`, borderRadius: 14, padding: "14px 16px", marginTop: 12 }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: paymentOk ? "#2f6f55" : "#b42318", marginBottom: 8 }}>Payment Check</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+                  {[
+                    { label: "Est. Monthly", value: formatCurrency(estimatedPayment), ok: paymentOk },
+                    { label: "Est. Weekly", value: formatCurrency(estimatedWeekly), ok: paymentOk },
+                    { label: "Est. Bi-Weekly", value: formatCurrency(estimatedBiweekly), ok: paymentOk },
+                    { label: "Lender Max", value: formatCurrency(maxPayment), ok: true },
+                  ].map(item => (
+                    <div key={item.label}>
+                      <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 3 }}>{item.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: item.label === "Lender Max" ? "rgba(0,0,0,0.6)" : paymentOk ? "#2f6f55" : "#b42318" }}>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+                {!paymentOk && (
+                  <div style={{ marginTop: 10, fontSize: 12, color: "#b42318", fontWeight: 500 }}>
+                    ⚠️ Estimated payment exceeds lender maximum. Remove F&I products or increase down payment.
+                  </div>
+                )}
+                {paymentOk && fiTotal > 0 && (
+                  <div style={{ marginTop: 10, fontSize: 12, color: "#2f6f55", fontWeight: 500 }}>
+                    ✓ Payment with F&I products is within lender limits.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Next Steps */}
+            <div style={{ background: "#0f0f0f", borderRadius: 20, padding: "1.5rem", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "#C9A84C", marginBottom: 16 }}>Next Steps for Your Team</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  {
+                    step: "01",
+                    title: "Present terms to the customer",
+                    desc: `Show them ${formatCurrency(estimatedPayment)}/mo · ${formatCurrency(estimatedWeekly)}/wk · ${formatCurrency(estimatedBiweekly)} bi-weekly. Let them choose their payment frequency.`,
+                  },
+                  {
+                    step: "02",
+                    title: "Collect down payment",
+                    desc: `Required down payment: ${formatCurrency(downPayment)}. Collect cash, check, or card before proceeding.`,
+                  },
+                  {
+                    step: "03",
+                    title: "Confirm F&I products",
+                    desc: "Review selected back end products with the customer. VSC and GAP must be from a lender-approved provider — confirm with your F&I office before finalizing.",
+                  },
+                  {
+                    step: "04",
+                    title: `Submit to ${application.lender || "lender"}\`,
+                    desc: `Submit via your lender portal (DealerTrack, RouteOne, or direct). Tier: ${application.tier || "—"}. Include all uploaded stips.`,
+                  },
+                  {
+                    step: "05",
+                    title: "Await funding confirmation",
+                    desc: "Typical turnaround: 24–48 hours after lender approval. Do not release the vehicle until funding is confirmed.",
+                  },
+                ].map((s, i) => (
+                  <div key={s.step} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                    <div style={{ minWidth: 28, height: 28, borderRadius: "50%", background: "#C9A84C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#0f0f0f", flexShrink: 0, marginTop: 2 }}>{s.step}</div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 3 }}>{s.title}</div>
+                      <div style={{ fontSize: 13, color: "#666", lineHeight: 1.5 }}>{s.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Applicant profile */}
             <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 12 }}>Applicant Profile</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
@@ -176,8 +377,8 @@ export default function DecisionPage() {
                   { label: "Credit Score", value: String(application.creditScore ?? "Not provided") },
                   { label: "Down Payment", value: formatCurrency(application.downPayment) },
                   { label: "Identity Status", value: application.identityStatus || "PENDING" },
-                  { label: "Vehicle Selected", value: [application.vehicleYear, application.vehicleMake, application.vehicleModel].filter(Boolean).join(" ") || "—" },
-                  { label: "Vehicle Price", value: formatCurrency(application.vehiclePrice) },
+                  { label: "Vehicle Selected", value: selectedVehicle ? `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}` : [application.vehicleYear, application.vehicleMake, application.vehicleModel].filter(Boolean).join(" ") || "—" },
+                  { label: "Vehicle Price", value: formatCurrency(vehiclePrice) },
                 ].map(item => (
                   <div key={item.label}>
                     <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", marginBottom: 3 }}>{item.label}</div>
@@ -186,50 +387,21 @@ export default function DecisionPage() {
                 ))}
               </div>
             </div>
-
-            {vehicles.length > 0 && (
-              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 12 }}>
-                  Eligible Inventory — {vehicles.length} vehicles within program limits
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {vehicles.map(v => (
-                    <div key={v.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "0.75rem 1rem", background: "#faf7f1", borderRadius: 12, flexWrap: "wrap" }}>
-                      <div>
-                        <div style={{ fontSize: 15, fontWeight: 500 }}>{v.year} {v.make} {v.model} {v.trim || ""}</div>
-                        <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginTop: 2 }}>Stock #{v.stockNumber} · {v.mileage?.toLocaleString()} mi</div>
-                      </div>
-                      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 16, fontWeight: 500 }}>{formatCurrency(v.askingPrice)}</div>
-                          <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{v.priceVsBudget}% of budget</div>
-                        </div>
-                        <div style={{
-                          background: v.matchScore >= 80 ? "#eef6f2" : v.matchScore >= 60 ? "#f8f2e8" : "#f5f3ee",
-                          color: v.matchScore >= 80 ? "#2f6f55" : v.matchScore >= 60 ? "#9a6700" : "#5f5a52",
-                          borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 500, minWidth: 60, textAlign: "center"
-                        }}>
-                          {v.matchScore}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </>
         )}
 
         <div style={{ textAlign: "center", fontSize: 12, color: "rgba(0,0,0,0.4)", marginBottom: "1.5rem" }}>
-          This decision is read-only and generated by the Smart Drive Elite engine. No fields may be edited by dealership staff.
+          This decision is generated by the Smart Drive Elite engine. Payment estimates are based on lender program guidelines and may vary at funding.
         </div>
 
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <button
-            onClick={() => router.push("/dealer")}
-            style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.2)", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#111" }}
-          >
+        <div style={{ display: "flex", justifyContent: "center", gap: 12 }}>
+          <button onClick={() => router.push("/dealer")}
+            style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.2)", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#111" }}>
             Back to Dealer Dashboard
+          </button>
+          <button onClick={() => window.print()}
+            style={{ background: "#0f0f0f", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#fff" }}>
+            Print Deal Summary
           </button>
         </div>
 
