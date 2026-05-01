@@ -528,8 +528,8 @@ export default function DealerPage() {
                   ))}
                 </div>
               </div>
-              {/* Residence + Employment side by side */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {/* Residence + Employment stacked */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>Time at Residence</div>
                   <div style={{ display: "flex", gap: 8 }}>
