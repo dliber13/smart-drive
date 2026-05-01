@@ -113,6 +113,20 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Dealer margin score (0-15) — higher margin = better for dealer
+        const bookVal = toNumber(unit.bookValue);
+        const totalCost = toNumber(unit.totalCost);
+        const costBasis = bookVal > 0 ? bookVal : totalCost > 0 ? totalCost : 0;
+        if (costBasis > 0) {
+          const margin = price - costBasis;
+          const marginPct = margin / price;
+          if (marginPct >= 0.20) score += 15;
+          else if (marginPct >= 0.15) score += 12;
+          else if (marginPct >= 0.10) score += 8;
+          else if (marginPct >= 0.05) score += 4;
+          else score += 1;
+        }
+
         // Subtract points for right at or over limit
         if (price >= maxPrice * 0.98) score -= 5;
 

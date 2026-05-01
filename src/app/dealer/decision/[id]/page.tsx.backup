@@ -345,74 +345,41 @@ export default function DecisionPage() {
 
             {/* Vehicle selector */}
             {vehicles.length > 0 && (
-              <div style={{ marginBottom: "1.5rem" }}>
-                <div style={{ background: "#0f0f0f", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "#C9A84C", marginBottom: 4 }}>Recommended by Smart Drive Elite Engine</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>Top 3 matches scored across credit, income, mileage, price fit, and dealer margin</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {vehicles.slice(0, 3).map((v, idx) => {
-                      const isSelected = selectedVehicle?.id === v.id;
-                      const picks = [
-                        { rank: "#1 BEST MATCH", border: "#C9A84C", bg: "rgba(201,168,76,0.08)", badge: "#C9A84C", badgeText: "#0f0f0f" },
-                        { rank: "#2 STRONG MATCH", border: "#2E6DA4", bg: "rgba(46,109,164,0.08)", badge: "#2E6DA4", badgeText: "#fff" },
-                        { rank: "#3 GOOD MATCH", border: "#2F6F55", bg: "rgba(47,111,85,0.08)", badge: "#2F6F55", badgeText: "#fff" },
-                      ];
-                      const pick = picks[idx];
-                      return (
-                        <button key={v.id} onClick={() => setSelectedVehicle(isSelected ? null : v)}
-                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "1rem 1.25rem", background: isSelected ? "rgba(201,168,76,0.15)" : pick.bg, border: `1.5px solid ${isSelected ? "#C9A84C" : pick.border}`, borderRadius: 14, flexWrap: "wrap", cursor: "pointer", textAlign: "left", width: "100%" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                            <div style={{ background: pick.badge, color: pick.badgeText, borderRadius: 8, padding: "4px 10px", fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{pick.rank}</div>
-                            <div>
-                              <div style={{ fontSize: 15, fontWeight: 600, color: "#fff" }}>{v.year} {v.make} {v.model} {v.trim || ""}</div>
-                              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>Stock #{v.stockNumber} · {v.mileage?.toLocaleString()} mi</div>
-                            </div>
-                          </div>
-                          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                            <div style={{ textAlign: "right" }}>
-                              <div style={{ fontSize: 16, fontWeight: 600, color: "#fff" }}>{formatCurrency(v.askingPrice)}</div>
-                              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{v.priceVsBudget}% of budget</div>
-                            </div>
-                            <div style={{ background: isSelected ? "#C9A84C" : pick.badge, color: isSelected ? "#0f0f0f" : pick.badgeText, borderRadius: 999, padding: "4px 14px", fontSize: 12, fontWeight: 700, minWidth: 60, textAlign: "center" }}>
-                              {isSelected ? "✓ Selected" : v.matchScore}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 4 }}>
+                  Select Vehicle for This Deal
                 </div>
-                {vehicles.length > 3 && (
-                  <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem" }}>
-                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 4 }}>All Eligible Vehicles</div>
-                    <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 12 }}>{vehicles.length - 3} additional vehicles within program limits</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {vehicles.slice(3).map(v => {
-                        const isSelected = selectedVehicle?.id === v.id;
-                        return (
-                          <button key={v.id} onClick={() => setSelectedVehicle(isSelected ? null : v)}
-                            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "0.75rem 1rem", background: isSelected ? "#eef6f2" : "#faf7f1", border: `1px solid ${isSelected ? "#d7e9df" : "rgba(0,0,0,0.08)"}`, borderRadius: 12, flexWrap: "wrap", cursor: "pointer", textAlign: "left", width: "100%" }}>
-                            <div>
-                              <div style={{ fontSize: 15, fontWeight: 500, color: "#111" }}>{v.year} {v.make} {v.model} {v.trim || ""}</div>
-                              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginTop: 2 }}>Stock #{v.stockNumber} · {v.mileage?.toLocaleString()} mi</div>
-                            </div>
-                            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                              <div style={{ textAlign: "right" }}>
-                                <div style={{ fontSize: 16, fontWeight: 500 }}>{formatCurrency(v.askingPrice)}</div>
-                                <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{v.priceVsBudget}% of budget</div>
-                              </div>
-                              <div style={{ background: isSelected ? "#2f6f55" : v.matchScore >= 80 ? "#eef6f2" : "#f5f3ee", color: isSelected ? "#fff" : v.matchScore >= 80 ? "#2f6f55" : "#5f5a52", borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 500, minWidth: 60, textAlign: "center" }}>
-                                {isSelected ? "✓ Selected" : v.matchScore}
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 12 }}>
+                  {vehicles.map((v) => {
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {vehicles.map((v) => {
+                    const isSelected = selectedVehicle?.id === v.id;
+                    return (
+                      <button key={v.id} onClick={() => setSelectedVehicle(isSelected ? null : v)}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "0.75rem 1rem", background: isSelected ? "#eef6f2" : "#faf7f1", border: `1px solid ${isSelected ? "#d7e9df" : "rgba(0,0,0,0.08)"}`, borderRadius: 12, flexWrap: "wrap", cursor: "pointer", textAlign: "left", width: "100%" }}>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 500, color: "#111" }}>{v.year} {v.make} {v.model} {v.trim || ""}</div>
+                          <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginTop: 2 }}>Stock #{v.stockNumber} · {v.mileage?.toLocaleString()} mi</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: 16, fontWeight: 500 }}>{formatCurrency(v.askingPrice)}</div>
+                            <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{v.priceVsBudget}% of budget</div>
+                          </div>
+                          <div style={{ background: isSelected ? "#2f6f55" : v.matchScore >= 80 ? "#eef6f2" : "#f5f3ee", color: isSelected ? "#fff" : v.matchScore >= 80 ? "#2f6f55" : "#5f5a52", borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 500, minWidth: 60, textAlign: "center" }}>
+                            {isSelected ? "✓ Selected" : v.matchScore}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
+
+            {/* Deal Jacket */}
+            <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 16 }}>Deal Jacket</div>
 
               {/* Base deal */}
