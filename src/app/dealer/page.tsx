@@ -466,7 +466,7 @@ export default function DealerPage() {
               <input
                 name="ssn"
                 placeholder="SSN (XXX-XX-XXXX)"
-                className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm font-mono tracking-wider"
+                className={`rounded-[14px] border px-4 py-3 outline-none text-sm font-mono tracking-wider ${form.ssn.length > 0 && form.ssn.replace(/\D/g, "").length < 9 ? "border-red-400 bg-red-50" : "border-black/10"}`}
                 value={form.ssn}
                 maxLength={11}
                 onChange={(e) => {
@@ -481,7 +481,7 @@ export default function DealerPage() {
                 <input
                   name="dob"
                   placeholder="Date of Birth (MM/DD/YYYY) *"
-                  className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm"
+                  className={`rounded-[14px] border px-4 py-3 outline-none text-sm ${form.dob.length > 0 && form.dob.replace(/\D/g, "").length < 8 ? "border-red-400 bg-red-50" : "border-black/10"}`}
                   value={form.dob}
                   maxLength={10}
                   onChange={(e) => {
@@ -492,6 +492,9 @@ export default function DealerPage() {
                     setForm(prev => ({ ...prev, dob: formatted }));
                   }}
                 />
+                {form.dob.length > 0 && form.dob.replace(/\D/g, "").length < 8 && (
+                  <div style={{ fontSize: 11, color: "#b42318", marginTop: 4 }}>⚠ Full date of birth required — MM/DD/YYYY</div>
+                )}
                 <input name="dlNumber" placeholder="Driver's License #" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.dlNumber} />
               </div>
               <select name="dlState" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm bg-white" onChange={handleChange} value={form.dlState}>
