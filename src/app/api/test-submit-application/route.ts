@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifySession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { runDecisionEngine } from "../../../lib/decision-engine";
 import { pullCredit } from "../../../lib/creditEngine";
@@ -21,8 +22,10 @@ function toNumberOrNull(value: unknown) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const token = req.cookies.get("sde_session")?.value;
+    const user = token ? verifySession(token) as any : null;
     const body = await req.json();
 
     // 1. Run decision engine before saving
