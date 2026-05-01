@@ -169,7 +169,7 @@ export default function DealerPage() {
     ssn: "", dob: "", dlNumber: "", dlState: "",
     creditScore: "", monthlyIncome: "", payFrequency: "BIWEEKLY",
     monthlyExpenses: "", downPayment: "",
-    residenceMonths: "", employmentMonths: "",
+    residenceMonths: "", residenceYears: "", residenceType: "RENT", employmentMonths: "", employmentYears: "",
     stockNumber: "", vin: "", vehicleYear: "",
     vehicleMake: "", vehicleModel: "", vehiclePrice: "", mileage: "",
   });
@@ -328,7 +328,7 @@ export default function DealerPage() {
         ssn: "", dob: "", dlNumber: "", dlState: "",
         creditScore: "", monthlyIncome: "", payFrequency: "BIWEEKLY",
         monthlyExpenses: "", downPayment: "",
-        residenceMonths: "", employmentMonths: "",
+        residenceMonths: "", residenceYears: "", residenceType: "RENT", employmentMonths: "", employmentYears: "",
         stockNumber: "", vin: "", vehicleYear: "",
         vehicleMake: "", vehicleModel: "", vehiclePrice: "", mileage: "",
       });
@@ -517,8 +517,41 @@ export default function DealerPage() {
 
               <div className="text-[11px] uppercase tracking-[0.22em] text-black/35 mt-2">Stability</div>
               <div className="grid grid-cols-2 gap-3">
-                <input name="residenceMonths" placeholder="Months at Residence" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.residenceMonths} />
-                <input name="employmentMonths" placeholder="Months Employed" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.employmentMonths} />
+                {/* Residence type */}
+                <div className="col-span-2">
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>Residence Type</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {["RENT", "OWN", "FAMILY", "OTHER"].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, residenceType: type }))}
+                        style={{
+                          flex: 1, padding: "10px 4px", borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                          background: form.residenceType === type ? "#0f0f0f" : "#fff",
+                          color: form.residenceType === type ? "#C9A84C" : "rgba(0,0,0,0.5)",
+                          border: form.residenceType === type ? "1px solid #0f0f0f" : "1px solid rgba(0,0,0,0.12)",
+                        }}
+                      >{type}</button>
+                    ))}
+                  </div>
+                </div>
+                {/* Residence time */}
+                <div>
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>Time at Residence</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input name="residenceYears" placeholder="Years" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.residenceYears} style={{ flex: 1 }} />
+                    <input name="residenceMonths" placeholder="Months" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.residenceMonths} style={{ flex: 1 }} />
+                  </div>
+                </div>
+                {/* Employment time */}
+                <div>
+                  <div style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", marginBottom: 6, letterSpacing: "0.05em", textTransform: "uppercase" }}>Time Employed</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input name="employmentYears" placeholder="Years" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.employmentYears} style={{ flex: 1 }} />
+                    <input name="employmentMonths" placeholder="Months" className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm" onChange={handleChange} value={form.employmentMonths} style={{ flex: 1 }} />
+                  </div>
+                </div>
               </div>
 
               <div className="text-[11px] uppercase tracking-[0.22em] text-black/35 mt-2">Vehicle</div>
