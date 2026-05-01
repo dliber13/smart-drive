@@ -383,7 +383,7 @@ export default function DecisionPage() {
                   </div>
                 </div>
                 {vehicles.length > 3 && (
-                  <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem" }}>
+                  <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginTop: 12 }}>
                     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 4 }}>All Eligible Vehicles</div>
                     <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 12 }}>{vehicles.length - 3} additional vehicles within program limits</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -413,6 +413,7 @@ export default function DecisionPage() {
                 )}
               </div>
             )}
+            <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 16 }}>Deal Jacket</div>
 
               {/* Base deal */}
