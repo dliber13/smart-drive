@@ -399,6 +399,10 @@ export default function DecisionPage() {
             style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.2)", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#111" }}>
             Back to Dealer Dashboard
           </button>
+          <button onClick={() => generateDealSummaryPDF(application, selectedVehicle, fiProducts, amountFinanced, estimatedPayment, estimatedWeekly, estimatedBiweekly, fiTotal, baseDealTotal)}
+            style={{ background: "#C9A84C", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#0f0f0f" }}>
+            ↓ Download PDF
+          </button>
           <button onClick={() => window.print()}
             style={{ background: "#0f0f0f", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#fff" }}>
             Print Deal Summary
