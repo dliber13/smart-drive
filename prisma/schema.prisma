@@ -57,6 +57,7 @@ model Application {
   maxVehicle          Float?
   decisionReason      String?
   dealStrength        Float?
+  apr                  Float?
   identityType        String?
   identityValue       String?
   issuingCountry      String?
