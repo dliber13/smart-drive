@@ -401,7 +401,7 @@ export default function DecisionPage() {
           </button>
           <button onClick={() => generateDealSummaryPDF(application, selectedVehicle, fiProducts, amountFinanced, estimatedPayment, estimatedWeekly, estimatedBiweekly, fiTotal, baseDealTotal)}
             style={{ background: "#C9A84C", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#0f0f0f" }}>
-            ↓ Download PDF
+            Download PDF
           </button>
           <button onClick={() => window.print()}
             style={{ background: "#0f0f0f", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#fff" }}>
