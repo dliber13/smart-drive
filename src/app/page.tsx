@@ -386,7 +386,7 @@ export default function HomePage() {
             { icon: "🏛️", label: "Missouri LLC", value: "Smart Drive Elite LLC", sub: "Legally incorporated entity" },
             { icon: "📋", label: "Occupational License", value: "License #2763", sub: "City of Smithville, MO · Software Platform" },
             { icon: "™️", label: "USPTO Trademark", value: "#99764274", sub: "Filed April 14, 2026" },
-            { icon: "📍", label: "Business Address", value: "Smithville, MO 64089", sub: "13411 Forest Oaks Drive" },
+            { icon: "📍", label: "Business Address", value: "Smithville, MO 64089", sub: "Located in Smithville, Missouri" },
           ].map(item => (
             <div key={item.label} style={{ background: "#FFFFFF", border: "1px solid #E8E3D8", borderRadius: 16, padding: "24px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ fontSize: 24 }}>{item.icon}</div>
