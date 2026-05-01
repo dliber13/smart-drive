@@ -58,6 +58,7 @@ model Application {
   decisionReason      String?
   dealStrength        Float?
   apr                  Float?
+  dealNumber           String?               @unique
   identityType        String?
   identityValue       String?
   issuingCountry      String?

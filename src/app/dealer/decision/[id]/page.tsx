@@ -37,6 +37,7 @@ type Application = {
   identityStatus: string | null;
   downPayment: number | null;
   createdAt: string;
+  dealNumber: string | null;
 };
 
 type MatchedVehicle = {
@@ -277,9 +278,16 @@ export default function DecisionPage() {
         {/* Header */}
         <div style={{ marginBottom: "2rem" }}>
           <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.28em", color: "rgba(0,0,0,0.4)", marginBottom: 8 }}>Smart Drive Elite · Decision Engine</div>
-          <h1 style={{ fontSize: 42, fontWeight: 500, letterSpacing: "-0.04em", margin: 0 }}>
-            {[application.firstName, application.lastName].filter(Boolean).join(" ") || "Applicant"}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 4 }}>
+            <h1 style={{ fontSize: 42, fontWeight: 500, letterSpacing: "-0.04em", margin: 0 }}>
+              {[application.firstName, application.lastName].filter(Boolean).join(" ") || "Applicant"}
+            </h1>
+            {application.dealNumber && (
+              <div style={{ background: "#0f0f0f", color: "#C9A84C", borderRadius: 8, padding: "6px 16px", fontSize: 13, fontWeight: 700, letterSpacing: "0.05em", fontFamily: "monospace" }}>
+                {application.dealNumber}
+              </div>
+            )}
+          </div>
           <div style={{ fontSize: 14, color: "rgba(0,0,0,0.55)", marginTop: 6 }}>
             {application.email || "No email"} · {application.phone || "No phone"} · Submitted {new Date(application.createdAt).toLocaleString()}
           </div>

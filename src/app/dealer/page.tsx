@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Application = {
   id: string;
+  dealNumber?: string | null;
   createdAt?: string;
   firstName?: string | null;
   lastName?: string | null;
@@ -565,7 +566,10 @@ export default function DealerPage() {
                   <div key={app.id} className="rounded-[22px] border border-black/8 bg-[#fcfbf8] p-5" style={{ cursor: "pointer" }} onClick={() => window.location.href = `/dealer/decision/${app.id}`}>
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div>
-                        <div className="text-[20px] font-semibold">{[app.firstName, app.lastName].filter(Boolean).join(" ") || "Unnamed Applicant"}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                          <div className="text-[20px] font-semibold">{[app.firstName, app.lastName].filter(Boolean).join(" ") || "Unnamed Applicant"}</div>
+                          {app.dealNumber && <span style={{ background: "#0f0f0f", color: "#C9A84C", borderRadius: 6, padding: "2px 10px", fontSize: 11, fontWeight: 700, fontFamily: "monospace" }}>{app.dealNumber}</span>}
+                        </div>
                         <div className="mt-1 text-sm text-black/55">{app.email || "No email"} · {app.phone || "No phone"}</div>
                         <div className="mt-3 text-sm text-black/55">{app.vehicleMake || "Vehicle"} {app.vehicleModel || ""} · {formatCurrency(app.vehiclePrice)}</div>
                         <div className="mt-1 text-sm text-black/50">Submitted: {formatDate(app.createdAt)}</div>
