@@ -534,7 +534,7 @@ export default function DealerPage() {
             ) : (
               <div className="space-y-4">
                 {applications.map((app) => (
-                  <div key={app.id} className="rounded-[22px] border border-black/8 bg-[#fcfbf8] p-5">
+                  <div key={app.id} className="rounded-[22px] border border-black/8 bg-[#fcfbf8] p-5" style={{ cursor: "pointer" }} onClick={() => window.location.href = `/dealer/decision/${app.id}`}>
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div>
                         <div className="text-[20px] font-semibold">{[app.firstName, app.lastName].filter(Boolean).join(" ") || "Unnamed Applicant"}</div>
@@ -560,6 +560,14 @@ export default function DealerPage() {
                     {app.decisionReason && (
                       <div className="mt-4 rounded-[16px] border border-black/8 bg-white px-4 py-3 text-sm text-black/65">{app.decisionReason}</div>
                     )}
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); window.location.href = `/dealer/decision/${app.id}`; }}
+                        className="rounded-[12px] bg-black text-white px-4 py-2 text-xs font-semibold hover:bg-black/80 transition-colors"
+                      >
+                        View Decision →
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
