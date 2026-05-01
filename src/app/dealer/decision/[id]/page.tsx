@@ -39,6 +39,7 @@ type Application = {
   downPayment: number | null;
   createdAt: string;
   dealNumber: string | null;
+  decisionMs: number | null;
 };
 
 type MatchedVehicle = {
@@ -286,6 +287,11 @@ export default function DecisionPage() {
             {application.dealNumber && (
               <div style={{ background: "#0f0f0f", color: "#C9A84C", borderRadius: 8, padding: "6px 16px", fontSize: 13, fontWeight: 700, letterSpacing: "0.05em", fontFamily: "monospace" }}>
                 {application.dealNumber}
+              </div>
+            )}
+            {application.decisionMs && (
+              <div style={{ background: "#f0f9f4", color: "#2f6f55", border: "1px solid #d7e9df", borderRadius: 8, padding: "6px 16px", fontSize: 13, fontWeight: 700, letterSpacing: "0.05em" }}>
+                ⚡ {application.decisionMs < 1000 ? `${application.decisionMs}ms` : `${(application.decisionMs / 1000).toFixed(1)}s`}
               </div>
             )}
           </div>

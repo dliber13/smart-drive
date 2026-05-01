@@ -60,6 +60,7 @@ model Application {
   apr                  Float?
   termMonths           Int?
   dealNumber           String?               @unique
+  decisionMs           Int?
   identityType        String?
   identityValue       String?
   issuingCountry      String?

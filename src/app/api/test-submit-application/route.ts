@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get("sde_session")?.value;
     const user = token ? verifySession(token) as any : null;
     const body = await req.json();
+    const decisionStartTime = Date.now();
 
     // 1. Run decision engine before saving
     const decisionInput = {
@@ -114,6 +115,8 @@ export async function POST(req: NextRequest) {
     // 2. Save application with decision results
     const application = await prisma.application.create({
       data: {
+        dealNumber: `SDE-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        decisionMs: Date.now() - decisionStartTime,
         firstName: decisionInput.firstName,
         lastName: decisionInput.lastName,
         phone: decisionInput.phone,
@@ -168,6 +171,7 @@ export async function POST(req: NextRequest) {
           ? "Application approved."
           : "Application declined.",
       applicationId: application.id,
+      decisionTimeMs: Date.now() - decisionStartTime,
       decision: {
         status: decision.status,
         riskTier: decision.riskTier,
