@@ -206,7 +206,7 @@ export default function DealerPage() {
     form.monthlyIncome.trim() !== "" &&
     selectedVehicleId !== "" &&
     (form.ssn === "" || form.ssn.replace(/\D/g, "").length === 9) &&
-    (form.dob === "" || form.dob.replace(/\D/g, "").length === 8) &&
+    form.dob.replace(/\D/g, "").length === 8 &&
     (form.phone === "" || form.phone.replace(/\D/g, "").length === 10);
 
   const stipsRemaining = Object.values(stips).filter((s) => s.status !== "uploaded").length;
@@ -480,7 +480,7 @@ export default function DealerPage() {
               <div className="grid grid-cols-2 gap-3">
                 <input
                   name="dob"
-                  placeholder="Date of Birth (MM/DD/YYYY)"
+                  placeholder="Date of Birth (MM/DD/YYYY) *"
                   className="rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm"
                   value={form.dob}
                   maxLength={10}
