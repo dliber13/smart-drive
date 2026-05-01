@@ -71,6 +71,8 @@ type StipDoc = {
   status: StipStatus;
   fileKey?: string;
   error?: string;
+  trafficLight?: "GREEN" | "YELLOW" | "RED" | "CHECKING";
+  verifyReason?: string;
 };
 
 type Stips = {
@@ -119,11 +121,18 @@ function StipCard({ stipKey, doc, onChange }: { stipKey: keyof Stips; doc: StipD
     error: "bg-red-50",
   }[doc.status];
 
+  const trafficBadge = doc.status === "uploaded" && doc.trafficLight ? {
+    CHECKING: <span style={{ background: "#f0f0f0", color: "#666", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>🔄 Checking…</span>,
+    GREEN: <span style={{ background: "#dcfce7", color: "#166534", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>🟢 Verified</span>,
+    YELLOW: <span style={{ background: "#fef9c3", color: "#854d0e", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>🟡 Review</span>,
+    RED: <span style={{ background: "#fee2e2", color: "#991b1b", borderRadius: 999, padding: "2px 10px", fontSize: 10, fontWeight: 700 }}>🔴 Failed</span>,
+  }[doc.trafficLight] : null;
+
   const badge = {
     empty: null,
     ready: <span className="rounded-full bg-blue-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">Ready</span>,
     uploading: <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">Uploading…</span>,
-    uploaded: <span className="rounded-full bg-green-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-green-700">✓ Uploaded</span>,
+    uploaded: trafficBadge || <span className="rounded-full bg-green-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-green-700">✓ Uploaded</span>,
     error: <span className="rounded-full bg-red-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700">Error</span>,
   }[doc.status];
 
@@ -135,6 +144,9 @@ function StipCard({ stipKey, doc, onChange }: { stipKey: keyof Stips; doc: StipD
           <div className="text-[11px] text-black/45 mt-0.5">{hint}</div>
           {doc.file && <div className="text-[11px] text-black/55 mt-1.5 truncate">{doc.file.name}</div>}
           {doc.error && <div className="text-[11px] text-red-600 mt-1">{doc.error}</div>}
+          {doc.verifyReason && doc.trafficLight && doc.trafficLight !== "CHECKING" && (
+            <div style={{ fontSize: 11, marginTop: 4, color: doc.trafficLight === "GREEN" ? "#166534" : doc.trafficLight === "YELLOW" ? "#854d0e" : "#991b1b" }}>{doc.verifyReason}</div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
           {badge}
@@ -257,7 +269,24 @@ export default function DealerPage() {
         setStips((prev) => ({ ...prev, [key]: { file, status: "error", error: data.error || "Upload failed" } }));
         return;
       }
-      setStips((prev) => ({ ...prev, [key]: { file, status: "uploaded", fileKey: data.fileKey } }));
+      setStips((prev) => ({ ...prev, [key]: { file, status: "uploaded", fileKey: data.fileKey, trafficLight: "CHECKING" } }));
+
+      // Run AI verification immediately after upload
+      const verifyEndpoint = key === "identity" ? "/api/verify-stip" : key === "income" ? "/api/verify-stip" : "/api/verify-stip";
+      try {
+        const verifyForm = new FormData();
+        verifyForm.append("file", file);
+        verifyForm.append("stipType", key);
+        verifyForm.append("firstName", form.firstName || "");
+        verifyForm.append("lastName", form.lastName || "");
+        verifyForm.append("monthlyIncome", form.monthlyIncome || "");
+        verifyForm.append("dob", form.dob || "");
+        const verifyRes = await fetch("/api/verify-stip", { method: "POST", body: verifyForm });
+        const verifyData = await verifyRes.json();
+        setStips((prev) => ({ ...prev, [key]: { ...prev[key], trafficLight: verifyData.trafficLight || "GREEN", verifyReason: verifyData.statusReason || "" } }));
+      } catch {
+        setStips((prev) => ({ ...prev, [key]: { ...prev[key], trafficLight: "YELLOW", verifyReason: "Verification unavailable" } }));
+      }
     } catch {
       setStips((prev) => ({ ...prev, [key]: { file, status: "error", error: "Upload failed" } }));
     }
