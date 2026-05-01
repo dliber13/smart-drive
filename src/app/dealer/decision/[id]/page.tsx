@@ -70,6 +70,142 @@ function DealStrengthBar({ value }: { value: number | null }) {
   );
 }
 
+
+function generateDealSummaryPDF(application: any, selectedVehicle: any, fiProducts: Record<string, boolean>, amountFinanced: number, estimatedPayment: number, estimatedWeekly: number, estimatedBiweekly: number, fiTotal: number, baseDealTotal: number) {
+  const jsPDF = require("jspdf").jsPDF;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let y = 20;
+  const ADMIN_FEE = 499;
+  const TITLE_FEE = 9;
+  const FI_LIST = [
+    { id: "vsc", label: "VSC / Extended Warranty", price: 1495 },
+    { id: "gap", label: "GAP Insurance", price: 795 },
+    { id: "paint", label: "Paint & Fabric Protection", price: 395 },
+    { id: "tire", label: "Tire & Wheel Protection", price: 495 },
+    { id: "key", label: "Key Replacement", price: 195 },
+  ];
+  const fmt = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+
+  // Header
+  doc.setFillColor(15, 15, 15);
+  doc.rect(0, 0, pageWidth, 28, "F");
+  doc.setTextColor(201, 168, 76);
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.text("SMART DRIVE ELITE", margin, 13);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(150, 150, 150);
+  doc.text("DEAL SUMMARY", margin, 21);
+  doc.text("Generated: " + new Date().toLocaleString(), pageWidth - margin, 21, { align: "right" });
+  y = 38;
+
+  // Customer
+  doc.setFillColor(248, 246, 241);
+  doc.rect(margin, y - 5, pageWidth - margin * 2, 28, "F");
+  doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(120, 120, 120);
+  doc.text("CUSTOMER", margin + 3, y);
+  y += 7;
+  doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 15, 15);
+  doc.text((application.firstName || "") + " " + (application.lastName || ""), margin + 3, y);
+  y += 6;
+  doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
+  doc.text((application.email || "No email") + "  |  " + (application.phone || "No phone") + "  |  Income: " + fmt(application.monthlyIncome || 0) + "/mo  |  Credit: " + (application.creditScore || "N/A"), margin + 3, y);
+  y += 16;
+
+  // Vehicle
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(230, 225, 216);
+  doc.rect(margin, y - 5, pageWidth - margin * 2, 24, "F");
+  doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(120, 120, 120);
+  doc.text("VEHICLE", margin + 3, y);
+  y += 7;
+  const vname = selectedVehicle
+    ? ((selectedVehicle.year || "") + " " + (selectedVehicle.make || "") + " " + (selectedVehicle.model || "") + " " + (selectedVehicle.trim || "")).trim()
+    : ((application.vehicleYear || "") + " " + (application.vehicleMake || "") + " " + (application.vehicleModel || "")).trim();
+  doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 15, 15);
+  doc.text(vname || "No vehicle selected", margin + 3, y);
+  y += 6;
+  doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
+  const stock = selectedVehicle?.stockNumber || application.stockNumber || "—";
+  const miles = selectedVehicle?.mileage || application.mileage;
+  doc.text("Stock #" + stock + "  |  " + (miles ? miles.toLocaleString() + " mi" : "—"), margin + 3, y);
+  y += 16;
+
+  // Deal structure
+  doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(100, 100, 100);
+  doc.text("DEAL STRUCTURE", margin, y); y += 5;
+  const vehiclePrice = selectedVehicle?.askingPrice || application.vehiclePrice || 0;
+  const rows: [string, string][] = [
+    ["Vehicle Price", fmt(vehiclePrice)],
+    ["Admin Fee", fmt(ADMIN_FEE)],
+    ["Title Fee", fmt(TITLE_FEE)],
+  ];
+  FI_LIST.filter(p => fiProducts[p.id]).forEach(p => rows.push([p.label, fmt(p.price)]));
+  rows.push(["Down Payment", "(" + fmt(application.downPayment || 0) + ")"]);
+  rows.forEach((row, i) => {
+    doc.setFillColor(i % 2 === 0 ? 252 : 248, i % 2 === 0 ? 251 : 246, i % 2 === 0 ? 248 : 241);
+    doc.rect(margin, y - 4, pageWidth - margin * 2, 7, "F");
+    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(60, 60, 60);
+    doc.text(row[0], margin + 3, y);
+    doc.text(row[1], pageWidth - margin - 3, y, { align: "right" });
+    y += 7;
+  });
+
+  // Amount financed
+  doc.setFillColor(15, 15, 15);
+  doc.rect(margin, y - 4, pageWidth - margin * 2, 10, "F");
+  doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(10);
+  doc.text("AMOUNT FINANCED", margin + 3, y + 2);
+  doc.text(fmt(amountFinanced), pageWidth - margin - 3, y + 2, { align: "right" });
+  y += 14;
+
+  // Payments
+  doc.setFillColor(201, 168, 76);
+  doc.rect(margin, y - 4, pageWidth - margin * 2, 20, "F");
+  doc.setTextColor(15, 15, 15); doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+  doc.text("PAYMENT OPTIONS", margin + 3, y);
+  y += 8;
+  doc.setFontSize(10);
+  const col = (pageWidth - margin * 2) / 3;
+  doc.text("Monthly: " + fmt(estimatedPayment), margin + 3, y);
+  doc.text("Bi-Weekly: " + fmt(estimatedBiweekly), margin + col + 3, y);
+  doc.text("Weekly: " + fmt(estimatedWeekly), margin + col * 2 + 3, y);
+  y += 16;
+
+  // Lender
+  doc.setFillColor(248, 246, 241);
+  doc.rect(margin, y - 4, pageWidth - margin * 2, 16, "F");
+  doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(100, 100, 100);
+  doc.text("LENDER", margin + 3, y); y += 7;
+  doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(15, 15, 15);
+  doc.text((application.lender || "—") + "  —  " + (application.tier || "—") + "  |  APR: " + (application.apr ? (application.apr * 100).toFixed(2) + "%" : "See lender"), margin + 3, y);
+  y += 16;
+
+  // Signatures
+  doc.setDrawColor(180, 180, 180);
+  doc.setTextColor(80, 80, 80); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+  doc.line(margin, y + 12, margin + 75, y + 12);
+  doc.text("Customer Signature", margin, y + 18);
+  doc.line(margin + 85, y + 12, margin + 130, y + 12);
+  doc.text("Date", margin + 85, y + 18);
+  doc.line(pageWidth - margin - 75, y + 12, pageWidth - margin, y + 12);
+  doc.text("Dealer Representative", pageWidth - margin - 75, y + 18);
+  doc.line(pageWidth - margin - 130, y + 12, pageWidth - margin - 85, y + 12);
+  doc.text("Date", pageWidth - margin - 130, y + 18);
+  y += 30;
+
+  // Disclaimer
+  doc.setFontSize(7); doc.setTextColor(160, 160, 160); doc.setFont("helvetica", "italic");
+  const disc = "This deal summary is generated by Smart Drive Elite LLC and is subject to lender approval. Approval and funding are not guaranteed. Payment estimates may vary at funding. All F&I products must be from lender-approved providers. Smart Drive Elite LLC | Smithville, MO 64089 | USPTO Trademark #99764274";
+  doc.text(doc.splitTextToSize(disc, pageWidth - margin * 2), margin, y);
+
+  const name = ((application.firstName || "customer") + "_" + (application.lastName || "")).toLowerCase().replace(/\s/g, "_");
+  doc.save("sde_deal_" + name + "_" + Date.now() + ".pdf");
+}
+
 export default function DecisionPage() {
   const params = useParams();
   const id = params?.id as string;
