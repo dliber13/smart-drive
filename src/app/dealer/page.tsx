@@ -188,6 +188,7 @@ export default function DealerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [decision, setDecision] = useState<DecisionResult | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const allStipsUploaded =
     stips.identity.status === "uploaded" &&
@@ -208,6 +209,14 @@ export default function DealerPage() {
     (form.dob === "" || form.dob.replace(/\D/g, "").length === 8);
 
   const stipsRemaining = Object.values(stips).filter((s) => s.status !== "uploaded").length;
+
+  const filteredApplications = applications.filter(app => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const name = [app.firstName, app.lastName].filter(Boolean).join(" ").toLowerCase();
+    const deal = (app.dealNumber || "").toLowerCase();
+    return name.includes(q) || deal.includes(q);
+  });
 
   async function loadVehicles() {
     try {
@@ -556,13 +565,28 @@ export default function DealerPage() {
               </div>
               <button onClick={loadApplications} className="rounded-[16px] border border-black/10 bg-white px-4 py-3 text-sm font-semibold">Refresh</button>
             </div>
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Search by customer name or deal number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-[14px] border border-black/10 px-4 py-3 outline-none text-sm"
+              />
+              {searchQuery && (
+                <div className="mt-2 text-xs text-black/45">
+                  {filteredApplications.length} result{filteredApplications.length !== 1 ? "s" : ""} for "{searchQuery}"
+                  <button onClick={() => setSearchQuery("")} className="ml-3 text-black/60 underline">Clear</button>
+                </div>
+              )}
+            </div>
             {loadingApps ? (
               <div className="rounded-[20px] border border-black/8 bg-[#faf7f1] px-5 py-10 text-center text-black/55">Loading applications…</div>
             ) : applications.length === 0 ? (
               <div className="rounded-[20px] border border-black/8 bg-[#faf7f1] px-5 py-10 text-center text-black/55">No applications submitted yet.</div>
             ) : (
               <div className="space-y-4">
-                {applications.map((app) => (
+                {filteredApplications.map((app) => (
                   <div key={app.id} className="rounded-[22px] border border-black/8 bg-[#fcfbf8] p-5" style={{ cursor: "pointer" }} onClick={() => window.location.href = `/dealer/decision/${app.id}`}>
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div>
