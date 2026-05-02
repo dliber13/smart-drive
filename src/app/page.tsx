@@ -32,9 +32,12 @@ export default function HomePage() {
           <h1 style={{ fontSize: "clamp(36px, 8vw, 62px)", fontWeight: 800, lineHeight: 1.02, letterSpacing: "-2px", color: "#0F0F0F", margin: "0 0 24px" }}>The finance desk.<br /><span style={{ color: "#C9A84C" }}>Rebuilt from</span><br />the ground up.</h1>
           <p style={{ fontSize: 18, color: "#666", lineHeight: 1.65, maxWidth: 480, margin: "0 0 16px" }}>Every deal optimized for approval before it ever reaches a lender. Structured, matched, and decisioned in under 60 seconds.</p>
           <p style={{ fontSize: 14, color: "#999", lineHeight: 1.6, maxWidth: 440, margin: "0 0 40px" }}>No legacy software. No 1,500-lender network you will never use. Just AI-powered decisioning built specifically for independent dealers.</p>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 40 }}>
-            <Link href="/signup" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Start Free Trial →</Link>
-            <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "14px 24px", textDecoration: "none" }}>Sign In</Link>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 40, alignItems: "flex-start" }}>
+            <Link href="/signup" style={{ fontSize: 17, fontWeight: 800, color: "#0F0F0F", background: "#C9A84C", borderRadius: 10, padding: "18px 40px", textDecoration: "none", letterSpacing: "-0.3px", boxShadow: "0 4px 24px rgba(201,168,76,0.4)" }}>Get Started — 50% Off First Month →</Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <Link href="/login" style={{ fontSize: 13, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "10px 20px", textDecoration: "none" }}>Sign In</Link>
+              <span style={{ fontSize: 12, color: "#999" }}>No long-term commitment. Cancel anytime.</span>
+            </div>
           </div>
           <div style={{ display: "flex", gap: 0 }}>
             {[{ value: "100%", label: "Automated" }, { value: "<60s", label: "Decisions" }, { value: "10", label: "Risk tiers" }, { value: "Zero", label: "Manual steps" }].map((s, i) => (
