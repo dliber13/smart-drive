@@ -168,7 +168,7 @@ td:first-child { font-weight: bold; background: #f8f6f1; width: 40%; }
     if (!envelopeRes.ok) {
       const err = await envelopeRes.text();
       console.error("DocuSign envelope error:", err);
-      return NextResponse.json({ error: "Failed to create envelope", details: err }, { status: 500 });
+      return NextResponse.json({ error: err }, { status: 500 });
     }
 
     const envelopeData = await envelopeRes.json();
