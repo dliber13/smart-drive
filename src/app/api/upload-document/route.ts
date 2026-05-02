@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File and documentType required" }, { status: 400 });
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/heic", "application/pdf"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/heic", "image/heif", "application/pdf"];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({ error: "Invalid file type. PDF, JPG, PNG, or HEIC only." }, { status: 400 });
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "File too large. Maximum 10MB." }, { status: 400 });
+    if (file.size > 20 * 1024 * 1024) {
+      return NextResponse.json({ error: "File too large. Maximum 20MB." }, { status: 400 });
     }
 
     const ext = file.name.split(".").pop() || "bin";
