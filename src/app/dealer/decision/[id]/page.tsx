@@ -351,6 +351,46 @@ export default function DecisionPage() {
           </div>
         </div>
 
+        {/* Decline Reasons Panel */}
+        {declined && (
+          <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "#b42318", marginBottom: 16 }}>Decline Analysis</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {(() => {
+                const pw = application.programWaterfallJson as any;
+                const reasons: { label: string; reason: string }[] = [];
+
+                if (pw) {
+                  if (!pw.iblEligible) reasons.push({ label: "IBL — Income Based Lending", reason: pw.iblDeclineReasons?.join("; ") || "Does not meet IBL income requirements" });
+                  if (!pw.retailEligible) reasons.push({ label: "Retail Financing", reason: "Credit score, income, or profile does not meet retail lender minimums" });
+                  if (!pw.leaseEligible) reasons.push({ label: "Lease Program", reason: "Credit below 600, income below $2,500/mo, or vehicle over $35,000" });
+                  if (!pw.subscriptionEligible) reasons.push({ label: "Subscription Program", reason: "Income below $1,500/mo or vehicle price over $15,000" });
+                } else {
+                  reasons.push({ label: "Decision Engine", reason: application.decisionReason || "Does not meet minimum program requirements" });
+                }
+
+                return reasons.map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 14px", borderRadius: 12, background: "#fdf5f5", border: "1px solid #f5d0cd" }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#b42318", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                      <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>✕</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#b42318", marginBottom: 3 }}>{r.label}</div>
+                      <div style={{ fontSize: 12, color: "rgba(0,0,0,0.55)", lineHeight: 1.5 }}>{r.reason}</div>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+            <div style={{ marginTop: 16, padding: "12px 14px", background: "#fff8e6", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#b87800", marginBottom: 4 }}>What can improve this decision?</div>
+              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.55)", lineHeight: 1.6 }}>
+                Consider: higher down payment · co-signer · lower vehicle price · proof of additional income · resolving open collections
+              </div>
+            </div>
+          </div>
+        )}
+
         {approved && (
           <>
             {/* Program Waterfall */}
@@ -431,6 +471,32 @@ export default function DecisionPage() {
               <DealStrengthBar value={application.dealStrength} />
             </div>
 
+            {/* Selected Vehicle Summary */}
+            {selectedVehicle && (
+              <div style={{ background: "#0f0f0f", border: "2px solid #C9A84C", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "#C9A84C", marginBottom: 8 }}>✓ Selected Vehicle</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model} {selectedVehicle.trim || ""}</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>Stock #{selectedVehicle.stockNumber} · {selectedVehicle.mileage?.toLocaleString()} mi</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: "#C9A84C" }}>{formatCurrency(selectedVehicle.askingPrice)}</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{selectedVehicle.priceVsBudget}% of budget</div>
+                    </div>
+                    {selectedVehicle.bookValue && selectedVehicle.bookValue > 0 && (
+                      <div style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 10, padding: "8px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Est. Profit</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#C9A84C" }}>{formatCurrency((selectedVehicle.askingPrice || 0) - (selectedVehicle.bookValue || 0))}</div>
+                      </div>
+                    )}
+                    <button onClick={() => setSelectedVehicle(null)} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "6px 14px", fontSize: 12, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Change</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Vehicle selector */}
             {vehicles.length > 0 && (
               <div style={{ marginBottom: "1.5rem" }}>
@@ -460,6 +526,7 @@ export default function DecisionPage() {
                             <div style={{ textAlign: "right" }}>
                               <div style={{ fontSize: 16, fontWeight: 600, color: "#fff" }}>{formatCurrency(v.askingPrice)}</div>
                               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{v.priceVsBudget}% of budget</div>
+                              {v.bookValue > 0 && <div style={{ fontSize: 11, color: "#C9A84C", fontWeight: 600 }}>Est. profit: {formatCurrency((v.askingPrice || 0) - (v.bookValue || 0))}</div>}
                             </div>
                             <div style={{ background: isSelected ? "#C9A84C" : pick.badge, color: isSelected ? "#0f0f0f" : pick.badgeText, borderRadius: 999, padding: "4px 14px", fontSize: 12, fontWeight: 700, minWidth: 60, textAlign: "center" }}>
                               {isSelected ? "✓ Selected" : v.matchScore}
@@ -488,6 +555,7 @@ export default function DecisionPage() {
                               <div style={{ textAlign: "right" }}>
                                 <div style={{ fontSize: 16, fontWeight: 500 }}>{formatCurrency(v.askingPrice)}</div>
                                 <div style={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{v.priceVsBudget}% of budget</div>
+                                {v.bookValue > 0 && <div style={{ fontSize: 11, color: "#2f6f55", fontWeight: 600 }}>Est. profit: {formatCurrency((v.askingPrice || 0) - (v.bookValue || 0))}</div>}
                               </div>
                               <div style={{ background: isSelected ? "#2f6f55" : v.matchScore >= 80 ? "#eef6f2" : "#f5f3ee", color: isSelected ? "#fff" : v.matchScore >= 80 ? "#2f6f55" : "#5f5a52", borderRadius: 999, padding: "4px 12px", fontSize: 12, fontWeight: 500, minWidth: 60, textAlign: "center" }}>
                                 {isSelected ? "✓ Selected" : v.matchScore}
