@@ -148,6 +148,7 @@ export default function DealerDashboardPage() {
           <div className="flex items-center gap-3">
             <div className="rounded-full border border-black/10 bg-white px-5 py-3 text-[13px] font-semibold tracking-[0.18em] text-black/60">{applications.length} FILES</div>
             <div className="rounded-full bg-black px-6 py-3 text-[13px] font-semibold tracking-[0.18em] text-white">{currentUserRole}</div>
+            <a href="/dealer" style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 999, padding: "12px 24px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>+ New Deal</a>
           </div>
         </div>
 
@@ -223,6 +224,10 @@ export default function DealerDashboardPage() {
                       <div><span className="text-black/35">Max Pmt:</span> {formatCurrency(app.maxPayment)}</div>
                       <div><span className="text-black/35">Strength:</span> {app.dealStrength ?? "—"}</div>
                     </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }} onClick={e => e.stopPropagation()}>
+                      <a href={`/dealer/decision/${app.id}`} style={{ background: "#0f0f0f", color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>View Decision</a>
+                      <a href={`/dealer/edit/${app.id}`} style={{ background: "#f0ece4", color: "#555", borderRadius: 8, padding: "6px 14px", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>Edit</a>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -250,6 +255,10 @@ export default function DealerDashboardPage() {
                     <div className={`rounded-full border px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.16em] ${getStatusTone(selectedApplication.status)}`}>
                       {selectedApplication.status || "DRAFT"}
                     </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+                    <a href={`/dealer/decision/${selectedApplication.id}`} style={{ background: "#0f0f0f", color: "#fff", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>View Full Decision →</a>
+                    <a href={`/dealer/edit/${selectedApplication.id}`} style={{ background: "#f0ece4", color: "#555", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Edit &amp; Resubmit</a>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-[16px] border border-black/8 bg-white px-4 py-3">
