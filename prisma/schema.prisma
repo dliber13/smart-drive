@@ -65,6 +65,7 @@ model Application {
   docusignStatus       String?   @default("NOT_SENT")
   docusignSentAt       DateTime?
   docusignSignedAt     DateTime?
+  programWaterfallJson Json?
   identityType        String?
   identityValue       String?
   issuingCountry      String?

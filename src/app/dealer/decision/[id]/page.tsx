@@ -40,6 +40,7 @@ type Application = {
   createdAt: string;
   dealNumber: string | null;
   decisionMs: number | null;
+  programWaterfallJson: any | null;
 };
 
 type MatchedVehicle = {
@@ -218,6 +219,7 @@ export default function DecisionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState<MatchedVehicle | null>(null);
+  const [ineligibleVehicles, setIneligibleVehicles] = useState<any[]>([]);
   const [fiProducts, setFiProducts] = useState<Record<string, boolean>>({});
   const [docusignStatus, setDocusignStatus] = useState<string>("NOT_SENT");
   const [docusignSending, setDocusignSending] = useState(false);
@@ -237,6 +239,7 @@ export default function DecisionPage() {
         if (appData?.application) setApplication(appData.application);
         else setError("Application not found.");
         if (matchData?.matches) setVehicles(matchData.matches);
+        if (matchData?.ineligibleMatches) setIneligibleVehicles(matchData.ineligibleMatches);
       })
       .catch(() => setError("Failed to load decision."))
       .finally(() => setLoading(false));
@@ -350,6 +353,59 @@ export default function DecisionPage() {
 
         {approved && (
           <>
+            {/* Program Waterfall */}
+            {application.programWaterfallJson && (
+              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 16 }}>Program Waterfall Analysis</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {(() => {
+                    const pw = application.programWaterfallJson as any;
+                    const programs = [
+                      { key: "IBL", label: "IBL — Income Based Lending", eligible: pw.iblEligible, reason: pw.iblEligible ? `Band ${pw.iblBand} — Score ${pw.iblScore}/100. Required down: $${(pw.iblRequiredDown||0).toLocaleString()}. Max vehicle: $${(pw.finalMaxVehicle||0).toLocaleString()}.` : (pw.iblDeclineReasons?.join("; ") || "Does not meet IBL requirements") },
+                      { key: "RETAIL", label: "Retail Financing", eligible: pw.retailEligible, reason: pw.retailEligible ? `${application.lender} ${application.tier} — ${application.apr ? (Number(application.apr)*100).toFixed(2)+"%" : "—"} APR, ${application.termMonths} months` : "Does not meet retail lender requirements" },
+                      { key: "LEASE", label: "Lease Program", eligible: pw.leaseEligible, reason: pw.leaseEligible ? "Eligible — credit and income meet lease requirements" : "Credit below 600 or income below $2,500/mo or vehicle over $35,000" },
+                      { key: "SUBSCRIPTION", label: "Subscription Program", eligible: pw.subscriptionEligible, reason: pw.subscriptionEligible ? "Eligible — last resort month-to-month program" : "Income below $1,500/mo or vehicle over $15,000" },
+                    ];
+                    const eligiblePrograms = programs.filter(p => p.eligible);
+                    return programs.map(p => (
+                      <div key={p.key} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 14px", borderRadius: 12, background: p.eligible ? "#eef6f2" : "#faf7f1", border: `1px solid ${p.eligible ? "#d7e9df" : "rgba(0,0,0,0.06)"}` }}>
+                        <div style={{ width: 20, height: 20, borderRadius: "50%", background: p.eligible ? "#2f6f55" : "#ddd", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                          <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>{p.eligible ? "✓" : "✕"}</span>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: p.eligible ? "#2f6f55" : "#888" }}>{p.label}</span>
+                            {pw.assignedProgram === p.key && <span style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 800 }}>ASSIGNED</span>}
+                          </div>
+                          <div style={{ fontSize: 12, color: p.eligible ? "#2f6f55" : "rgba(0,0,0,0.4)", lineHeight: 1.5 }}>{p.reason}</div>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                {(() => {
+                  const pw = application.programWaterfallJson as any;
+                  const eligibleCount = [pw.iblEligible, pw.retailEligible, pw.leaseEligible, pw.subscriptionEligible].filter(Boolean).length;
+                  if (eligibleCount > 1) {
+                    return (
+                      <div style={{ marginTop: 16, padding: "14px", background: "#f0f9f4", border: "1px solid #d7e9df", borderRadius: 12 }}>
+                        <div style={{ fontSize: 12, color: "#2f6f55", fontWeight: 600, marginBottom: 10 }}>
+                          {eligibleCount} programs eligible — select the best fit for this customer:
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {pw.iblEligible && <button style={{ background: pw.assignedProgram === "IBL" ? "#2f6f55" : "#fff", color: pw.assignedProgram === "IBL" ? "#fff" : "#2f6f55", border: "1px solid #2f6f55", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>IBL</button>}
+                          {pw.retailEligible && <button style={{ background: pw.assignedProgram === "RETAIL" ? "#2f6f55" : "#fff", color: pw.assignedProgram === "RETAIL" ? "#fff" : "#2f6f55", border: "1px solid #2f6f55", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Retail</button>}
+                          {pw.leaseEligible && <button style={{ background: pw.assignedProgram === "LEASE" ? "#2f6f55" : "#fff", color: pw.assignedProgram === "LEASE" ? "#fff" : "#2f6f55", border: "1px solid #2f6f55", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Lease</button>}
+                          {pw.subscriptionEligible && <button style={{ background: pw.assignedProgram === "SUBSCRIPTION" ? "#2f6f55" : "#fff", color: pw.assignedProgram === "SUBSCRIPTION" ? "#fff" : "#2f6f55", border: "1px solid #2f6f55", borderRadius: 8, padding: "8px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Subscription</button>}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
+
             {/* Lender terms */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: "1.5rem" }}>
               {[
@@ -445,6 +501,34 @@ export default function DecisionPage() {
                 )}
               </div>
             )}
+
+            {/* Ineligible Vehicles — Down Payment Gap */}
+            {ineligibleVehicles.length > 0 && (
+              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 4 }}>Additional Down Payment Required</div>
+                <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginBottom: 12 }}>These vehicles need more down to qualify. Show customers how close they are.</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {ineligibleVehicles.slice(0, 10).map(v => (
+                    <div key={v.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "0.75rem 1rem", background: "#fdf8f0", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 12, flexWrap: "wrap" }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: "#111" }}>{v.year} {v.make} {v.model} {v.trim || ""}</div>
+                        <div style={{ fontSize: 12, color: "rgba(0,0,0,0.45)", marginTop: 2 }}>Stock #{v.stockNumber} · {v.mileage?.toLocaleString()} mi</div>
+                        <div style={{ fontSize: 11, color: "#b42318", marginTop: 3 }}>{v.ineligibleReasons?.join(" · ")}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600 }}>{formatCurrency(v.askingPrice)}</div>
+                        {v.additionalDownNeeded > 0 && (
+                          <div style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 800, marginTop: 4 }}>
+                            +{formatCurrency(v.additionalDownNeeded)} down to qualify
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: "1.5rem" }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 16 }}>Deal Jacket</div>
 

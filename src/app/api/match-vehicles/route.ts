@@ -149,6 +149,55 @@ export async function POST(req: NextRequest) {
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, 15);
 
+    // Calculate gap for ineligible vehicles
+    const ineligibleMatches = inventory
+      .filter(unit => {
+        const price = toNumber(unit.askingPrice);
+        const mileage = toNumber(unit.mileage);
+        const year = toNumber(unit.year);
+        const age = currentYear - year;
+        if (!price || price <= 0) return false;
+        // Already in eligible list
+        if (matches.find(m => m.id === unit.id)) return false;
+        return true;
+      })
+      .slice(0, 20)
+      .map(unit => {
+        const price = toNumber(unit.askingPrice);
+        const mileage = toNumber(unit.mileage);
+        const year = toNumber(unit.year);
+        const age = currentYear - year;
+
+        // Calculate reasons and down payment gap
+        const reasons: string[] = [];
+        let additionalDownNeeded = 0;
+
+        if (price > maxPrice) {
+          const gap = price - maxPrice;
+          additionalDownNeeded = Math.max(additionalDownNeeded, gap);
+          reasons.push(`$${gap.toLocaleString()} over lender max`);
+        }
+        if (mileage > maxMileage) reasons.push(`${(mileage - maxMileage).toLocaleString()} miles over limit`);
+        if (age > maxVehicleAge) reasons.push(`Vehicle age ${age} years exceeds limit`);
+
+        return {
+          id: unit.id,
+          stockNumber: unit.stockNumber,
+          year: unit.year,
+          make: unit.make,
+          model: unit.model,
+          trim: unit.trim,
+          mileage: unit.mileage,
+          askingPrice: unit.askingPrice,
+          vehicleClass: unit.vehicleClass,
+          eligible: false,
+          ineligibleReasons: reasons,
+          additionalDownNeeded: Math.ceil(additionalDownNeeded / 100) * 100,
+          priceVsBudget: maxVehicle > 0 ? Math.round((price / maxVehicle) * 100) : 0,
+          matchScore: 0,
+        };
+      });
+
     return NextResponse.json({
       success: true,
       applicationId,
@@ -156,6 +205,7 @@ export async function POST(req: NextRequest) {
       lenderConstraints: { maxMileage, maxVehicleAge, maxPrice },
       matchCount: matches.length,
       matches,
+      ineligibleMatches,
     });
   } catch (error: any) {
     console.error("MATCH VEHICLES ERROR:", error);
