@@ -69,17 +69,17 @@ export default function SignupPage() {
               </div>
             </div>
           </Link>
-          <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-0.04em", margin: "0 0 8px" }}>Start your free trial</h1>
-          <p style={{ fontSize: 15, color: "rgba(0,0,0,0.55)", margin: 0 }}>14 days free. First paid month 50% off. No commitment.</p>
+          <h1 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-0.04em", margin: "0 0 8px" }}>Get started today</h1>
+          <p style={{ fontSize: 15, color: "rgba(0,0,0,0.55)", margin: 0 }}>50% off your first month. Full platform access from day one.</p>
         </div>
 
         {/* Trial Banner */}
         <div style={{ background: "#0f0f0f", borderRadius: 16, padding: "16px 24px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#C9A84C", marginBottom: 2 }}>🎉 Limited Time Offer</div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>14-day free trial + 50% off your first paid month</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>50% off your first month when you sign up today</div>
           </div>
-          <div style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 800 }}>NO CREDIT CARD TO START</div>
+          <div style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 800 }}>50% OFF FIRST MONTH</div>
         </div>
 
         {/* Plan Selector */}
@@ -179,7 +179,7 @@ export default function SignupPage() {
 
         <button onClick={handleSubmit} disabled={loading}
           style={{ width: "100%", background: "#C9A84C", border: "none", borderRadius: 14, padding: "16px", fontSize: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", color: "#0f0f0f", opacity: loading ? 0.7 : 1, marginBottom: 16 }}>
-          {loading ? "Creating your account…" : "Start 14-Day Free Trial →"}
+          {loading ? "Creating your account…" : "Get Started — 50% Off First Month →"}
         </button>
 
         <div style={{ textAlign: "center", fontSize: 13, color: "rgba(0,0,0,0.4)", marginBottom: 24 }}>
