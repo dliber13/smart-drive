@@ -447,18 +447,18 @@ export default function HomePage() {
             <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
               <div style={{ background: "#1A1A1A", borderRadius: 10, padding: "12px 20px" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#C9A84C", marginBottom: 4 }}>BASIC</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#FFFFFF" }}>$299<span style={{ fontSize: 12, color: "#555", fontWeight: 400 }}>/mo</span></div>
-                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Up to 50 deals/mo</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#FFFFFF" }}>$1,299<span style={{ fontSize: 12, color: "#555", fontWeight: 400 }}>/mo</span></div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Up to 50 deals/mo + $25/app</div>
               </div>
               <div style={{ background: "#C9A84C", borderRadius: 10, padding: "12px 20px" }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#0F0F0F", marginBottom: 4 }}>PRO</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#0F0F0F" }}>$599<span style={{ fontSize: 12, color: "#7A6030", fontWeight: 400 }}>/mo</span></div>
-                <div style={{ fontSize: 11, color: "#7A6030", marginTop: 2 }}>Unlimited deals</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#0F0F0F" }}>$1,799<span style={{ fontSize: 12, color: "#7A6030", fontWeight: 400 }}>/mo</span></div>
+                <div style={{ fontSize: 11, color: "#7A6030", marginTop: 2 }}>Unlimited deals + $20/app</div>
               </div>
               <div style={{ background: "#1A1A1A", borderRadius: 10, padding: "12px 20px" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#C9A84C", marginBottom: 4 }}>ENTERPRISE</div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "2px", color: "#C9A84C", marginBottom: 4 }}>ELITE</div>
                 <div style={{ fontSize: 20, fontWeight: 800, color: "#FFFFFF" }}>Custom</div>
-                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Multi-rooftop</div>
+                <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>Multi-rooftop + $15/app</div>
               </div>
             </div>
             <div style={{ marginTop: 20, fontSize: 12, color: "#444" }}>Missouri · USPTO Trademark #99764274 · Smart Drive Elite LLC 2026</div>

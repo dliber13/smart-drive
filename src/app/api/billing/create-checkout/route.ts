@@ -14,13 +14,17 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { plan } = await req.json();
-    if (!plan || !["basic", "pro"].includes(plan)) {
+    if (!plan || !["basic", "pro", "elite"].includes(plan)) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const priceId = plan === "basic"
-      ? process.env.STRIPE_BASIC_PRICE_ID!
-      : process.env.STRIPE_PRO_PRICE_ID!;
+    const priceMap: Record<string, string> = {
+      basic: process.env.STRIPE_BASIC_PRICE_ID!,
+      pro: process.env.STRIPE_PRO_PRICE_ID!,
+      elite: process.env.STRIPE_ELITE_PRICE_ID!,
+    };
+
+    const priceId = priceMap[plan];
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
