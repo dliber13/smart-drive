@@ -415,3 +415,11 @@ model DealerGroup {
   updatedAt   DateTime @updatedAt
   Dealer      Dealer[]  @relation("DealerGroupDealers")
 }
+
+model PlatformSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}

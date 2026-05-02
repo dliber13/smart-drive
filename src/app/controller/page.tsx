@@ -232,10 +232,25 @@ export default function ControllerPage() {
                   return;
                 }
                 setIblAprSaving(true);
-                setIblApr(val);
-                setIblAprMessage(`IBL APR set to ${val.toFixed(2)}%`);
-                setIblAprSaving(false);
-                setTimeout(() => setIblAprMessage(""), 3000);
+                try {
+                  const res = await fetch("/api/settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ key: "ibl_apr", value: val.toFixed(2) }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setIblApr(val);
+                    setIblAprMessage(`✓ IBL APR saved as ${val.toFixed(2)}%`);
+                  } else {
+                    setIblAprMessage(data.error || "Failed to save");
+                  }
+                } catch {
+                  setIblAprMessage("Failed to save rate");
+                } finally {
+                  setIblAprSaving(false);
+                  setTimeout(() => setIblAprMessage(""), 4000);
+                }
               }}
               style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 10, padding: "8px 20px", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer" }}
             >
