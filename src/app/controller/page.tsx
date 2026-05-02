@@ -98,6 +98,10 @@ function StipDots({ docs }: { docs?: { documentType: string; verifyStatus: strin
 }
 
 export default function ControllerPage() {
+  const [iblApr, setIblApr] = useState<number>(24.99);
+  const [iblAprInput, setIblAprInput] = useState<string>("24.99");
+  const [iblAprSaving, setIblAprSaving] = useState(false);
+  const [iblAprMessage, setIblAprMessage] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({ approvalRate: 0, avgDealStrength: 0, pipelineValue: 0, fundedVolume: 0, totalApplications: 0 });
   const [counts, setCounts] = useState({ draft: 0, submitted: 0, approved: 0, declined: 0, funded: 0 });
@@ -200,6 +204,46 @@ export default function ControllerPage() {
             {message}
           </div>
         )}
+
+        {/* IBL Settings */}
+        <div style={{ background: "#0f0f0f", borderRadius: 20, padding: "1.25rem 1.5rem", marginBottom: 24, display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.22em", color: "#C9A84C", marginBottom: 4 }}>IBL Rate Override</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Set your in-house lending APR. Default 24.99%. Max 24.99%.</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+            <div style={{ position: "relative" }}>
+              <input
+                type="number"
+                min="0"
+                max="24.99"
+                step="0.01"
+                value={iblAprInput}
+                onChange={e => setIblAprInput(e.target.value)}
+                style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(201,168,76,0.4)", borderRadius: 10, padding: "8px 40px 8px 14px", fontSize: 16, fontWeight: 700, color: "#C9A84C", width: 110, outline: "none" }}
+              />
+              <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#C9A84C", fontWeight: 700 }}>%</span>
+            </div>
+            <button
+              onClick={async () => {
+                const val = parseFloat(iblAprInput);
+                if (isNaN(val) || val < 0 || val > 24.99) {
+                  setIblAprMessage("Rate must be between 0% and 24.99%");
+                  return;
+                }
+                setIblAprSaving(true);
+                setIblApr(val);
+                setIblAprMessage(`IBL APR set to ${val.toFixed(2)}%`);
+                setIblAprSaving(false);
+                setTimeout(() => setIblAprMessage(""), 3000);
+              }}
+              style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 10, padding: "8px 20px", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer" }}
+            >
+              {iblAprSaving ? "Saving..." : "Set Rate"}
+            </button>
+            {iblAprMessage && <span style={{ fontSize: 12, color: "#C9A84C", fontWeight: 600 }}>{iblAprMessage}</span>}
+          </div>
+        </div>
 
         {/* Metrics */}
         <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
