@@ -371,10 +371,15 @@ export default function DealerPage() {
   return (
     <main className="min-h-screen bg-[#f7f4ee] px-6 py-8 text-[#111111]">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">Smart Drive Elite</div>
-          <h1 className="mt-3 text-5xl font-semibold tracking-[-0.05em]">Dealer Dashboard</h1>
-          <p className="mt-3 text-base text-black/60">Submit new deals and track live application status in one place.</p>
+        <div className="mb-8 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="text-[12px] uppercase tracking-[0.28em] text-black/40">Smart Drive Elite</div>
+            <h1 className="mt-3 text-5xl font-semibold tracking-[-0.05em]">Dealer Dashboard</h1>
+            <p className="mt-3 text-base text-black/60">Submit new deals and track live application status in one place.</p>
+          </div>
+          <a href="/billing" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0f0f0f", color: "#C9A84C", borderRadius: 12, padding: "10px 20px", fontSize: 13, fontWeight: 700, textDecoration: "none", marginTop: 8 }}>
+            💳 Billing & Plans
+          </a>
         </div>
 
         <div className="mb-8 grid gap-4 md:grid-cols-4">
