@@ -137,8 +137,8 @@ td:first-child { font-weight: bold; background: #f8f6f1; width: 40%; }
             recipientId: "1",
             routingOrder: "1",
             tabs: {
-              signHereTabs: [{ documentId: "1", pageNumber: "1", xPosition: "100", yPosition: "650" }],
-              dateSignedTabs: [{ documentId: "1", pageNumber: "1", xPosition: "300", yPosition: "650" }],
+              signHereTabs: [{ documentId: "1", pageNumber: "1", xPosition: "50", yPosition: "500" }],
+              dateSignedTabs: [{ documentId: "1", pageNumber: "1", xPosition: "250", yPosition: "500" }],
             },
           },
           {
@@ -147,8 +147,8 @@ td:first-child { font-weight: bold; background: #f8f6f1; width: 40%; }
             recipientId: "2",
             routingOrder: "2",
             tabs: {
-              signHereTabs: [{ documentId: "1", pageNumber: "1", xPosition: "450", yPosition: "650" }],
-              dateSignedTabs: [{ documentId: "1", pageNumber: "1", xPosition: "650", yPosition: "650" }],
+              signHereTabs: [{ documentId: "1", pageNumber: "1", xPosition: "50", yPosition: "560" }],
+              dateSignedTabs: [{ documentId: "1", pageNumber: "1", xPosition: "250", yPosition: "560" }],
             },
           },
         ],
