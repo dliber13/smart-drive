@@ -143,10 +143,10 @@ export async function POST(req: NextRequest) {
 
         // Decision engine results
         status: decision.status === "APPROVED" ? "APPROVED" : "DECLINED",
-        tier: decision.lenderTier,
-        lender: decision.lender,
-        maxPayment: decision.maxPayment,
-        maxVehicle: decision.maxVehicle,
+        tier: programResult.assignedProgram === "IBL" ? `IBL Band ${iblResult.riskBand}` : decision.lenderTier,
+        lender: programResult.assignedProgram === "IBL" ? "In-House / BHPH" : programResult.assignedProgram === "LEASE" ? "Lease Program" : programResult.assignedProgram === "SUBSCRIPTION" ? "Subscription Program" : decision.lender,
+        maxPayment: programResult.finalMaxPayment || decision.maxPayment,
+        maxVehicle: programResult.finalMaxVehicle || decision.maxVehicle,
         dealStrength: decision.dealStrength,
         decisionReason: decision.decisionReason,
         programWaterfallJson: {
