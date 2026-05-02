@@ -448,15 +448,19 @@ export default function DecisionPage() {
 
             {/* Lender terms */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: "1.5rem" }}>
-              {[
-                { label: "Lender", value: application.lender || "—", sub: application.tier || "" },
-                { label: "Max Monthly", value: formatCurrency(maxPayment), sub: "payment" },
-                { label: "Max Weekly", value: formatCurrency(weeklyPayment), sub: "payment" },
-                { label: "Max Bi-Weekly", value: formatCurrency(biweeklyPayment), sub: "payment" },
-                { label: "Max Vehicle", value: formatCurrency(application.maxVehicle), sub: "price" },
-                { label: "APR", value: apr ? `${(apr * 100).toFixed(2)}%` : "—", sub: "rate" },
-                { label: "Term", value: termMonths ? `${termMonths} months` : "—", sub: "loan term" },
-              ].map(item => (
+              {(() => {
+                const pw = application.programWaterfallJson as any;
+                const isIBL = pw?.assignedProgram === "IBL";
+                return [
+                  { label: "Lender", value: application.lender || "—", sub: application.tier || "" },
+                  { label: "Max Monthly", value: formatCurrency(maxPayment), sub: "payment" },
+                  { label: "Max Weekly", value: formatCurrency(weeklyPayment), sub: "payment" },
+                  { label: "Max Bi-Weekly", value: formatCurrency(biweeklyPayment), sub: "payment" },
+                  { label: "Max Vehicle", value: formatCurrency(application.maxVehicle), sub: "price" },
+                  { label: "APR", value: apr ? `${(apr * 100).toFixed(2)}%` : "—", sub: isIBL ? "in-house rate" : "rate" },
+                  { label: "Term", value: isIBL && pw?.finalTerm ? `${pw.finalTerm} weeks` : termMonths ? `${termMonths} months` : "—", sub: "loan term" },
+                ];
+              })().map(item => (
                 <div key={item.label} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 16, padding: "1rem 1.25rem" }}>
                   <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.18em", color: "rgba(0,0,0,0.38)", marginBottom: 6 }}>{item.label}</div>
                   <div style={{ fontSize: 20, fontWeight: 500 }}>{item.value}</div>
