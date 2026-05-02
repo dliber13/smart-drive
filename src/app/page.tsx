@@ -33,7 +33,7 @@ export default function HomePage() {
           <p style={{ fontSize: 18, color: "#666", lineHeight: 1.65, maxWidth: 480, margin: "0 0 16px" }}>Every deal optimized for approval before it ever reaches a lender. Structured, matched, and decisioned in under 60 seconds.</p>
           <p style={{ fontSize: 14, color: "#999", lineHeight: 1.6, maxWidth: 440, margin: "0 0 40px" }}>No legacy software. No 1,500-lender network you will never use. Just AI-powered decisioning built specifically for independent dealers.</p>
           <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 40 }}>
-            <Link href="/request-access" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Request Dealer Access</Link>
+            <Link href="/signup" style={{ fontSize: 14, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 32px", textDecoration: "none" }}>Start Free Trial →</Link>
             <Link href="/login" style={{ fontSize: 14, fontWeight: 500, color: "#555", background: "#FFFFFF", border: "1px solid #E0DBD0", borderRadius: 8, padding: "14px 24px", textDecoration: "none" }}>Sign In</Link>
           </div>
           <div style={{ display: "flex", gap: 0 }}>
@@ -239,7 +239,7 @@ export default function HomePage() {
 
           <div style={{ textAlign: "center", marginTop: 32 }}>
             <p style={{ fontSize: 13, color: "#555", marginBottom: 20 }}>This is the actual platform. Request access and your team is live within 24 hours.</p>
-            <a href="/request-access" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 36px", textDecoration: "none", display: "inline-block" }}>Request Dealer Access</a>
+            <a href="/signup" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "14px 36px", textDecoration: "none", display: "inline-block" }}>Start Free Trial →</a>
           </div>
         </div>
       </section>
@@ -441,7 +441,7 @@ export default function HomePage() {
             <h2 style={{ fontSize: "clamp(30px, 6vw, 48px)", fontWeight: 900, letterSpacing: "-1.5px", color: "#FFFFFF", margin: "0 0 20px", lineHeight: 1.05 }}>Stop losing deals to slow decisions.</h2>
             <p style={{ fontSize: 17, color: "#777", lineHeight: 1.7, margin: "0 0 40px", maxWidth: 520 }}>Request access today. Your team will be submitting deals and getting instant AI-powered approvals within 24 hours of onboarding.</p>
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <Link href="/request-access" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "15px 36px", textDecoration: "none" }}>Request Dealer Access</Link>
+              <Link href="/signup" style={{ fontSize: 15, fontWeight: 700, color: "#0F0F0F", background: "#C9A84C", borderRadius: 8, padding: "15px 36px", textDecoration: "none" }}>Start Free Trial →</Link>
               <Link href="/login" style={{ fontSize: 15, fontWeight: 500, color: "#777", background: "transparent", border: "1px solid #2A2A2A", borderRadius: 8, padding: "15px 28px", textDecoration: "none" }}>Sign In</Link>
             </div>
             <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>

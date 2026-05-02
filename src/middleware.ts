@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "experimental-edge";
 
-const PUBLIC_ROUTES = ["/login", "/", "/privacy", "/terms", "/request-access"];
+const PUBLIC_ROUTES = ["/login", "/", "/privacy", "/terms", "/request-access", "/signup"];
 const ADMIN_ONLY = ["/controller", "/admin"];
 const DEALER_ROUTES = ["/dealer", "/dealer-dashboard"];
 
