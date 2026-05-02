@@ -162,7 +162,9 @@ export async function POST(req: NextRequest) {
         maxPayment: programResult.finalMaxPayment || decision.maxPayment,
         maxVehicle: programResult.finalMaxVehicle || decision.maxVehicle,
         dealStrength: decision.dealStrength,
-        decisionReason: decision.decisionReason,
+        decisionReason: programResult.assignedProgram === "IBL"
+          ? `Approved — IBL Income Based Lending. Band ${iblResult.riskBand} — Score ${iblResult.score}/100. Required down: $${(iblResult.requiredDown||0).toLocaleString()}. Max vehicle: $${(programResult.finalMaxVehicle||0).toLocaleString()}. Deal strength ${decision.dealStrength}/100.`
+          : decision.decisionReason,
         programWaterfallJson: {
           assignedProgram: programResult.assignedProgram,
           programReason: programResult.programReason,
