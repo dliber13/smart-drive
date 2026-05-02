@@ -65,6 +65,9 @@ export async function GET(req: NextRequest) {
         fundingDate: true,
         fundingAmount: true,
         lenderConfirmation: true,
+        dealNumber: true,
+        decisionMs: true,
+        docusignStatus: true,
       },
     });
 

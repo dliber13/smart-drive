@@ -25,6 +25,9 @@ type Application = {
   decisionReason?: string | null;
   identityStatus?: string | null;
   downPayment?: number | null;
+  dealNumber?: string | null;
+  decisionMs?: number | null;
+  docusignStatus?: string | null;
   Dealer?: { name: string; dealerNumber: string } | null;
   ApplicationDocument?: { id: string; documentType: string; verifyStatus: string }[];
 };
@@ -258,7 +261,10 @@ export default function ControllerPage() {
                     className={`w-full rounded-[22px] border p-5 text-left transition ${decision.applicationId === app.id ? "border-black bg-black text-white" : "border-black/8 bg-[#fcfbf8] hover:bg-[#faf7f1]"}`}>
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
-                        <div className="text-[16px] font-semibold">{[app.firstName, app.lastName].filter(Boolean).join(" ") || "Unnamed"}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <div className="text-[16px] font-semibold">{[app.firstName, app.lastName].filter(Boolean).join(" ") || "Unnamed"}</div>
+                          {app.dealNumber && <span style={{ background: "#0f0f0f", color: "#C9A84C", borderRadius: 6, padding: "2px 8px", fontSize: 10, fontWeight: 700, fontFamily: "monospace" }}>{app.dealNumber}</span>}
+                        </div>
                         <div className={`text-[12px] mt-0.5 ${decision.applicationId === app.id ? "opacity-60" : "text-black/45"}`}>
                           {app.Dealer?.name || "No dealer"} · #{app.Dealer?.dealerNumber || "—"}
                         </div>
