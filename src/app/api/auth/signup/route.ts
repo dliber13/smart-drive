@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 14,
+        discounts: [{ coupon: process.env.STRIPE_TRIAL_COUPON_ID }],
         coupon: process.env.STRIPE_TRIAL_COUPON_ID,
         metadata: {
           dealerId: dealer.id,
