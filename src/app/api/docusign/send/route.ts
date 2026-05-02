@@ -2,7 +2,55 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 
+const DOCUSIGN_INTEGRATION_KEY = process.env.DOCUSIGN_INTEGRATION_KEY!;
+const DOCUSIGN_USER_ID = process.env.DOCUSIGN_USER_ID!;
+const DOCUSIGN_ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID!;
+const DOCUSIGN_BASE_URL = process.env.DOCUSIGN_BASE_URL!;
+const DOCUSIGN_PRIVATE_KEY = process.env.DOCUSIGN_PRIVATE_KEY!;
+
 export const dynamic = "force-dynamic";
+
+async function getJWTAccessToken(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: DOCUSIGN_INTEGRATION_KEY,
+    sub: DOCUSIGN_USER_ID,
+    aud: "account-d.docusign.com",
+    iat: now,
+    exp: now + 3600,
+    scope: "signature impersonation",
+  };
+
+  const base64Header = Buffer.from(JSON.stringify(header)).toString("base64url");
+  const base64Payload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signingInput = `${base64Header}.${base64Payload}`;
+
+  const crypto = await import("crypto");
+  const sign = crypto.createSign("RSA-SHA256");
+  sign.update(signingInput);
+  const signature = sign.sign(DOCUSIGN_PRIVATE_KEY, "base64url");
+
+  const jwt = `${signingInput}.${signature}`;
+
+  const tokenRes = await fetch("https://account-d.docusign.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }),
+  });
+
+  if (!tokenRes.ok) {
+    const err = await tokenRes.text();
+    throw new Error(`DocuSign JWT token error: ${err}`);
+  }
+
+  const data = await tokenRes.json();
+  return data.access_token;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,19 +59,11 @@ export async function POST(req: NextRequest) {
     const user = verifySession(token) as any;
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const accessToken = req.cookies.get("ds_access_token")?.value;
-    if (!accessToken) {
-      return NextResponse.json({ error: "DocuSign not connected", needsAuth: true }, { status: 401 });
-    }
-
     const { applicationId } = await req.json();
     if (!applicationId) return NextResponse.json({ error: "applicationId required" }, { status: 400 });
 
     const application = await prisma.application.findUnique({ where: { id: applicationId } });
     if (!application) return NextResponse.json({ error: "Application not found" }, { status: 404 });
-
-    const accountId = process.env.DOCUSIGN_ACCOUNT_ID!;
-    const baseUrl = process.env.DOCUSIGN_BASE_URL!;
 
     const signerEmail = application.email || "";
     const signerName = [application.firstName, application.lastName].filter(Boolean).join(" ") || "Applicant";
@@ -35,74 +75,54 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Applicant email required to send for signature" }, { status: 400 });
     }
 
-    // Build document HTML
-    const documentHtml = `
-<!DOCTYPE html>
-<html>
-<head><style>
+    const accessToken = await getJWTAccessToken();
+
+    const documentHtml = `<!DOCTYPE html><html><head><style>
 body { font-family: Arial, sans-serif; margin: 40px; color: #111; }
 h1 { font-size: 24px; color: #0f0f0f; }
 h2 { font-size: 16px; color: #C9A84C; border-bottom: 1px solid #C9A84C; padding-bottom: 4px; }
 table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
 td { padding: 8px 12px; border: 1px solid #ddd; font-size: 13px; }
 td:first-child { font-weight: bold; background: #f8f6f1; width: 40%; }
-.footer { font-size: 11px; color: #999; margin-top: 40px; border-top: 1px solid #eee; padding-top: 12px; }
-</style></head>
-<body>
+</style></head><body>
 <h1>Smart Drive Elite — Deal Summary</h1>
 <p>Deal Number: <strong>${dealNumber}</strong> &nbsp;|&nbsp; Date: ${new Date().toLocaleDateString()}</p>
-
-<h2>Applicant Information</h2>
+<h2>Applicant</h2>
 <table>
 <tr><td>Name</td><td>${signerName}</td></tr>
 <tr><td>Email</td><td>${signerEmail}</td></tr>
 <tr><td>Phone</td><td>${application.phone || "—"}</td></tr>
 </table>
-
-<h2>Vehicle & Deal Structure</h2>
+<h2>Vehicle & Deal</h2>
 <table>
 <tr><td>Vehicle</td><td>${application.vehicleYear || ""} ${application.vehicleMake || ""} ${application.vehicleModel || ""}</td></tr>
 <tr><td>Vehicle Price</td><td>$${(application.vehiclePrice || 0).toLocaleString()}</td></tr>
 <tr><td>Down Payment</td><td>$${(application.downPayment || 0).toLocaleString()}</td></tr>
 <tr><td>Amount Financed</td><td>$${(application.amountFinanced || 0).toLocaleString()}</td></tr>
 </table>
-
 <h2>Approval Terms</h2>
 <table>
 <tr><td>Lender</td><td>${application.lender || "—"}</td></tr>
-<tr><td>Tier</td><td>${application.tier || "—"}</td></tr>
 <tr><td>Max Monthly Payment</td><td>$${(application.maxPayment || 0).toLocaleString()}/mo</td></tr>
 <tr><td>APR</td><td>${application.apr ? (Number(application.apr) * 100).toFixed(2) + "%" : "—"}</td></tr>
 <tr><td>Term</td><td>${application.termMonths || "—"} months</td></tr>
 </table>
-
-<p style="margin-top:40px;">By signing below, I acknowledge that I have reviewed and agree to the terms of this deal summary. Final approval and funding are subject to lender review.</p>
-
+<p style="margin-top:40px;">By signing below, I acknowledge that I have reviewed and agree to the terms of this deal summary.</p>
 <br/><br/>
 <table style="border:none;">
 <tr>
-<td style="border:none; width:45%;">
-  <div style="border-bottom: 1px solid #000; height: 40px;"></div>
-  <p style="font-size:12px;">Applicant Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date</p>
-</td>
-<td style="border:none; width:10%;"></td>
-<td style="border:none; width:45%;">
-  <div style="border-bottom: 1px solid #000; height: 40px;"></div>
-  <p style="font-size:12px;">Dealer Representative Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date</p>
-</td>
+<td style="border:none; width:45%;"><div style="border-bottom:1px solid #000;height:40px;"></div><p style="font-size:12px;">Applicant Signature / Date</p></td>
+<td style="border:none;width:10%;"></td>
+<td style="border:none;width:45%;"><div style="border-bottom:1px solid #000;height:40px;"></div><p style="font-size:12px;">Dealer Representative / Date</p></td>
 </tr>
 </table>
-
-<div class="footer">Smart Drive Elite LLC | Smithville, MO 64089 | USPTO Trademark #99764274 | License #2763<br/>
-This document is generated by Smart Drive Elite. Approval and funding are not guaranteed.</div>
-</body>
-</html>`;
+<p style="font-size:11px;color:#999;margin-top:40px;">Smart Drive Elite LLC | Smithville, MO 64089 | USPTO #99764274 | License #2763</p>
+</body></html>`;
 
     const documentBase64 = Buffer.from(documentHtml).toString("base64");
 
     const envelope = {
       emailSubject: `Smart Drive Elite — Deal ${dealNumber} Ready for Signature`,
-      emailBlurb: `Your deal summary for ${signerName} is ready for review and signature. Please review the terms and sign at your earliest convenience.`,
       documents: [{
         documentBase64,
         name: `Deal_Summary_${dealNumber}.html`,
@@ -136,7 +156,7 @@ This document is generated by Smart Drive Elite. Approval and funding are not gu
       status: "sent",
     };
 
-    const envelopeRes = await fetch(`${baseUrl}/restapi/v2.1/accounts/${accountId}/envelopes`, {
+    const envelopeRes = await fetch(`${DOCUSIGN_BASE_URL}/restapi/v2.1/accounts/${DOCUSIGN_ACCOUNT_ID}/envelopes`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${accessToken}`,

@@ -263,24 +263,12 @@ export default function DecisionPage() {
     setDocusignSending(true);
     setDocusignMessage("");
     try {
-      const authRes = await fetch("/api/docusign/auth");
-      const authData = await authRes.json();
-      if (authData.needsAuth || !document.cookie.includes("ds_access_token")) {
-        window.location.href = authData.authUrl;
-        return;
-      }
       const res = await fetch("/api/docusign/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ applicationId: id }),
       });
       const data = await res.json();
-      if (data.needsAuth) {
-        const authRes2 = await fetch("/api/docusign/auth");
-        const authData2 = await authRes2.json();
-        window.location.href = authData2.authUrl;
-        return;
-      }
       if (data.success) {
         setDocusignStatus("SENT");
         setDocusignMessage(data.message || "Sent for signature successfully");
