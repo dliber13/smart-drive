@@ -106,8 +106,6 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 14,
-        discounts: [{ coupon: process.env.STRIPE_TRIAL_COUPON_ID }],
-        coupon: process.env.STRIPE_TRIAL_COUPON_ID,
         metadata: {
           dealerId: dealer.id,
           userId: user.id,
@@ -116,6 +114,7 @@ export async function POST(req: NextRequest) {
       },
       success_url: `https://smartdriveelite.com/login?signup=success&email=${encodeURIComponent(email)}`,
       cancel_url: `https://smartdriveelite.com/signup?cancelled=true`,
+      discounts: [{ coupon: process.env.STRIPE_TRIAL_COUPON_ID }],
       customer_email: email,
     });
 
