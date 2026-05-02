@@ -6,7 +6,7 @@ const DOCUSIGN_INTEGRATION_KEY = process.env.DOCUSIGN_INTEGRATION_KEY!;
 const DOCUSIGN_USER_ID = process.env.DOCUSIGN_USER_ID!;
 const DOCUSIGN_ACCOUNT_ID = process.env.DOCUSIGN_ACCOUNT_ID!;
 const DOCUSIGN_BASE_URL = process.env.DOCUSIGN_BASE_URL!;
-const DOCUSIGN_PRIVATE_KEY = process.env.DOCUSIGN_PRIVATE_KEY!;
+const DOCUSIGN_PRIVATE_KEY = (process.env.DOCUSIGN_PRIVATE_KEY || "").replace(/\\n/g, "\n");
 
 export const dynamic = "force-dynamic";
 
