@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getSession } from "@/lib/session";
+import { verifySession } from "@/lib/session";
 const prisma = new PrismaClient();
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession(req);
+    const token = req.cookies.get("session")?.value || "";
+    const session = token ? verifySession(token) as any : null;
     if (!session || !["SUPER_ADMIN","EXECUTIVE","FUNDING","ADMIN"].includes(session.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
