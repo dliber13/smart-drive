@@ -192,6 +192,13 @@ model Dealer {
   restrictionsJson Json?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime
+  stripeCustomerId  String?
+  stripePlanId      String?
+  planStatus        String?   @default("INACTIVE")
+  planName          String?
+  planActivatedAt   DateTime?
+  planCancelledAt   DateTime?
+  trialEndsAt       DateTime?
   Application      Application[]
   DealerUser       DealerUser[]
   Vehicle              Vehicle[]        @relation("DealerVehicles")

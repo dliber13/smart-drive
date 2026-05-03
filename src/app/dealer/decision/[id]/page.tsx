@@ -227,6 +227,7 @@ export default function DecisionPage() {
   const [ineligibleVehicles, setIneligibleVehicles] = useState<any[]>([]);
   const [fiProducts, setFiProducts] = useState<Record<string, boolean>>({});
   const [docusignStatus, setDocusignStatus] = useState<string>("NOT_SENT");
+  const [packetGenerating, setPacketGenerating] = useState(false);
   const [docusignSending, setDocusignSending] = useState(false);
   const [docusignMessage, setDocusignMessage] = useState("");
 
@@ -797,6 +798,30 @@ export default function DecisionPage() {
             style={{ background: "#0f0f0f", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "#fff" }}>
             Print Deal Summary
           </button>
+          {approved && (
+            <button onClick={async () => {
+              setPacketGenerating(true);
+              try {
+                const res = await fetch("/api/deals/generate-packet", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ applicationId: id, selectedVehicle, fiProducts, amountFinanced, estimatedPayment, estimatedWeekly, estimatedBiweekly }),
+                });
+                const data = await res.json();
+                if (data.html) {
+                  const win = window.open("", "_blank");
+                  if (win) { win.document.write(data.html); win.document.close(); }
+                } else {
+                  alert(data.error || "Failed to generate packet");
+                }
+              } catch { alert("Failed to generate packet"); }
+              finally { setPacketGenerating(false); }
+            }}
+            disabled={packetGenerating}
+            style={{ background: "#2f6f55", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: packetGenerating ? "not-allowed" : "pointer", color: "#fff", opacity: packetGenerating ? 0.7 : 1 }}>
+              {packetGenerating ? "Generating..." : "📄 Generate Deal Packet"}
+            </button>
+          )}
           {approved && (
             <button onClick={sendForSignature} disabled={docusignSending || docusignStatus === "SENT"}
               style={{ background: docusignStatus === "SENT" ? "#2f6f55" : "#1a4fa0", border: "none", borderRadius: 999, padding: "10px 28px", fontSize: 14, fontWeight: 500, cursor: docusignSending || docusignStatus === "SENT" ? "not-allowed" : "pointer", color: "#fff", opacity: docusignSending ? 0.7 : 1 }}>

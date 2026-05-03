@@ -24,26 +24,17 @@ export async function POST(req: NextRequest) {
       elite: process.env.STRIPE_ELITE_PRICE_ID!,
     };
 
-    const priceId = priceMap[plan];
-
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceMap[plan], quantity: 1 }],
+      discounts: [{ coupon: process.env.STRIPE_HALF_OFF_COUPON_ID! }],
       success_url: `https://smartdriveelite.com/billing?success=true&plan=${plan}`,
       cancel_url: `https://smartdriveelite.com/billing?cancelled=true`,
       customer_email: user.email,
-      metadata: {
-        userId: user.id,
-        dealerId: user.dealerId || "",
-        plan,
-      },
+      metadata: { userId: user.id, dealerId: user.dealerId || "", plan },
       subscription_data: {
-        metadata: {
-          userId: user.id,
-          dealerId: user.dealerId || "",
-          plan,
-        },
+        metadata: { userId: user.id, dealerId: user.dealerId || "", plan },
       },
     });
 
