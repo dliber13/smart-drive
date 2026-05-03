@@ -213,14 +213,11 @@ export function runIBLEngine(input: IBLInput): IBLDecision {
     ? amortizedPayment(amountFinanced, 0.2499, termMonths)
     : ptiMaxMonthly;
 
-  // Step 5: If actual payment exceeds PTI cap — customer cannot afford this vehicle
-  // Display actual payment but flag it — payment check on decision screen will show red
-  const maxMonthlyPayment = actualMonthlyPayment;
+  // Step 5: maxPayment = PTI cap (what the customer can AFFORD based on income)
+  // actualMonthlyPayment is used only for payment check comparison on decision screen
+  const maxMonthlyPayment = ptiMaxMonthly;
   const maxWeeklyPayment = Math.round(maxMonthlyPayment * 12 / 52);
   const maxBiweeklyPayment = Math.round(maxMonthlyPayment * 12 / 26);
-
-  // PTI cap preserved separately for payment check comparison
-  const ptiMonthlyCapForCheck = ptiMaxMonthly;
 
   return {
     eligible,
