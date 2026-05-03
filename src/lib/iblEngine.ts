@@ -192,28 +192,35 @@ export function runIBLEngine(input: IBLInput): IBLDecision {
   const requiredDownPct = eligible ? IBL_DOWN[riskBand] : 0;
   const requiredDown = Math.round(input.vehiclePrice * requiredDownPct);
 
-  // Max vehicle based on PTI cap — what can they afford at 24.99%?
-  // Solve for max principal: P = PMT * ((1-(1+r)^-n)/r)
+  // ── Correct amortized payment math ──────────────────────────────────────
+  // Step 1: PTI cap = max affordable monthly payment based on income
   const monthlyRate = 0.2499 / 12;
+
+  // Step 2: Max principal = loan amount that produces exactly ptiMaxMonthly at 24.99%
+  // Formula: P = PMT * ((1-(1+r)^-n)/r)
   const maxPrincipal = eligible && termMonths > 0
     ? Math.round(ptiMaxMonthly * ((1 - Math.pow(1 + monthlyRate, -termMonths)) / monthlyRate))
     : 0;
+
+  // Step 3: Max vehicle = max principal + down + trade (capped at $25K)
   const maxVehiclePrice = eligible
     ? Math.min(maxPrincipal + input.downPayment + input.tradeIn, 25000)
     : 0;
 
-  // Actual amortized payment on the SELECTED vehicle at 24.99%
+  // Step 4: Actual payment on SELECTED vehicle — amortized at 24.99%
   const amountFinanced = Math.max(0, input.vehiclePrice - input.downPayment - input.tradeIn);
-  const actualMonthlyPayment = eligible && termMonths > 0
+  const actualMonthlyPayment = eligible && termMonths > 0 && amountFinanced > 0
     ? amortizedPayment(amountFinanced, 0.2499, termMonths)
-    : 0;
-  const actualWeeklyPayment = Math.round(actualMonthlyPayment * 12 / 52);
-  const actualBiweeklyPayment = Math.round(actualMonthlyPayment * 12 / 26);
+    : ptiMaxMonthly;
 
-  // Use actual payments for display, PTI cap for qualification
-  const maxMonthlyPayment = actualMonthlyPayment || ptiMaxMonthly;
-  const maxWeeklyPayment = actualWeeklyPayment || Math.round(ptiMaxMonthly * 12 / 52);
-  const maxBiweeklyPayment = actualBiweeklyPayment || Math.round(ptiMaxMonthly * 12 / 26);
+  // Step 5: If actual payment exceeds PTI cap — customer cannot afford this vehicle
+  // Display actual payment but flag it — payment check on decision screen will show red
+  const maxMonthlyPayment = actualMonthlyPayment;
+  const maxWeeklyPayment = Math.round(maxMonthlyPayment * 12 / 52);
+  const maxBiweeklyPayment = Math.round(maxMonthlyPayment * 12 / 26);
+
+  // PTI cap preserved separately for payment check comparison
+  const ptiMonthlyCapForCheck = ptiMaxMonthly;
 
   return {
     eligible,
