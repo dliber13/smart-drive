@@ -243,8 +243,20 @@ export default function DecisionPage() {
       .then(([appData, matchData]) => {
         if (appData?.application) setApplication(appData.application);
         else setError("Application not found.");
-        if (matchData?.matches) setVehicles(matchData.matches);
+        const matches = matchData?.matches || [];
+        if (matches.length > 0) setVehicles(matches);
         if (matchData?.ineligibleMatches) setIneligibleVehicles(matchData.ineligibleMatches);
+        // Auto-select: prefer vehicle matching submission, else best match
+        if (matches.length > 0) {
+          const app = appData?.application;
+          const submitted = app?.vehicleMake && app?.vehicleModel
+            ? matches.find((v: any) =>
+                v.make?.toLowerCase() === app.vehicleMake?.toLowerCase() &&
+                v.model?.toLowerCase() === app.vehicleModel?.toLowerCase()
+              )
+            : null;
+          setSelectedVehicle(submitted || matches[0]);
+        }
       })
       .catch(() => setError("Failed to load decision."))
       .finally(() => setLoading(false));

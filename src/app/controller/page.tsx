@@ -73,6 +73,7 @@ function getStatusTone(status: string | null | undefined) {
   if (s === "APPROVED") return "bg-[#eef6f2] text-[#2f6f55] border-[#d7e9df]";
   if (s === "DECLINED") return "bg-[#fbefee] text-[#b42318] border-[#f0c8c4]";
   if (s === "FUNDED") return "bg-[#f3f0ff] text-[#5b3cc4] border-[#ddd2ff]";
+  if (s === "PENDING_FUNDING") return "bg-[#fff8e6] text-[#9a6700] border-[#ead7b0]";
   if (s === "SUBMITTED") return "bg-[#f8f2e8] text-[#9a6700] border-[#ead7b0]";
   return "bg-[#f5f3ee] text-[#5f5a52] border-[#e2ddd4]";
 }
@@ -104,7 +105,11 @@ export default function ControllerPage() {
   const [iblAprMessage, setIblAprMessage] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
   const [metrics, setMetrics] = useState<Metrics>({ approvalRate: 0, avgDealStrength: 0, pipelineValue: 0, fundedVolume: 0, totalApplications: 0 });
-  const [counts, setCounts] = useState({ draft: 0, submitted: 0, approved: 0, declined: 0, funded: 0 });
+  const [counts, setCounts] = useState({ draft: 0, submitted: 0, approved: 0, declined: 0, funded: 0, pending_funding: 0 });
+  const [fundingConfirmation, setFundingConfirmation] = useState("");
+  const [fundingAmount, setFundingAmount] = useState("");
+  const [fundingSaving, setFundingSaving] = useState(false);
+  const [fundingMessage, setFundingMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -112,7 +117,7 @@ export default function ControllerPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("error");
   const [decision, setDecision] = useState<DecisionForm>(emptyDecision);
-  const [filter, setFilter] = useState<"ALL" | "SUBMITTED" | "APPROVED" | "DECLINED">("SUBMITTED");
+  const [filter, setFilter] = useState<"ALL" | "SUBMITTED" | "APPROVED" | "DECLINED" | "PENDING_FUNDING">("SUBMITTED");
 
   async function loadApplications() {
     try {
@@ -267,6 +272,7 @@ export default function ControllerPage() {
             { label: "Submitted", value: counts.submitted },
             { label: "Approved", value: counts.approved },
             { label: "Declined", value: counts.declined },
+            { label: "Pending Funding", value: counts.pending_funding },
             { label: "Funded", value: counts.funded },
           ].map(s => (
             <div key={s.label} className="rounded-[22px] border border-black/8 bg-white p-5 shadow-[0_15px_35px_rgba(0,0,0,0.04)]">
@@ -301,10 +307,10 @@ export default function ControllerPage() {
 
             {/* Filter tabs */}
             <div className="mb-5 flex gap-2 flex-wrap">
-              {(["SUBMITTED", "APPROVED", "DECLINED", "ALL"] as const).map(f => (
+              {(["SUBMITTED", "APPROVED", "PENDING_FUNDING", "DECLINED", "ALL"] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)}
                   className={`rounded-full px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.16em] transition ${filter === f ? "bg-black text-white" : "border border-black/10 bg-white text-black/55 hover:bg-[#faf7f1]"}`}>
-                  {f} {f !== "ALL" ? `(${counts[f.toLowerCase() as keyof typeof counts]})` : `(${metrics.totalApplications})`}
+                  {f === "PENDING_FUNDING" ? "PENDING FUNDING" : f} {f !== "ALL" ? `(${(counts as any)[f.toLowerCase()] ?? 0})` : `(${metrics.totalApplications})`}
                 </button>
               ))}
             </div>
@@ -396,6 +402,77 @@ export default function ControllerPage() {
                 </div>
               )}
             </div>
+
+            {/* Mark Funded Panel */}
+            {selectedApp && (selectedApp.status === "PENDING_FUNDING" || selectedApp.status === "APPROVED") && (
+              <div style={{ background: "#0f0f0f", borderRadius: 30, padding: "2rem", boxShadow: "0 18px 45px rgba(0,0,0,0.12)" }}>
+                <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.28em", color: "#C9A84C", marginBottom: 8 }}>Funding</div>
+                <h2 style={{ fontSize: 24, fontWeight: 600, color: "#fff", letterSpacing: "-0.04em", marginBottom: 4 }}>Mark Deal Funded</h2>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 20 }}>
+                  {selectedApp.dealNumber} · {selectedApp.firstName} {selectedApp.lastName} · {selectedApp.lender || "—"}
+                </div>
+                {selectedApp.status === "PENDING_FUNDING" && (
+                  <div style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#C9A84C", fontWeight: 600 }}>
+                    ✓ DocuSign complete — deal is signed and ready to fund
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <input
+                    placeholder="Lender Confirmation # (optional)"
+                    value={fundingConfirmation}
+                    onChange={e => setFundingConfirmation(e.target.value)}
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, padding: "12px 16px", fontSize: 14, color: "#fff", outline: "none" }}
+                  />
+                  <input
+                    placeholder="Funding Amount (leave blank to use financed amount)"
+                    value={fundingAmount}
+                    onChange={e => setFundingAmount(e.target.value)}
+                    type="number"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 14, padding: "12px 16px", fontSize: 14, color: "#fff", outline: "none" }}
+                  />
+                  {fundingMessage && (
+                    <div style={{ fontSize: 13, fontWeight: 600, color: fundingMessage.startsWith("✓") ? "#C9A84C" : "#f87171", padding: "8px 0" }}>
+                      {fundingMessage}
+                    </div>
+                  )}
+                  <button
+                    disabled={fundingSaving}
+                    onClick={async () => {
+                      setFundingSaving(true);
+                      setFundingMessage("");
+                      try {
+                        const res = await fetch("/api/applications/fund", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            applicationId: selectedApp.id,
+                            lenderConfirmation: fundingConfirmation || undefined,
+                            fundingAmount: fundingAmount ? parseFloat(fundingAmount) : undefined,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          setFundingMessage("✓ Deal marked as FUNDED successfully");
+                          setFundingConfirmation("");
+                          setFundingAmount("");
+                          setDecision(emptyDecision);
+                          await loadApplications();
+                        } else {
+                          setFundingMessage(data.error || "Failed to mark funded");
+                        }
+                      } catch {
+                        setFundingMessage("Network error — try again");
+                      } finally {
+                        setFundingSaving(false);
+                      }
+                    }}
+                    style={{ background: "#C9A84C", color: "#0f0f0f", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 700, border: "none", cursor: fundingSaving ? "not-allowed" : "pointer", opacity: fundingSaving ? 0.6 : 1 }}
+                  >
+                    {fundingSaving ? "Processing..." : "✓ Mark as FUNDED"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Vehicle matches */}
             <div className="rounded-[30px] border border-black/10 bg-white p-8 shadow-[0_18px_45px_rgba(0,0,0,0.05)]">
