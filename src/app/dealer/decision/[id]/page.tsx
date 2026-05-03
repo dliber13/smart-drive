@@ -40,6 +40,7 @@ type Application = {
   createdAt: string;
   dealNumber: string | null;
   decisionMs: number | null;
+  payFrequency: string | null;
   programWaterfallJson: any | null;
 };
 
@@ -453,12 +454,12 @@ export default function DecisionPage() {
                 const isIBL = pw?.assignedProgram === "IBL";
                 return [
                   { label: "Lender", value: application.lender || "—", sub: application.tier || "" },
-                  { label: "Max Monthly", value: formatCurrency(maxPayment), sub: "payment" },
-                  { label: "Max Weekly", value: formatCurrency(weeklyPayment), sub: "payment" },
-                  { label: "Max Bi-Weekly", value: formatCurrency(biweeklyPayment), sub: "payment" },
+                  { label: "Max Monthly", value: formatCurrency(maxPayment), sub: application.payFrequency === "MONTHLY" ? "★ your pay cycle" : "payment" },
+                  { label: "Max Weekly", value: formatCurrency(weeklyPayment), sub: application.payFrequency === "WEEKLY" ? "★ your pay cycle" : "payment" },
+                  { label: "Max Bi-Weekly", value: formatCurrency(biweeklyPayment), sub: (application.payFrequency === "BIWEEKLY" || application.payFrequency === "SEMI_MONTHLY") ? "★ your pay cycle" : "payment" },
                   { label: "Max Vehicle", value: formatCurrency(application.maxVehicle), sub: "price" },
                   { label: "APR", value: apr ? `${(apr * 100).toFixed(2)}%` : "—", sub: isIBL ? "in-house rate" : "rate" },
-                  { label: "Term", value: isIBL && pw?.finalTerm ? `${pw.finalTerm} weeks` : termMonths ? `${termMonths} months` : "—", sub: "loan term" },
+                  { label: "Term", value: termMonths ? `${termMonths} months` : "—", sub: "loan term" },
                 ];
               })().map(item => (
                 <div key={item.label} style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: 16, padding: "1rem 1.25rem" }}>
