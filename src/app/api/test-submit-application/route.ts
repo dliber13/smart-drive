@@ -36,8 +36,6 @@ export async function POST(req: NextRequest) {
       if (aprSetting) iblAprOverride = parseFloat(aprSetting.value) / 100;
     } catch {}
 
-    // Load platform settings
-    } catch {}
 
     // 1. Run decision engine before saving
     const decisionInput = {
