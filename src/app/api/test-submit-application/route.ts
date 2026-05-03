@@ -37,10 +37,6 @@ export async function POST(req: NextRequest) {
     } catch {}
 
     // Load platform settings
-    let iblAprOverride = 0.2499;
-    try {
-      const aprSetting = await prisma.platformSetting.findUnique({ where: { key: "ibl_apr" } });
-      if (aprSetting) iblAprOverride = parseFloat(aprSetting.value) / 100;
     } catch {}
 
     // 1. Run decision engine before saving
