@@ -70,6 +70,15 @@ const IBL_TERM: Record<string, number> = {
   D: 78,  // 1.5 years
 };
 
+// Calculate actual amortized payment
+function amortizedPayment(principal: number, annualRate: number, termMonths: number): number {
+  if (principal <= 0 || termMonths <= 0) return 0;
+  if (annualRate === 0) return Math.round(principal / termMonths);
+  const monthlyRate = annualRate / 12;
+  const payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / (Math.pow(1 + monthlyRate, termMonths) - 1);
+  return Math.round(payment);
+}
+
 export function runIBLEngine(input: IBLInput): IBLDecision {
   const declineReasons: string[] = [];
 
@@ -176,19 +185,35 @@ export function runIBLEngine(input: IBLInput): IBLDecision {
 
   // ── Payment Calculations ──────────────────────────────────────────────────
   const ptiLimit = eligible ? IBL_PTI[riskBand] : 0;
-  const maxMonthlyPayment = Math.round(input.monthlyIncome * ptiLimit);
-  const maxWeeklyPayment = Math.round(maxMonthlyPayment * 12 / 52);
-  const maxBiweeklyPayment = Math.round(maxMonthlyPayment * 12 / 26);
+  const ptiMaxMonthly = Math.round(input.monthlyIncome * ptiLimit);
 
   const termWeeks = eligible ? IBL_TERM[riskBand] : 0;
-  const totalPayable = maxWeeklyPayment * termWeeks;
+  const termMonths = Math.round(termWeeks / 52 * 12);
   const requiredDownPct = eligible ? IBL_DOWN[riskBand] : 0;
   const requiredDown = Math.round(input.vehiclePrice * requiredDownPct);
 
-  // Max vehicle: total payable + down payment + trade
-  const maxVehiclePrice = eligible
-    ? Math.min(Math.round(totalPayable + input.downPayment + input.tradeIn), 25000)
+  // Max vehicle based on PTI cap — what can they afford at 24.99%?
+  // Solve for max principal: P = PMT * ((1-(1+r)^-n)/r)
+  const monthlyRate = 0.2499 / 12;
+  const maxPrincipal = eligible && termMonths > 0
+    ? Math.round(ptiMaxMonthly * ((1 - Math.pow(1 + monthlyRate, -termMonths)) / monthlyRate))
     : 0;
+  const maxVehiclePrice = eligible
+    ? Math.min(maxPrincipal + input.downPayment + input.tradeIn, 25000)
+    : 0;
+
+  // Actual amortized payment on the SELECTED vehicle at 24.99%
+  const amountFinanced = Math.max(0, input.vehiclePrice - input.downPayment - input.tradeIn);
+  const actualMonthlyPayment = eligible && termMonths > 0
+    ? amortizedPayment(amountFinanced, 0.2499, termMonths)
+    : 0;
+  const actualWeeklyPayment = Math.round(actualMonthlyPayment * 12 / 52);
+  const actualBiweeklyPayment = Math.round(actualMonthlyPayment * 12 / 26);
+
+  // Use actual payments for display, PTI cap for qualification
+  const maxMonthlyPayment = actualMonthlyPayment || ptiMaxMonthly;
+  const maxWeeklyPayment = actualWeeklyPayment || Math.round(ptiMaxMonthly * 12 / 52);
+  const maxBiweeklyPayment = actualBiweeklyPayment || Math.round(ptiMaxMonthly * 12 / 26);
 
   return {
     eligible,
