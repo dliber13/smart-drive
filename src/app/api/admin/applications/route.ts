@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
       approved: applications.filter(a => String(a.status ?? "").toUpperCase() === "APPROVED").length,
       declined: applications.filter(a => String(a.status ?? "").toUpperCase() === "DECLINED").length,
       funded: applications.filter(a => String(a.status ?? "").toUpperCase() === "FUNDED").length,
+      pending_funding: applications.filter(a => String(a.status ?? "").toUpperCase() === "PENDING_FUNDING").length,
     };
 
     const approvedApps = applications.filter(a => String(a.status ?? "").toUpperCase() === "APPROVED");
