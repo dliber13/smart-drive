@@ -55,6 +55,10 @@ type MatchedVehicle = {
   askingPrice: number | null;
   matchScore: number;
   priceVsBudget: number;
+  bookValue?: number | null;
+  eligible?: boolean;
+  ineligibleReasons?: string[];
+  additionalDownNeeded?: number;
 };
 
 function formatCurrency(v: number | null | undefined) {
