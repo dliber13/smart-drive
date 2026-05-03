@@ -1,0 +1,20 @@
+[33m069b23f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add bookValue and ineligible fields to MatchedVehicle type
+[33mc950d61[m Remove stray catch block
+[33m30ccc2b[m Fix missing apr and termMonths in prisma create
+[33m56773f8[m Fix duplicate iblAprOverride declaration
+[33mcfeb7e5[m Fix IBL lender name, term in months, highlight customer pay cycle payment
+[33m84f1f05[m Fix IBL term display — show weeks not months, in-house rate label
+[33mb514004[m Fix IBL decision reason — show IBL terms not retail lender text
+[33mc7149b3[m Selected vehicle banner at top, gross/net profit on vehicle cards, decline reasons panel
+[33me17577f[m IBL APR persisted to DB — owner can set rate from controller, pulled on every submission
+[33mc064a9e[m Add IBL APR rate override panel to controller dashboard
+[33m3d6b91f[m Set IBL APR to 24.99% default — owner adjustable
+[33m2b88dc7[m Add program waterfall analysis + ineligible vehicles with down payment gap
+[33m0bd8127[m Increase upload limit to 20MB, add HEIF support
+[33m7c071ff[m Redirect /dashboard to /dealer-dashboard
+[33m5ba2132[m Add action buttons to dealer dashboard — View Decision, Edit, New Deal, DocuSign status
+[33ma85d5bf[m Make homepage CTA more pronounced
+[33m5f762b0[m Fix signup messaging — 50% off first month
+[33m77c01d3[m Fix Stripe coupon at session level
+[33m06b795d[m Fix Stripe coupon placement in signup
+[33m137e2f8[m Add self-serve signup — 14-day trial + 50% off first month
